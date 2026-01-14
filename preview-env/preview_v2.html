@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>西自仪 LIMS - 业务受理与特种设备流程</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <style>
+    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f0f2f5; }
+    #app { display: flex; height: 100vh; overflow: hidden; }
+    
+    /* 侧边栏 */
+    .sidebar-container { width: 220px; background-color: #304156; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+    .logo { height: 50px; line-height: 50px; text-align: center; font-size: 16px; font-weight: 600; background-color: #2b2f3a; color: #fff; border-bottom: 1px solid #1f2d3d; }
+    .el-menu { border-right: none; }
+    
+    /* 主体区域 */
+    .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
+    .navbar { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10; }
+    .app-main { flex: 1; padding: 20px; overflow-y: auto; }
+    .app-container { background: #fff; padding: 20px; border-radius: 4px; min-height: calc(100vh - 90px); box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
+    
+    /* 通用工具类 */
+    .mb8 { margin-bottom: 8px; }
+    .mt20 { margin-top: 20px; }
+    .text-center { text-align: center; }
+    
+    .type-card {
+      cursor: pointer;
+      border: 1px solid #e6e6e6;
+      border-radius: 8px;
+      padding: 30px 20px;
+      text-align: center;
+      transition: all 0.3s;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #fcfcfc;
+    }
+    .type-card:hover {
+      border-color: #409EFF;
+      box-shadow: 0 4px 12px rgba(64,158,255,0.15);
+      transform: translateY(-2px);
+      background: #fff;
+    }
+    .type-card i { font-size: 48px; color: #409EFF; margin-bottom: 15px; }
+    .type-card h3 { margin: 0; font-size: 18px; color: #303133; }
+    .type-card p { margin: 10px 0 0; color: #909399; font-size: 13px; }
+
+    .device-type-toolbar {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .device-type-toolbar .el-input {
+      flex: 1;
+    }
+    .device-type-grid {
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 4px;
+    }
+    .device-type-card {
+      cursor: pointer;
+      border: 1px solid #e4e7ed;
+      border-radius: 6px;
+      padding: 14px 16px;
+      transition: all 0.2s;
+      background: #fcfcfc;
+    }
+    .device-type-card:hover {
+      border-color: #409EFF;
+      box-shadow: 0 2px 8px rgba(64,158,255,0.15);
+      background: #fff;
+    }
+    .device-type-card.is-active {
+      border-color: #409EFF;
+      background: #f0f7ff;
+    }
+    .device-type-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .device-type-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #303133;
+    }
+    .device-type-code {
+      font-size: 12px;
+      color: #909399;
+      margin-bottom: 4px;
+    }
+    .device-type-desc {
+      font-size: 12px;
+      color: #606266;
+      line-height: 1.4;
+    }
+    .device-type-tags {
+      margin-top: 6px;
+    }
+
+    /* 分步表单样式 */
+    .step-form-container { padding: 0 20px; }
+    .step-content { margin-top: 30px; border: 1px solid #eee; padding: 30px; border-radius: 4px; }
+    .section-header { font-size: 15px; font-weight: bold; color: #303133; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid #409EFF; }
+
+    /* A4 纸张模拟 */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .report-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+    .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .report-table td, .report-table th { border: 1px solid #000; padding: 8px; text-align: center; font-size: 14px; }
+    .report-info { margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
+    
+    [v-cloak] { display: none; }
+    
+    /* 弹窗居中与滚动优化 */
+    .centered-dialog {
+      display: flex;
+      flex-direction: column;
+      margin: 0 !important;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-height: 96vh;
+      max-width: 96vw;
+      width: 100%;
+    }
+    .centered-dialog .el-dialog__body {
+      flex: 1;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <!-- 侧边栏 -->
+    <div class="sidebar-container">
+      <div class="logo">西自仪 LIMS</div>
+      <el-menu
+        :default-active="activeMenu"
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409EFF"
+        @select="handleMenuSelect"
+      >
+        <el-menu-item index="business">
+          <i class="el-icon-s-order"></i>
+          <span slot="title">业务受理</span>
+        </el-menu-item>
+        <el-menu-item index="assign">
+          <i class="el-icon-s-custom"></i>
+          <span slot="title">任务分配</span>
+        </el-menu-item>
+        <el-submenu index="record">
+          <template slot="title">
+            <i class="el-icon-edit-outline"></i>
+            <span>原始记录</span>
+          </template>
+          <el-menu-item index="record-list">记录列表</el-menu-item>
+          <el-menu-item index="record-entry" style="display:none">录入详情</el-menu-item>
+        </el-submenu>
+        <el-menu-item index="audit">
+          <i class="el-icon-s-check"></i>
+          <span slot="title">审核管理</span>
+        </el-menu-item>
+        <el-submenu index="report">
+          <template slot="title">
+            <i class="el-icon-document"></i>
+            <span>报告管理</span>
+          </template>
+          <el-menu-item index="report-list">报告列表</el-menu-item>
+          <el-menu-item index="report-preview" style="display:none">报告预览</el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+      <div class="navbar">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item>首页</el-breadcrumb-item>
+          <el-breadcrumb-item>{{ getPageTitle() }}</el-breadcrumb-item>
+        </el-breadcrumb>
+        <el-dropdown>
+          <span class="el-dropdown-link" style="cursor: pointer;">
+            <i class="el-icon-user-solid"></i> 管理员 <i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>个人中心</el-dropdown-item>
+            <el-dropdown-item divided>退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+
+      <div class="app-main">
+        
+        <!-- ================= 页面 1: 业务受理 (委托管理) ================= -->
+        <div v-if="activeMenu === 'business'" class="app-container">
+          <!-- 搜索区 -->
+          <el-form :inline="true" size="small" class="demo-form-inline">
+            <el-form-item label="委托单号"><el-input placeholder="请输入"></el-input></el-form-item>
+            <el-form-item label="委托单位"><el-input placeholder="请输入"></el-input></el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="el-icon-search">搜索</el-button>
+              <el-button icon="el-icon-refresh">重置</el-button>
+            </el-form-item>
+          </el-form>
+
+          <!-- 工具栏 -->
+          <el-row :gutter="10" class="mb8">
+            <el-col :span="1.5"><el-button type="primary" icon="el-icon-plus" size="mini" @click="dialogTypeSelectVisible = true">新增</el-button></el-col>
+            <el-col :span="1.5"><el-button type="danger" plain icon="el-icon-delete" size="mini">删除</el-button></el-col>
+            <el-col :span="1.5"><el-button type="warning" plain icon="el-icon-download" size="mini">导出</el-button></el-col>
+          </el-row>
+
+          <!-- Tab 切换 -->
+          <el-tabs v-model="activeTab" type="card">
+            <el-tab-pane label="检定校准" name="cal"></el-tab-pane>
+            <el-tab-pane label="检验检测" name="test"></el-tab-pane>
+            <el-tab-pane label="特种设备" name="special">
+              <!-- 特种设备列表 -->
+              <el-table :data="specialList" border style="width: 100%" size="medium">
+                <el-table-column type="selection" width="55" align="center"></el-table-column>
+                <el-table-column label="委托单号" prop="no" width="160" align="center">
+                  <template slot-scope="scope"><el-link type="primary">{{ scope.row.no }}</el-link></template>
+                </el-table-column>
+                <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
+                <el-table-column label="业务类型" width="100" align="center">
+                  <template slot-scope="scope">
+                    <el-tag v-if="scope.row.subType === 'gas'" type="info">气瓶</el-tag>
+                    <el-tag v-else type="warning">安全阀</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="剩余天数" width="120" align="center">
+                  <template slot-scope="scope">
+                    <el-tag :type="getRiskColor(scope.row.days)" effect="plain">
+                      <i class="el-icon-time"></i> {{ scope.row.days }} 天
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="状态" width="100" align="center">
+                  <template slot-scope="scope"><el-tag size="small">{{ scope.row.status }}</el-tag></template>
+                </el-table-column>
+                <el-table-column label="受理人" prop="acceptor" width="100" align="center"></el-table-column>
+                <el-table-column label="委托日期" prop="entrustDate" width="120" align="center"></el-table-column>
+                <el-table-column label="委托审核" width="110" align="center">
+                  <template slot-scope="scope">
+                    <el-tag :type="scope.row.auditStatus === '已通过' ? 'success' : scope.row.auditStatus === '退回' ? 'danger' : 'warning'" size="small">
+                      {{ scope.row.auditStatus }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="260" align="center">
+                  <template slot-scope="scope">
+                    <el-button size="mini" type="text" icon="el-icon-s-promotion">流转</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-edit">修改</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-view">详情</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-link">复制签名链接</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-delete" class="text-danger">删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </el-tab-pane>
+          </el-tabs>
+        </div>
+
+        <!-- ================= 页面 2: 任务分配 (独立) ================= -->
+        <div v-if="activeMenu === 'assign'" class="app-container">
+          <el-alert title="检测组长/科室主任工作台" type="info" :closable="false" show-icon class="mb8"></el-alert>
+          <el-table :data="assignList" border style="width: 100%">
+            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="业务类型" prop="type"></el-table-column>
+            <el-table-column label="状态" prop="status">
+              <template slot-scope="scope"><el-tag type="danger">待分配</el-tag></template>
+            </el-table-column>
+            <el-table-column label="操作" align="center">
+              <template slot-scope="scope">
+                <el-button size="mini" type="primary" icon="el-icon-user" @click="$message.success('打开分配弹窗')">分配人员</el-button>
+                <el-button size="mini" icon="el-icon-time" @click="trackVisible = true">流程追踪</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- ================= 页面 3: 原始记录列表 (入口) ================= -->
+        <div v-if="activeMenu === 'record-list'" class="app-container">
+          <el-form :inline="true" size="small">
+            <el-form-item label="我的任务"><el-input placeholder="委托单号/样品名称"></el-input></el-form-item>
+            <el-form-item><el-button type="primary">查询</el-button></el-form-item>
+          </el-form>
+          <el-table :data="myTaskList" border style="width: 100%">
+            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="样品名称" prop="sample"></el-table-column>
+            <el-table-column label="检测进度" align="center">
+              <template slot-scope="scope">
+                <el-progress :percentage="scope.row.progress" :status="scope.row.progress===100?'success':''"></el-progress>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center">
+              <template slot-scope="scope">
+                <el-button size="mini" type="primary" plain @click="openRecordEntry(scope.row)">
+                  <i class="el-icon-edit"></i> 录入记录
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- ================= 页面 4: 原始记录录入详情 ================= -->
+        <div v-if="activeMenu === 'record-entry'" class="app-container" style="display: flex; flex-direction: column; height: 100%;">
+          <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+               <span style="font-size: 18px; font-weight: bold;">原始记录录入</span>
+               <el-tag size="small" style="margin-left: 10px;">{{ currentRecordType === 'gas' ? '气瓶检测' : '安全阀校验' }}</el-tag>
+               <span style="color: #909399; font-size: 13px; margin-left: 10px;">单号：20240115-GC-001</span>
+            </div>
+            <div>
+               <el-button size="small" @click="activeMenu='record-list'">返回列表</el-button>
+               <el-button type="primary" size="small" icon="el-icon-check">提交审核</el-button>
+            </div>
+          </div>
+          
+          <div style="display: flex; flex: 1; overflow: hidden; gap: 20px;">
+            <!-- 左侧：录入表单区 -->
+            <div style="flex: 2; overflow-y: auto; padding-right: 10px;">
+               <!-- 公共：环境条件 -->
+               <el-card shadow="never" class="mb8">
+                 <div slot="header" class="clearfix"><span>环境条件</span></div>
+                 <el-form :inline="true" size="small" :model="recordForm">
+                   <el-form-item label="环境温度(℃)"><el-input v-model="recordForm.envTemperature" style="width: 80px;"></el-input></el-form-item>
+                   <el-form-item label="相对湿度(%)"><el-input v-model="recordForm.envHumidity" style="width: 80px;"></el-input></el-form-item>
+                   <el-form-item label="大气压力(kPa)"><el-input v-model="recordForm.envPressure" style="width: 80px;"></el-input></el-form-item>
+                 </el-form>
+               </el-card>
+               
+               <!-- 模板A：气瓶检测记录 -->
+               <div v-if="currentRecordType === 'gas'">
+                 <el-card shadow="never" class="mb8">
+                   <div slot="header"><span>外观与音响检查</span></div>
+                   <el-form size="small" label-width="120px">
+                     <el-row>
+                       <el-col :span="12"><el-form-item label="外观检查"><el-radio-group v-model="recordForm.bottle.appearance"><el-radio label="合格"></el-radio><el-radio label="不合格"></el-radio></el-radio-group></el-form-item></el-col>
+                       <el-col :span="12"><el-form-item label="音响检查"><el-radio-group v-model="recordForm.bottle.sound"><el-radio label="清脆"></el-radio><el-radio label="沉闷"></el-radio></el-radio-group></el-form-item></el-col>
+                     </el-row>
+                     <el-row>
+                       <el-col :span="12"><el-form-item label="瓶口螺纹"><el-radio-group v-model="recordForm.bottle.thread"><el-radio label="合格"></el-radio><el-radio label="不合格"></el-radio></el-radio-group></el-form-item></el-col>
+                       <el-col :span="12"><el-form-item label="实测重量(kg)"><el-input v-model="recordForm.bottle.weight"></el-input></el-form-item></el-col>
+                     </el-row>
+                   </el-form>
+                 </el-card>
+                 
+                 <el-card shadow="never" class="mb8">
+                   <div slot="header"><span>壁厚测定 (mm)</span></div>
+                   <el-table :data="recordForm.bottle.thickness" border size="mini">
+                     <el-table-column prop="point" label="测定位置" width="100"></el-table-column>
+                     <el-table-column label="测点1"><template slot-scope="scope"><el-input v-model="scope.row.val1" size="mini"></el-input></template></el-table-column>
+                     <el-table-column label="测点2"><template slot-scope="scope"><el-input v-model="scope.row.val2" size="mini"></el-input></template></el-table-column>
+                     <el-table-column label="测点3"><template slot-scope="scope"><el-input v-model="scope.row.val3" size="mini"></el-input></template></el-table-column>
+                     <el-table-column label="平均值" width="100"><template slot-scope="scope"><el-input v-model="scope.row.avg" size="mini" readonly placeholder="自动"></el-input></template></el-table-column>
+                   </el-table>
+                 </el-card>
+               </div>
+               
+               <!-- 模板B：安全阀校验记录 -->
+               <div v-else-if="currentRecordType === 'valve'">
+                 <el-card shadow="never" class="mb8">
+                   <div slot="header"><span>校验数据</span></div>
+                   <el-form size="small" label-width="140px">
+                     <el-form-item label="校验介质"><el-input v-model="recordForm.valve.media"></el-input></el-form-item>
+                     <el-row>
+                       <el-col :span="12"><el-form-item label="开启压力1 (MPa)"><el-input v-model="recordForm.valve.openPressure1"></el-input></el-form-item></el-col>
+                       <el-col :span="12"><el-form-item label="开启压力2 (MPa)"><el-input v-model="recordForm.valve.openPressure2"></el-input></el-form-item></el-col>
+                     </el-row>
+                     <el-row>
+                       <el-col :span="12"><el-form-item label="开启压力3 (MPa)"><el-input v-model="recordForm.valve.openPressure3"></el-input></el-form-item></el-col>
+                       <el-col :span="12"><el-form-item label="回座压力 (MPa)"><el-input v-model="recordForm.valve.returnPressure"></el-input></el-form-item></el-col>
+                     </el-row>
+                     <el-form-item label="密封试验压力 (MPa)"><el-input v-model="recordForm.valve.sealTestPressure"></el-input></el-form-item>
+                   </el-form>
+                 </el-card>
+               </div>
+               
+               <el-card shadow="never">
+                 <div slot="header"><span>检验结论</span></div>
+                 <el-form size="small" label-width="100px">
+                   <el-form-item label="综合判定">
+                      <el-radio-group v-model="recordForm.bottle.result" v-if="currentRecordType==='gas'">
+                        <el-radio label="合格" border></el-radio>
+                        <el-radio label="报废" border class="text-danger"></el-radio>
+                      </el-radio-group>
+                      <el-radio-group v-model="recordForm.valve.result" v-else>
+                        <el-radio label="合格" border></el-radio>
+                        <el-radio label="不合格" border class="text-danger"></el-radio>
+                      </el-radio-group>
+                   </el-form-item>
+                   <el-form-item label="备注/意见">
+                     <el-input type="textarea" :rows="2"></el-input>
+                   </el-form-item>
+                 </el-form>
+               </el-card>
+            </div>
+            
+            <!-- 右侧：对照与辅助区 -->
+            <div style="flex: 1; background: #fff; border-left: 1px solid #e6e6e6; padding: 0 15px; display: flex; flex-direction: column;">
+               <div style="padding: 15px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #606266;">
+                 <i class="el-icon-picture-outline"></i> 原始凭证/现场记录
+               </div>
+               <div style="flex: 1; overflow-y: auto; padding: 15px 0;">
+                 <el-upload
+                    action="#"
+                    list-type="picture-card"
+                    :auto-upload="false"
+                    :file-list="recordForm.fileList">
+                    <i slot="default" class="el-icon-plus"></i>
+                    <div slot="file" slot-scope="{file}">
+                      <img class="el-upload-list__item-thumbnail" :src="file.url" alt="">
+                      <span class="el-upload-list__item-actions">
+                        <span class="el-upload-list__item-preview" @click="$message.info('预览大图')"><i class="el-icon-zoom-in"></i></span>
+                        <span class="el-upload-list__item-delete"><i class="el-icon-delete"></i></span>
+                      </span>
+                    </div>
+                  </el-upload>
+                  <div style="margin-top: 20px; color: #909399; font-size: 12px; line-height: 1.5;">
+                    <p>提示：</p>
+                    <p>1. 请上传现场手写记录单或设备打印小票。</p>
+                    <p>2. 支持 JPG/PNG 格式。</p>
+                    <p>3. 点击图片可放大查看，方便对照录入。</p>
+                  </div>
+                  
+                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                    <div style="font-weight: bold; margin-bottom: 10px; color: #606266;"><i class="el-icon-cpu"></i> 检测设备绑定</div>
+                    <el-form size="small" label-position="top">
+                      <el-form-item label="使用设备">
+                        <el-select placeholder="请选择" style="width: 100%;">
+                           <el-option label="电子天平 (EQ-001)" value="1"></el-option>
+                           <el-option label="超声波测厚仪 (EQ-005)" value="2"></el-option>
+                           <el-option label="安全阀校验台 (EQ-008)" value="3"></el-option>
+                        </el-select>
+                      </el-form-item>
+                      <el-button type="text" icon="el-icon-connection" @click="$message.success('模拟：从设备获取数据...')">尝试从设备读取数据</el-button>
+                    </el-form>
+                  </div>
+               </div>
+        </div>
+
+        <!-- ================= 页面 5: 报告列表 ================= -->
+        <div v-if="activeMenu === 'report-list'" class="app-container">
+          <el-form :inline="true" size="small">
+            <el-form-item label="委托单号"><el-input placeholder="请输入"></el-input></el-form-item>
+            <el-form-item label="状态">
+              <el-select placeholder="请选择" value="">
+                <el-option label="编制中" value="1"></el-option>
+                <el-option label="待审批" value="2"></el-option>
+                <el-option label="已批准" value="3"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item><el-button type="primary">查询</el-button></el-form-item>
+          </el-form>
+          
+          <el-row :gutter="10" class="mb8">
+            <el-col :span="1.5"><el-button type="warning" plain icon="el-icon-download" size="mini">批量导出</el-button></el-col>
+            <el-col :span="1.5"><el-button type="primary" plain icon="el-icon-printer" size="mini">批量打印</el-button></el-col>
+            <el-col :span="1.5"><el-button type="success" plain icon="el-icon-s-promotion" size="mini">批量发放</el-button></el-col>
+          </el-row>
+          
+          <el-table :data="reportList" border style="width: 100%">
+            <el-table-column type="selection" width="55" align="center"></el-table-column>
+            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="报告名称" prop="name" show-overflow-tooltip></el-table-column>
+            <el-table-column label="编制人" prop="author" width="100" align="center"></el-table-column>
+            <el-table-column label="状态" width="100" align="center">
+               <template slot-scope="scope">
+                 <el-tag :type="scope.row.status === '已批准' ? 'success' : scope.row.status === '待审批' ? 'warning' : ''">{{ scope.row.status }}</el-tag>
+               </template>
+            </el-table-column>
+            <el-table-column label="操作" align="center">
+              <template slot-scope="scope">
+                <el-button size="mini" type="text" icon="el-icon-view" @click="openReportPreview(scope.row)">预览</el-button>
+                <el-button size="mini" type="text" icon="el-icon-download">下载</el-button>
+                <el-button size="mini" type="text" icon="el-icon-document-checked" v-if="scope.row.status==='待审批'">审批</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- ================= 页面 6: 报告预览 (A4 模拟) ================= -->
+        <div v-if="activeMenu === 'report-preview'" style="height: 100%; display: flex; flex-direction: column; background: #525659;">
+           <div style="height: 50px; background: #323639; color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0;">
+             <div style="font-size: 16px;">{{ currentReport ? currentReport.name : '报告预览' }}</div>
+             <div>
+               <el-button size="mini" icon="el-icon-printer" @click="$message.success('调用浏览器打印...')">打印</el-button>
+               <el-button size="mini" type="primary" icon="el-icon-download">下载 PDF</el-button>
+               <el-button size="mini" type="info" @click="activeMenu='report-list'">关闭</el-button>
+             </div>
+           </div>
+           
+           <div style="flex: 1; overflow-y: auto; padding: 30px 0; text-align: center;">
+             <!-- 气瓶报告模板 -->
+             <div v-if="currentRecordType === 'gas'" class="a4-page">
+               <div class="report-title">气瓶定期检验报告</div>
+               <div class="report-info" style="text-align: left;">
+                 <p>报告编号：{{ currentReport ? currentReport.no : '' }}</p>
+                 <p>委托单位：上海气体工厂</p>
+                 <p>设备名称：无缝气瓶 &nbsp;&nbsp;&nbsp;&nbsp; 介质：氧气</p>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th colspan="4" style="background: #f0f0f0;">检验结果汇总</th>
+                 </tr>
+                 <tr>
+                   <td width="25%">外观检查</td>
+                   <td width="25%">合格</td>
+                   <td width="25%">音响检查</td>
+                   <td width="25%">合格</td>
+                 </tr>
+                 <tr>
+                   <td>瓶口螺纹</td>
+                   <td>合格</td>
+                   <td>内部检查</td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>壁厚测定</td>
+                   <td>合格</td>
+                   <td>水压试验</td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>气密性试验</td>
+                   <td>合格</td>
+                   <td>综合判定</td>
+                   <td><strong>合格</strong></td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 50px; text-align: left;">
+                 <p>检验结论：该气瓶经定期检验，符合相关标准要求，允许继续使用。</p>
+                 <p>下次检验日期：2027年01月14日</p>
+               </div>
+               
+               <div style="margin-top: 80px; display: flex; justify-content: space-around;">
+                 <div>编制：<img src="https://dummyimage.com/80x30/fff/000&text=Sign" style="vertical-align: middle;"></div>
+                 <div>审核：<img src="https://dummyimage.com/80x30/fff/000&text=Sign" style="vertical-align: middle;"></div>
+                 <div>批准：<img src="https://dummyimage.com/80x30/fff/000&text=Sign" style="vertical-align: middle;"></div>
+                 <div>日期：2024-01-14</div>
+               </div>
+             </div>
+             
+             <!-- 安全阀报告模板 -->
+             <div v-else class="a4-page">
+               <div class="report-title">安全阀校验报告</div>
+               <div class="report-info" style="text-align: left;">
+                 <p>报告编号：{{ currentReport ? currentReport.no : '' }}</p>
+                 <p>使用单位：江苏化工厂</p>
+                 <p>设备型号：A48Y-16C &nbsp;&nbsp;&nbsp;&nbsp; 公称通径：DN50</p>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th width="30%">检验项目</th>
+                   <th width="30%">标准要求</th>
+                   <th width="40%">检验结果</th>
+                 </tr>
+                 <tr>
+                   <td>整定压力 (MPa)</td>
+                   <td>1.0 ± 0.03</td>
+                   <td>1.01</td>
+                 </tr>
+                 <tr>
+                   <td>密封试验压力 (MPa)</td>
+                   <td>0.9</td>
+                   <td>0.9</td>
+                 </tr>
+                 <tr>
+                   <td>开启高度</td>
+                   <td>≥ 1/4 d0</td>
+                   <td>符合</td>
+                 </tr>
+                 <tr>
+                   <td>外观检查</td>
+                   <td>完好无损</td>
+                   <td>合格</td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 50px; text-align: left;">
+                 <p>校验结论：<strong>合格</strong></p>
+                 <p>备注：铅封已施加。</p>
+               </div>
+               
+               <div style="margin-top: 100px; display: flex; justify-content: space-around;">
+                 <div>校验员：<span style="font-family: cursive;">张三</span></div>
+                 <div>核验员：<span style="font-family: cursive;">李四</span></div>
+                 <div>日期：2024-01-14</div>
+               </div>
+             </div>
+           </div>
+        </div>
+
+      </div>
+    </div>
+
+      </div>
+    </div>
+
+    <!-- ================= 弹窗 1: 新增委托类型选择 (三选一) ================= -->
+    <el-dialog 
+      title="新增委托" 
+      :visible.sync="dialogTypeSelectVisible" 
+      width="1100px" 
+      center
+      custom-class="centered-dialog"
+    >
+      <el-row :gutter="20" style="padding: 20px 0;">
+        <el-col :span="8">
+          <div class="type-card" @click="$message.info('检定校准 - 跳转原有页面')">
+            <i class="el-icon-setting"></i>
+            <h3>检定校准</h3>
+            <p>常规仪器仪表的校准业务</p>
+          </div>
+        </el-col>
+        <el-col :span="8">
+          <div class="type-card" @click="$message.info('检验检测 - 跳转原有页面')">
+            <i class="el-icon-s-operation"></i>
+            <h3>检验检测</h3>
+            <p>各类综合性检验业务</p>
+          </div>
+        </el-col>
+        <el-col :span="8">
+          <div class="type-card" @click="handleSpecialSelect">
+            <i class="el-icon-s-cooperation"></i>
+            <h3>特种设备</h3>
+            <p>气瓶、安全阀等特种检测</p>
+          </div>
+        </el-col>
+      </el-row>
+    </el-dialog>
+
+    <!-- ================= 弹窗 2: 特种设备业务类型选择 ================= -->
+    <el-dialog 
+      title="请选择特种设备类型" 
+      :visible.sync="dialogSubTypeVisible" 
+      width="900px"
+      custom-class="centered-dialog"
+    >
+      <div style="padding: 10px 20px 0;">
+        <div class="device-type-toolbar">
+          <el-input
+            v-model="typeSearchKeyword"
+            size="small"
+            placeholder="搜索设备类型（名称/编码/关键字）"
+            prefix-icon="el-icon-search"
+            clearable
+          ></el-input>
+          <el-radio-group v-model="typeCategoryFilter" size="small">
+            <el-radio-button label="all">全部类型</el-radio-button>
+            <el-radio-button
+              v-for="cat in deviceCategories"
+              :key="cat"
+              :label="cat"
+            >
+              {{ cat }}
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+
+        <div class="device-type-grid">
+          <el-row :gutter="16">
+            <el-col
+              v-for="item in filteredDeviceTypes"
+              :key="item.value"
+              :span="12"
+              style="margin-bottom: 12px;"
+            >
+              <div
+                class="device-type-card"
+                :class="{ 'is-active': selectedSubType === item.value }"
+                @click="selectedSubType = item.value"
+              >
+                <div class="device-type-card-header">
+                  <span class="device-type-name">{{ item.label }}</span>
+                  <el-tag v-if="item.category" size="mini" type="info">{{ item.category }}</el-tag>
+                </div>
+                <div class="device-type-code">编码：{{ item.value }}</div>
+                <div class="device-type-desc">{{ item.description }}</div>
+                <div class="device-type-tags">
+                  <el-tag
+                    v-if="item.scene"
+                    size="mini"
+                    effect="plain"
+                    style="margin-right: 4px;"
+                  >
+                    {{ item.scene }}
+                  </el-tag>
+                  <el-tag
+                    v-if="item.hot"
+                    size="mini"
+                    type="danger"
+                    effect="plain"
+                  >
+                    高频
+                  </el-tag>
+                </div>
+              </div>
+            </el-col>
+          </el-row>
+          <div
+            v-if="!filteredDeviceTypes.length"
+            class="text-center"
+            style="padding: 20px 0; color: #909399;"
+          >
+            暂无匹配的设备类型，请调整搜索或分类条件
+          </div>
+
+        <div style="margin-top: 8px; color: #666; font-size: 13px;">
+          <i class="el-icon-info"></i> 不同类型的设备将加载不同的委托单模板
+        </div>
+      </div>
+    </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogSubTypeVisible = false">取 消</el-button>
+        <el-button type="primary" @click="openSpecialForm">下一步</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- ================= 弹窗 3: 特种设备委托单录入 (核心) ================= -->
+    <el-dialog 
+      :title="'新增' + (currentDevice ? currentDevice.label : '') + '委托单'" 
+      :visible.sync="dialogFormVisible" 
+      width="1200px" 
+      custom-class="centered-dialog"
+      :close-on-click-modal="false"
+    >
+      <div class="step-form-container">
+        <el-steps :active="activeStep" finish-status="success" align-center>
+          <el-step title="委托方信息"></el-step>
+          <el-step title="样品信息"></el-step>
+          <el-step title="检验要求"></el-step>
+          <el-step title="交付信息"></el-step>
+        </el-steps>
+
+        <!-- 步骤 1: 委托方信息 -->
+        <div v-show="activeStep === 0" class="step-content">
+          <el-form label-width="110px" size="small">
+            <div class="section-header">基本信息</div>
+            <el-row :gutter="20">
+              <el-col :span="6">
+                <el-form-item label="委托类别" required>
+                  <el-radio-group v-model="form.category">
+                    <el-radio label="送检">送检</el-radio>
+                    <el-radio label="现场">现场</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="加急服务">
+                  <el-switch v-model="form.isUrgent" active-text="是" inactive-text="否"></el-switch>
+                </el-form-item>
+              </el-col>
+              <el-col :span="6">
+                <el-form-item label="委托日期">
+                  <el-date-picker v-model="form.entrustDate" type="date" placeholder="默认今天" style="width: 100%"></el-date-picker>
+                </el-form-item>
+              </el-col>
+              <el-col v-if="currentDevice && currentDevice.value === 'gas'" :span="6">
+                <el-form-item label="送检人" required>
+                  <el-input v-model="form.witnessPerson"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col v-else :span="6">
+                <el-form-item label="制单人" required>
+                  <el-input v-model="form.maker"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="currentDevice && currentDevice.value === 'valve'">
+              <el-col :span="8">
+                <el-form-item label="报告方式" required>
+                  <el-radio-group v-model="form.valveMode" @change="updateTestStandard">
+                    <el-radio label="离线"></el-radio>
+                    <el-radio label="在线"></el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            
+            <div class="section-header">单位信息</div>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="委托单位" required>
+                  <el-input v-model="form.company" placeholder="请输入或选择单位">
+                    <el-button slot="append" icon="el-icon-search"></el-button>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="使用单位" required>
+                  <el-input v-model="form.useCompany" placeholder="同委托单位可不填">
+                     <el-button slot="append" icon="el-icon-search"></el-button>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="currentDevice && currentDevice.value === 'gas'" :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="制造单位"><el-input v-model="form.manufacturer"></el-input></el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="设计单位"><el-input v-model="form.designCompany"></el-input></el-form-item>
+              </el-col>
+            </el-row>
+            <el-row v-if="currentDevice && currentDevice.value === 'gas'" :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="安装单位"><el-input v-model="form.installCompany"></el-input></el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="见证单位"><el-input v-model="form.witnessCompany"></el-input></el-form-item>
+              </el-col>
+            </el-row>
+            
+            <div class="section-header">联系方式</div>
+            <el-row :gutter="20">
+              <el-col :span="12"><el-form-item label="委托人" required><el-input v-model="form.contact"></el-input></el-form-item></el-col>
+              <el-col :span="12"><el-form-item label="联系电话" required><el-input v-model="form.phone"></el-input></el-form-item></el-col>
+            </el-row>
+            <el-form-item label="单位地址"><el-input v-model="form.address"></el-input></el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 步骤 2: 样品信息 (一批多条登记) -->
+        <div v-show="activeStep === 1" class="step-content">
+          <el-form label-width="130px" size="small">
+            <div class="section-header">样品批次信息</div>
+            <el-row :gutter="20" style="margin-bottom: 10px;">
+              <el-col :span="12">
+                <el-form-item label="样品数量">
+                  <span>{{ form.samples.length }}</span>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" style="text-align: right;">
+                <el-button type="primary" size="mini" icon="el-icon-plus" @click="addSampleRow">新增样品</el-button>
+                <el-button size="mini" @click="copyLastSample" :disabled="!form.samples.length">复制上一行</el-button>
+              </el-col>
+            </el-row>
+
+            <div class="section-header">{{ currentDevice ? currentDevice.sampleTitle : '' }}登记（多条录入）</div>
+            <el-table :data="form.samples" border size="small">
+              <el-table-column type="index" label="序号" width="60"></el-table-column>
+              <el-table-column
+                v-for="field in currentSampleFields"
+                :key="field.prop"
+                :label="field.label"
+                min-width="120"
+              >
+                <template slot-scope="scope">
+                  <el-input
+                    v-if="!field.type || field.type === 'text'"
+                    v-model="scope.row[field.prop]"
+                    size="mini"
+                  ></el-input>
+                  <el-radio-group
+                    v-else-if="field.type === 'radio'"
+                    v-model="scope.row[field.prop]"
+                    size="mini"
+                  >
+                    <el-radio 
+                      v-for="opt in field.options" 
+                      :key="opt" 
+                      :label="opt"
+                      style="margin-right: 10px;"
+                    ></el-radio>
+                  </el-radio-group>
+                  <el-select
+                    v-else-if="field.type === 'select'"
+                    v-model="scope.row[field.prop]"
+                    size="mini"
+                    style="width: 100%;"
+                  >
+                    <el-option
+                      v-for="opt in field.options"
+                      :key="opt"
+                      :label="opt"
+                      :value="opt"
+                    ></el-option>
+                  </el-select>
+                  <el-date-picker
+                    v-else-if="field.type === 'date'"
+                    v-model="scope.row[field.prop]"
+                    type="date"
+                    size="mini"
+                    style="width: 100%;"
+                  ></el-date-picker>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="80">
+                <template slot-scope="scope">
+                  <el-button
+                    type="text"
+                    size="mini"
+                    icon="el-icon-delete"
+                    @click="removeSampleRow(scope.$index)"
+                  >
+                    删除
+                  </el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+
+            <el-alert 
+              title="说明：一条记录代表一件设备/一只气瓶，同一委托单可登记多条样品。"
+              type="info"
+              :closable="false"
+              show-icon
+              style="margin-top: 15px;"
+            ></el-alert>
+          </el-form>
+        </div>
+
+        <!-- 步骤 3: 检验要求 -->
+        <div v-show="activeStep === 2" class="step-content">
+          <el-form label-width="120px" size="small">
+            <div class="section-header">检验要求</div>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="检验类别" required>
+                  <el-select v-model="form.testCategory" style="width: 100%">
+                    <el-option label="定期检验" value="定期检验"></el-option>
+                    <el-option label="监督检验" value="监督检验"></el-option>
+                    <el-option label="初次检验" value="初次检验"></el-option>
+                    <el-option label="委托检验" value="委托检验"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                 <el-form-item label="报告期望期限" required>
+                  <el-date-picker
+                    v-model="form.expectedReportDate"
+                    type="date"
+                    placeholder="请选择日期"
+                    style="width: 100%;"
+                  ></el-date-picker>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-form-item label="执行标准">
+              <el-input
+                v-model="form.testStandard"
+                type="textarea"
+                :rows="2"
+                :disabled="currentDevice && currentDevice.value === 'valve'"
+              ></el-input>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 步骤 4: 交付信息 -->
+        <div v-show="activeStep === 3" class="step-content">
+          <el-alert 
+            title="请确认委托方信息，如有变更请返回客户管理中维护。" 
+            type="warning" 
+            :closable="false" 
+            show-icon
+            style="margin-bottom: 15px;"
+          ></el-alert>
+
+          <el-row :gutter="20" style="margin-bottom: 20px;">
+            <el-col :span="12">
+              <el-card shadow="never">
+                <div slot="header" class="clearfix">
+                  <span>公司信息</span>
+                </div>
+                <el-form label-width="80px" size="small">
+                  <el-form-item label="户名">
+                    <el-input :value="platformCompany.accountName" disabled></el-input>
+                  </el-form-item>
+                  <el-form-item label="账号">
+                    <el-input :value="platformCompany.bankAccount" disabled></el-input>
+                  </el-form-item>
+                  <el-form-item label="开户行">
+                    <el-input :value="platformCompany.bankName" disabled></el-input>
+                  </el-form-item>
+                </el-form>
+              </el-card>
+            </el-col>
+            <el-col :span="12">
+              <el-card shadow="never">
+                <div slot="header" class="clearfix">
+                  <span>委托方信息</span>
+                </div>
+                <el-form label-width="90px" size="small">
+                  <el-form-item label="付款单位">
+                    <el-input :value="form.company" disabled></el-input>
+                  </el-form-item>
+                  <el-form-item label="发票单位名称">
+                    <el-input :value="form.company" disabled></el-input>
+                  </el-form-item>
+                  <el-form-item label="单位编号">
+                    <el-input :value="form.unitCode" disabled></el-input>
+                  </el-form-item>
+                </el-form>
+              </el-card>
+            </el-col>
+          </el-row>
+
+          <el-form label-width="120px" size="small">
+            <div class="section-header">报告与交付</div>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                 <el-form-item label="交付形式">
+                  <el-checkbox-group v-model="form.deliveryType">
+                    <el-checkbox label="电子版" disabled></el-checkbox>
+                    <el-checkbox label="纸质版"></el-checkbox>
+                  </el-checkbox-group>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="纸质报告份数">
+                  <el-input-number v-model="form.reportCopies" :min="1" :disabled="!form.deliveryType.includes('纸质版')"></el-input-number>
+                </el-form-item>
+              </el-col>
+            </el-row>
+           
+            <el-form-item label="领取方式" v-if="form.deliveryType.includes('纸质版')">
+              <el-radio-group v-model="form.pickupMethod">
+                <el-radio label="自取"></el-radio>
+                <el-radio label="邮寄"></el-radio>
+              </el-radio-group>
+            </el-form-item>
+            
+            <div class="section-header">其他信息</div>
+            <!--
+            <el-form-item label="分包情况">
+               <el-radio-group v-model="form.subcontract">
+                <el-radio label="无分包"></el-radio>
+                <el-radio label="部分分包"></el-radio>
+                <el-radio label="全部分包"></el-radio>
+              </el-radio-group>
+            </el-form-item>
+            
+            <el-form-item label="是否带CNAS">
+              <el-switch v-model="form.cnas" active-text="是" inactive-text="否"></el-switch>
+            </el-form-item>
+            -->
+            
+          <el-form-item label="备注/特殊要求">
+             <el-input type="textarea" v-model="form.remarks" :rows="3" placeholder="例如：对检验时间的特殊要求，或者进厂安全须知等"></el-input>
+            </el-form-item>
+          </el-form>
+        </div>
+
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button v-if="activeStep > 0" @click="activeStep--">上一步</el-button>
+        <el-button v-if="activeStep < 3" type="primary" @click="activeStep++">下一步</el-button>
+        <el-button v-if="activeStep === 3" type="success" @click="submitEntrust">提 交</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 流程追踪弹窗 -->
+    <el-dialog title="流程追踪" :visible.sync="trackVisible" width="500px">
+      <el-timeline>
+        <el-timeline-item timestamp="2024-01-14 09:00" color="#0bbd87">委托登记完成</el-timeline-item>
+        <el-timeline-item timestamp="2024-01-14 10:00" color="#F56C6C">待分配人员</el-timeline-item>
+      </el-timeline>
+    </el-dialog>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        activeMenu: 'business',
+        activeTab: 'special',
+        
+        dialogTypeSelectVisible: false,
+        dialogSubTypeVisible: false,
+        dialogFormVisible: false,
+        trackVisible: false,
+        
+        selectedSubType: 'gas',
+        typeSearchKeyword: '',
+        typeCategoryFilter: 'all',
+        deviceTypes: [
+          {
+            value: 'gas',
+            label: '气瓶检测',
+            category: '气瓶类',
+            scene: '定期检验',
+            description: '适用于各类气瓶的定期检验业务',
+            testStandard: 'TSG 23-2021《气瓶安全技术规范》和GB/T 24161-2009《呼吸器用复合气瓶定期检验与评定》',
+            hot: true,
+            sampleTitle: '气瓶',
+            sampleFields: [
+              { prop: 'bottleName', label: '气瓶名称', required: true },
+              { prop: 'model', label: '气瓶型号', required: true },
+              { prop: 'number', label: '气瓶编号', required: true },
+              { prop: 'waterVolume', label: '气瓶水容积(L)', required: true },
+              { prop: 'nominalPressure', label: '公称工作压力(MPa)', required: true },
+              { prop: 'repaired', label: '是否修理过', required: true, type: 'radio', options: ['是','否'] },
+              { prop: 'hasValve', label: '有无气阀', required: true, type: 'radio', options: ['有','无'] },
+              { prop: 'medium', label: '使用介质', required: true },
+              { prop: 'hasGas', label: '有无气体', required: true, type: 'radio', options: ['有','无'] },
+              { prop: 'remark', label: '备注', required: false }
+            ]
+          },
+          {
+            value: 'valve',
+            label: '安全阀校验',
+            category: '阀门类',
+            scene: '校验检测',
+            description: '适用于安全阀的校验检测业务',
+            sampleTitle: '安全阀',
+            sampleFields: [
+              { prop: 'installPos', label: '安装位置', required: true },
+              { prop: 'workMedium', label: '工作介质', required: true },
+              { prop: 'equipmentType', label: '使用设备类型', required: true },
+              { prop: 'setPressureReq', label: '要求整定压力(MPa)', required: true },
+              { prop: 'manufacturer', label: '制造单位', required: false },
+              { prop: 'model', label: '型号', required: true },
+              { prop: 'factoryNo', label: '出厂编号', required: false },
+              { prop: 'dn', label: '公称通径(mm)', required: true },
+              { prop: 'pn', label: '公称压力', required: true },
+              { prop: 'pressureRange', label: '压力级别范围', required: false },
+              { prop: 'workPressure', label: '工作压力(MPa)', required: false },
+              { prop: 'licenceNo', label: '生产制造许可证编号', required: false },
+              { prop: 'produceDate', label: '生产日期', required: false },
+              { prop: 'remark', label: '备注', required: false }
+            ]
+          }
+        ],
+        activeStep: 0,
+        platformCompany: {
+          accountName: '西安西自仪检测技术有限公司',
+          bankAccount: '6113107077018150008144',
+          bankName: '交通银行股份有限公司西安西稍门支行'
+        },
+        form: {
+          // 委托方信息
+          category: '送检',
+          isUrgent: false,
+          entrustDate: new Date(),
+          valveMode: '离线',
+          company: '',
+          useCompany: '',
+          contact: '',
+          phone: '',
+          address: '',
+          manufacturer: '',
+          designCompany: '',
+          installCompany: '',
+          witnessCompany: '',
+          witnessPerson: '',
+          maker: '',
+          unitCode: '',
+          
+          // 样品信息
+          sampleCount: 1,
+          samples: [],
+          // 气瓶字段
+          medium: '',
+          nominalPressure: '',
+          volume: '',
+          designLife: '',
+          manufactureDate: '',
+          // 安全阀字段
+          deviceName: '安全阀',
+          model: '',
+          sampleManufacturer: '',
+          installPos: '',
+          dn: '',
+          pn: '',
+          setPressure: '',
+          runTemp: '',
+          
+          // 检验要求
+          testCategory: '定期检验',
+          testStandard: '',
+          expectedReportDate: '',
+          
+          // 交付信息
+          deliveryType: ['电子版'],
+          reportCopies: 2,
+          pickupMethod: '自取',
+          subcontract: '无分包',
+          cnas: true,
+          remarks: ''
+        },
+        
+        // 原始记录相关数据
+        currentRecordType: 'gas', // gas | valve
+        recordForm: {
+          // 环境条件
+          envTemperature: '23.5',
+          envHumidity: '55',
+          envPressure: '101.3',
+          
+          // 气瓶专用
+          bottle: {
+             appearance: '合格',
+             thread: '合格',
+             sound: '清脆',
+             weight: '',
+             thickness: [
+               { point: '上部', val1: '', val2: '', val3: '', avg: '' },
+               { point: '中部', val1: '', val2: '', val3: '', avg: '' },
+               { point: '下部', val1: '', val2: '', val3: '', avg: '' }
+             ],
+             result: '合格'
+          },
+          
+          // 安全阀专用
+          valve: {
+             appearance: '完好',
+             media: '空气',
+             openPressure1: '',
+             openPressure2: '',
+             openPressure3: '',
+             returnPressure: '',
+             sealTestPressure: '',
+             result: '合格'
+          },
+          
+          // 附件/图片
+          fileList: []
+        },
+
+        specialList: [
+          { no: '20240115-GC-001', company: '上海气体工厂', subType: 'gas', days: -2, status: '待流转', acceptor: '张三', entrustDate: '2024-01-12', auditStatus: '待审核' },
+          { no: '20240115-SV-005', company: '江苏化工厂', subType: 'valve', days: 5, status: '待流转', acceptor: '李四', entrustDate: '2024-01-13', auditStatus: '已通过' },
+        ],
+        assignList: [
+          { no: '20240115-GC-001', type: '气瓶检测', status: '待分配' }
+        ],
+        myTaskList: [
+          { no: '20240115-GC-001', sample: '氧气瓶 50L', progress: 0, type: 'gas' },
+          { no: '20240114-SV-002', sample: '安全阀 DN50', progress: 100, type: 'valve' }
+        ],
+        
+        // 报告相关
+        reportList: [
+          { no: '20240115-GC-001', name: '上海气体工厂-气瓶定期检验报告', author: '张三', status: '待审批', type: 'gas' },
+          { no: '20240115-SV-005', name: '江苏化工厂-安全阀校验报告', author: '李四', status: '已批准', type: 'valve' }
+        ],
+        currentReport: null
+      },
+      computed: {
+        currentDevice() {
+          return this.deviceTypes.find(item => item.value === this.selectedSubType) || this.deviceTypes[0]
+        },
+        currentSampleFields() {
+          return this.currentDevice ? this.currentDevice.sampleFields : []
+        },
+        deviceCategories() {
+          const set = new Set()
+          this.deviceTypes.forEach(item => {
+            if (item.category) {
+              set.add(item.category)
+            }
+          })
+          return Array.from(set)
+        },
+        filteredDeviceTypes() {
+          const kw = this.typeSearchKeyword.trim().toLowerCase()
+          return this.deviceTypes.filter(item => {
+            if (this.typeCategoryFilter !== 'all' && item.category !== this.typeCategoryFilter) {
+              return false
+            }
+            if (!kw) {
+              return true
+            }
+            const text = [
+              item.label,
+              item.value,
+              item.category,
+              item.scene,
+              item.description
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+            return text.indexOf(kw) !== -1
+          })
+        }
+      },
+        methods: {
+        handleMenuSelect(index) {
+          if (index.indexOf('record') === -1 && index.indexOf('report') === -1) {
+             this.activeMenu = index;
+          } else if (index === 'record-list' || index === 'report-list') {
+             this.activeMenu = index;
+          }
+        },
+        getPageTitle() {
+          const map = {
+            'business': '业务受理',
+            'assign': '任务分配',
+            'record-list': '原始记录 / 列表',
+            'record-entry': '原始记录 / 录入',
+            'audit': '审核管理',
+            'report-list': '报告管理 / 列表',
+            'report-preview': '报告管理 / 预览'
+          };
+          return map[this.activeMenu] || '首页';
+        },
+        getRiskColor(days) {
+          if (days < 0) return 'danger';
+          if (days <= 3) return 'warning';
+          return 'success';
+        },
+        handleSpecialSelect() {
+          this.dialogTypeSelectVisible = false;
+          this.dialogSubTypeVisible = true;
+        },
+        openSpecialForm() {
+          this.dialogSubTypeVisible = false;
+          this.activeStep = 0;
+          this.form.sampleBatchNo = '';
+          this.form.samples = [];
+          this.addSampleRow();
+          this.updateTestStandard();
+          this.dialogFormVisible = true;
+        },
+        updateTestStandard() {
+          if (this.currentDevice && this.currentDevice.value === 'valve') {
+            this.form.testStandard = this.form.valveMode === '在线'
+              ? 'TSGZF001-2006'
+              : 'TSGZF001-2006《安全阀安全技术监察规程》';
+          } else if (this.currentDevice && this.currentDevice.testStandard) {
+            this.form.testStandard = this.currentDevice.testStandard;
+          } else {
+            this.form.testStandard = '';
+          }
+        },
+        submitEntrust() {
+          this.form.sampleCount = this.form.samples.length;
+          this.$message.success('委托单创建成功！');
+          this.dialogFormVisible = false;
+        },
+        addSampleRow() {
+          const sample = {};
+          this.currentSampleFields.forEach(field => {
+            sample[field.prop] = '';
+          });
+          this.form.samples.push(sample);
+        },
+        copyLastSample() {
+          if (!this.form.samples.length) {
+            this.addSampleRow();
+            return;
+          }
+          const last = this.form.samples[this.form.samples.length - 1];
+          const copy = {};
+          this.currentSampleFields.forEach(field => {
+            copy[field.prop] = last[field.prop];
+          });
+          this.form.samples.push(copy);
+        },
+        removeSampleRow(index) {
+          this.form.samples.splice(index, 1);
+        },
+        openRecordEntry(row) {
+          this.currentRecordType = row.type;
+          this.activeMenu = 'record-entry';
+        },
+        openReportPreview(row) {
+          this.currentReport = row;
+          this.currentRecordType = row.type; // 借用这个变量来控制模板显示
+          this.activeMenu = 'report-preview';
+        }
+      }
+    })
+  </script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>特种设备检测系统 - UI 原型预览</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <style>
+    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f0f2f5; }
+    #app { display: flex; height: 100vh; overflow: hidden; }
+    
+    /* 侧边栏样式 */
+    .sidebar-container { width: 220px; background-color: #304156; color: #fff; display: flex; flex-direction: column; transition: width 0.3s; flex-shrink: 0; }
+    .logo { height: 50px; line-height: 50px; text-align: center; font-size: 16px; font-weight: 600; background-color: #2b2f3a; color: #fff; }
+    .el-menu { border-right: none; }
+    
+    /* 主体区域样式 */
+    .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
+    .navbar { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; z-index: 10; }
+    .app-main { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
+    
+    /* 通用容器 */
+    .app-container { background: #fff; padding: 20px; border-radius: 4px; min-height: calc(100vh - 90px); box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
+    
+    /* 模拟 RuoYi 样式微调 */
+    .mb8 { margin-bottom: 8px; }
+    .el-table .cell { padding-left: 5px; padding-right: 5px; }
+    
+    /* 审核工作台特定样式 */
+    .audit-layout { display: flex; height: calc(100vh - 130px); margin: -20px; }
+    .left-panel { width: 320px; background: #fff; border-right: 1px solid #e6e6e6; display: flex; flex-direction: column; }
+    .right-panel { flex: 1; background: #f7f8fa; padding: 15px; display: flex; flex-direction: column; overflow: hidden; }
+    .task-item { padding: 15px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: 0.2s; }
+    .task-item:hover { background: #f9f9f9; }
+    .task-item.active { background: #e6f7ff; border-right: 3px solid #1890ff; }
+    .workspace-header { background: #fff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    .workspace-content { flex: 1; background: #fff; padding: 20px; overflow-y: auto; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+    
+    /* 原始记录表单样式 */
+    .section-title { border-left: 4px solid #1890ff; padding-left: 10px; margin: 20px 0 15px; font-size: 16px; font-weight: bold; color: #303133; }
+    
+    [v-cloak] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <!-- 侧边栏 -->
+    <div class="sidebar-container">
+      <div class="logo">西自仪 LIMS</div>
+      <el-menu
+        :default-active="activeMenu"
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409EFF"
+        @select="handleMenuSelect"
+      >
+        <el-submenu index="1">
+          <template slot="title">
+            <i class="el-icon-s-cooperation"></i>
+            <span>特种设备检测</span>
+          </template>
+          <el-menu-item index="entrust">委托管理</el-menu-item>
+          <el-menu-item index="record">原始记录录入</el-menu-item>
+          <el-menu-item index="audit">审核工作台</el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+      <div class="navbar">
+        <el-dropdown>
+          <span class="el-dropdown-link" style="cursor: pointer;">
+            <i class="el-icon-user-solid"></i> 管理员 <i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>个人中心</el-dropdown-item>
+            <el-dropdown-item divided>退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+
+      <div class="app-main">
+        <!-- 页面 1: 委托管理 -->
+        <div v-if="activeMenu === 'entrust'" class="app-container">
+          <!-- 搜索 -->
+          <el-form :inline="true" size="small" label-width="68px">
+            <el-form-item label="委托单号">
+              <el-input v-model="entrustQuery.no" placeholder="请输入"></el-input>
+            </el-form-item>
+            <el-form-item label="业务类型">
+              <el-select v-model="entrustQuery.type" placeholder="请选择">
+                <el-option label="气瓶" value="gas"></el-option>
+                <el-option label="安全阀" value="valve"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="el-icon-search">搜索</el-button>
+              <el-button icon="el-icon-refresh">重置</el-button>
+            </el-form-item>
+          </el-form>
+
+          <!-- 工具栏 -->
+          <el-row :gutter="10" class="mb8">
+            <el-col :span="1.5"><el-button type="primary" plain icon="el-icon-plus" size="mini">新增委托</el-button></el-col>
+            <el-col :span="1.5"><el-button type="success" plain icon="el-icon-s-promotion" size="mini">批量流转</el-button></el-col>
+            <el-col :span="1.5"><el-button type="warning" plain icon="el-icon-download" size="mini">导出</el-button></el-col>
+          </el-row>
+
+          <!-- 表格 -->
+          <el-table :data="entrustList" border style="width: 100%">
+            <el-table-column type="selection" width="55" align="center"></el-table-column>
+            <el-table-column label="委托单号" prop="no" width="160" align="center">
+              <template slot-scope="scope">
+                <el-link type="primary">{{ scope.row.no }}</el-link>
+              </template>
+            </el-table-column>
+            <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
+            <el-table-column label="业务类型" width="100" align="center">
+              <template slot-scope="scope">
+                <el-tag v-if="scope.row.type === '气瓶'">气瓶</el-tag>
+                <el-tag v-else type="warning">安全阀</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="剩余天数" width="120" align="center">
+              <template slot-scope="scope">
+                <el-tag :type="getRiskColor(scope.row.days)" effect="dark">
+                  <i class="el-icon-time"></i> {{ scope.row.days }} 天
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="状态" width="100" align="center">
+              <template slot-scope="scope">
+                <el-tag type="info" plain>{{ scope.row.status }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="180" align="center">
+              <template slot-scope="scope">
+                <el-tooltip content="流转" placement="top"><el-button size="mini" type="text" icon="el-icon-s-promotion"></el-button></el-tooltip>
+                <el-tooltip content="分配" placement="top"><el-button size="mini" type="text" icon="el-icon-user"></el-button></el-tooltip>
+                <el-tooltip content="原始记录" placement="top"><el-button size="mini" type="text" icon="el-icon-edit-outline" @click="activeMenu='record'"></el-button></el-tooltip>
+                <el-tooltip content="流程追踪" placement="top"><el-button size="mini" type="text" icon="el-icon-time" @click="openTrack"></el-button></el-tooltip>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- 页面 2: 原始记录录入 -->
+        <div v-if="activeMenu === 'record'" class="app-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+            <span style="font-size: 18px; font-weight: bold;">原始记录录入 - 20240114-GC-001</span>
+            <div>
+              <el-button type="primary" size="small" @click="submitRecord">提交审核</el-button>
+              <el-button size="small">暂存</el-button>
+              <el-button size="small" @click="activeMenu='entrust'">返回列表</el-button>
+            </div>
+          </div>
+
+          <el-form :model="recordForm" label-width="120px" size="small">
+            <h4 class="section-title">样品基础信息</h4>
+            <el-row>
+              <el-col :span="8"><el-form-item label="样品名称"><el-input v-model="recordForm.sampleName" disabled></el-input></el-form-item></el-col>
+              <el-col :span="8"><el-form-item label="样品编号"><el-input v-model="recordForm.sampleNo" disabled></el-input></el-form-item></el-col>
+              <el-col :span="8"><el-form-item label="出厂编号"><el-input v-model="recordForm.factoryNo" disabled></el-input></el-form-item></el-col>
+            </el-row>
+
+            <h4 class="section-title">检测环境条件</h4>
+            <el-row>
+              <el-col :span="8"><el-form-item label="温度(℃)"><el-input-number v-model="recordForm.temp" :precision="1" :step="0.1"></el-input-number></el-form-item></el-col>
+              <el-col :span="8"><el-form-item label="湿度(%)"><el-input-number v-model="recordForm.humidity" :min="0" :max="100"></el-input-number></el-form-item></el-col>
+              <el-col :span="8"><el-form-item label="大气压(kPa)"><el-input-number v-model="recordForm.pressure"></el-input-number></el-form-item></el-col>
+            </el-row>
+
+            <h4 class="section-title">检测数据记录</h4>
+            <el-table :data="recordForm.items" border style="width: 100%" size="mini">
+              <el-table-column prop="name" label="检测项目" width="200"></el-table-column>
+              <el-table-column prop="req" label="技术要求" width="250"></el-table-column>
+              <el-table-column label="实测值" width="200">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.val" placeholder="输入结果"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column label="单项结论">
+                <template slot-scope="scope">
+                  <el-radio-group v-model="scope.row.res">
+                    <el-radio label="pass">合格</el-radio>
+                    <el-radio label="fail">不合格</el-radio>
+                  </el-radio-group>
+                </template>
+              </el-table-column>
+            </el-table>
+          </el-form>
+        </div>
+
+        <!-- 页面 3: 审核工作台 -->
+        <div v-if="activeMenu === 'audit'" class="app-container" style="padding: 20px; background: transparent; box-shadow: none;">
+          <div class="audit-layout">
+            <!-- 左侧待办 -->
+            <div class="left-panel">
+              <div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
+                <el-input placeholder="搜索单号..." prefix-icon="el-icon-search" size="small" style="margin-bottom: 10px;"></el-input>
+                <el-radio-group v-model="auditType" size="mini" fill="#409EFF" style="width: 100%; display: flex; justify-content: center;">
+                  <el-radio-button label="record">原始记录</el-radio-button>
+                  <el-radio-button label="report">报告</el-radio-button>
+                </el-radio-group>
+              </div>
+              <div style="flex: 1; overflow-y: auto;">
+                <div v-for="item in auditList" :key="item.id" class="task-item" :class="{active: currentAudit.id === item.id}" @click="currentAudit = item">
+                  <div style="display: flex; justify-content: space-between; font-weight: 500; margin-bottom: 5px;">
+                    <span>{{ item.no }}</span>
+                    <el-tag size="mini" effect="plain">{{ item.type }}</el-tag>
+                  </div>
+                  <div style="font-size: 13px; color: #666; margin-bottom: 5px;">{{ item.company }}</div>
+                  <div style="font-size: 12px; color: #999; display: flex; justify-content: space-between;">
+                    <span><i class="el-icon-user"></i> {{ item.user }}</span>
+                    <span>{{ item.time }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧详情 -->
+            <div class="right-panel">
+              <div class="workspace-header">
+                <div style="font-size: 16px; font-weight: bold;">
+                  正在审核: {{ currentAudit.no }} 
+                  <el-tag type="warning" size="small" style="margin-left: 10px">待审核</el-tag>
+                </div>
+                <div>
+                  <el-button type="success" icon="el-icon-check" size="small" @click="passAudit">通过</el-button>
+                  <el-button type="danger" icon="el-icon-close" size="small" @click="rejectVisible = true">退回</el-button>
+                  <el-divider direction="vertical"></el-divider>
+                  <el-button type="text" icon="el-icon-arrow-left">上一条</el-button>
+                  <el-button type="text">下一条 <i class="el-icon-arrow-right"></i></el-button>
+                </div>
+              </div>
+
+              <div class="workspace-content">
+                <h3 style="margin-top: 0;">原始记录预览</h3>
+                <el-descriptions border :column="2" size="medium">
+                  <el-descriptions-item label="委托单位">{{ currentAudit.company }}</el-descriptions-item>
+                  <el-descriptions-item label="检测日期">2024-01-14</el-descriptions-item>
+                  <el-descriptions-item label="样品名称">氧气瓶</el-descriptions-item>
+                  <el-descriptions-item label="设备状态">正常</el-descriptions-item>
+                </el-descriptions>
+                <div style="margin-top: 20px;">
+                  <h4>检测数据</h4>
+                  <el-table :data="mockAuditGrid" border style="width: 100%">
+                    <el-table-column prop="param" label="检测参数"></el-table-column>
+                    <el-table-column prop="std" label="标准值"></el-table-column>
+                    <el-table-column prop="val" label="实测值"></el-table-column>
+                    <el-table-column label="判定">
+                      <template slot-scope="scope"><el-tag type="success">合格</el-tag></template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 流程追踪弹窗 -->
+    <el-dialog title="流程追踪" :visible.sync="trackVisible" width="500px">
+      <el-timeline>
+        <el-timeline-item timestamp="2024-01-14 09:00" color="#0bbd87">委托登记完成 (操作人: 管理员)</el-timeline-item>
+        <el-timeline-item timestamp="2024-01-14 10:00" color="#0bbd87">流转至气瓶检测科 (操作人: 管理员)</el-timeline-item>
+        <el-timeline-item timestamp="2024-01-14 10:05">等待分配检测人员</el-timeline-item>
+      </el-timeline>
+    </el-dialog>
+
+    <!-- 退回原因弹窗 -->
+    <el-dialog title="退回原因" :visible.sync="rejectVisible" width="400px">
+      <el-input type="textarea" :rows="4" placeholder="请输入退回原因（必填）..." v-model="rejectReason"></el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="rejectVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmReject">确 定</el-button>
+      </span>
+    </el-dialog>
+
+  </div>
+
+  <!-- 引入 Vue 和 Element UI -->
+  <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        activeMenu: 'entrust',
+        // 委托管理数据
+        entrustQuery: { no: '', type: '' },
+        entrustList: [
+          { no: '20240114-GC-001', company: '上海某某气体公司', type: '气瓶', days: -1, status: '待流转' },
+          { no: '20240114-SV-002', company: '江苏化工集团', type: '安全阀', days: 3, status: '待分配' },
+          { no: '20240114-GC-003', company: '浙北石化', type: '气瓶', days: 10, status: '进行中' }
+        ],
+        trackVisible: false,
+        
+        // 原始记录数据
+        recordForm: {
+          sampleName: '工业用氧气瓶',
+          sampleNo: 'S-2024-001',
+          factoryNo: 'FAC-888',
+          temp: 24.5, humidity: 60, pressure: 101,
+          items: [
+            { name: '外观检查', req: '无明显锈蚀、变形', val: '', res: 'pass' },
+            { name: '音响检查', req: '音响清脆', val: '', res: 'pass' },
+            { name: '公称工作压力', req: '15 MPa', val: '', res: 'pass' }
+          ]
+        },
+
+        // 审核工作台数据
+        auditType: 'record',
+        auditList: [
+          { id: 1, no: '20240114-GC-001', type: '气瓶', company: '上海某某气体公司', user: '张三', time: '10:00' },
+          { id: 2, no: '20240114-SV-002', type: '安全阀', company: '江苏化工', user: '李四', time: '11:30' },
+          { id: 3, no: '20240114-GC-005', type: '气瓶', company: '浙北石化', user: '王五', time: '16:00' }
+        ],
+        currentAudit: { id: 1, no: '20240114-GC-001', type: '气瓶', company: '上海某某气体公司', user: '张三', time: '10:00' },
+        mockAuditGrid: [
+          { param: '公称压力', std: '≥ 10MPa', val: '12MPa' },
+          { param: '气密性', std: '无泄漏', val: '无泄漏' }
+        ],
+        rejectVisible: false,
+        rejectReason: ''
+      },
+      methods: {
+        handleMenuSelect(index) {
+          this.activeMenu = index;
+        },
+        getRiskColor(days) {
+          if (days < 0) return 'danger';
+          if (days <= 3) return 'warning';
+          return 'success';
+        },
+        openTrack() {
+          this.trackVisible = true;
+        },
+        submitRecord() {
+          this.$confirm('确认提交原始记录吗？', '提示', { type: 'warning' })
+            .then(() => {
+              this.$message.success('提交成功');
+              this.activeMenu = 'entrust';
+            });
+        },
+        passAudit() {
+          this.$confirm(`确认通过委托单 ${this.currentAudit.no} 吗？`, '提示', { type: 'success' })
+            .then(() => {
+              this.$message.success('审核通过');
+              // 模拟切换下一条
+              if (this.currentAudit.id < 3) {
+                 this.currentAudit = this.auditList[this.currentAudit.id];
+              }
+            });
+        },
+        confirmReject() {
+          if (!this.rejectReason) {
+            this.$message.error('请输入退回原因');
+            return;
+          }
+          this.$message.warning('已退回');
+          this.rejectVisible = false;
+          this.rejectReason = '';
+        }
+      }
+    })
+  </script>
+</body>
+</html>
