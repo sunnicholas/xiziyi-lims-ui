@@ -1701,7 +1701,7 @@
     </el-dialog>
 
     <!-- 流程追踪弹窗 -->
-    <el-dialog title="流程追踪" :visible.sync="trackVisible" width="500px">
+    <el-dialog title="流程追踪" :visible.sync="trackVisible" width="500px" append-to-body>
       <el-timeline>
         <el-timeline-item timestamp="2024-01-14 09:00" color="#0bbd87">委托登记完成</el-timeline-item>
         <el-timeline-item timestamp="2024-01-14 10:00" color="#F56C6C">待分配人员</el-timeline-item>
@@ -1713,6 +1713,7 @@
       :visible.sync="dialogAssignVisible"
       width="720px"
       :close-on-click-modal="false"
+      append-to-body
     >
       <div v-if="currentAssignRow">
         <el-form label-width="90px" size="small" style="margin-bottom: 15px;">
