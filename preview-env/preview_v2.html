@@ -371,7 +371,7 @@
 
             <!-- Tab 2: 特种设备 -->
             <el-tab-pane label="特种设备" name="special">
-              <el-table :data="assignSpecialList" border style="width: 100%" size="small">
+              <el-table :data="filteredAssignSpecialList" border style="width: 100%" size="small">
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 
                 <!-- 委托单号（点击标题弹出输入框检索） -->
@@ -450,6 +450,27 @@
                   </template>
                 </el-table-column>
 
+                <el-table-column label="任务执行人" prop="executor" width="140">
+                  <template slot="header" slot-scope="scope">
+                    <el-popover placement="bottom" width="200" trigger="click">
+                      <el-input
+                        v-model="assignSpecialSearch.executor"
+                        size="mini"
+                        placeholder="输入执行人检索"
+                        clearable
+                      ></el-input>
+                      <span slot="reference" style="cursor: pointer; color: #303133;">
+                        任务执行人
+                        <i class="el-icon-search" style="margin-left: 4px; color: #409EFF;"></i>
+                      </span>
+                    </el-popover>
+                  </template>
+                  <template slot-scope="scope">
+                    <span v-if="scope.row.executor">{{ scope.row.executor }}</span>
+                    <el-tag v-else type="info">未分配</el-tag>
+                  </template>
+                </el-table-column>
+
                 <!-- 委托日期（点击标题弹出日期选择检索） -->
                 <el-table-column label="委托日期" prop="date" width="140">
                   <template slot="header" slot-scope="scope">
@@ -487,7 +508,7 @@
                     </div>
                   </template>
                   <template slot-scope="scope">
-                    <el-button size="mini" type="primary" icon="el-icon-user" @click="$message.success('打开分配弹窗')">分配人员</el-button>
+                    <el-button size="mini" type="primary" icon="el-icon-user" @click="openAssignDialog(scope.row)">分配人员</el-button>
                     <el-button size="mini" icon="el-icon-time" @click="trackVisible = true">流程追踪</el-button>
                   </template>
                 </el-table-column>
@@ -1284,6 +1305,81 @@
       </el-timeline>
     </el-dialog>
 
+    <el-dialog
+      title="分配执行人"
+      :visible.sync="dialogAssignVisible"
+      width="720px"
+      :close-on-click-modal="false"
+    >
+      <div v-if="currentAssignRow">
+        <el-form label-width="90px" size="small" style="margin-bottom: 15px;">
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="委托单号">
+                <span>{{ currentAssignRow.no }}</span>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="业务类型">
+                <span>{{ currentAssignRow.type === 'gas' ? '气瓶检测' : '安全阀校验' }}</span>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="受理人">
+                <span>{{ currentAssignRow.acceptor }}</span>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="当前执行人">
+                <span>{{ currentAssignRow.executor || '未分配' }}</span>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="font-weight: 500;">特种设备检测室人员</div>
+        <el-input
+          v-model="staffSearchKeyword"
+          size="small"
+          placeholder="按姓名/角色检索"
+          prefix-icon="el-icon-search"
+          style="width: 240px;"
+          clearable
+        ></el-input>
+      </div>
+
+        <el-table
+          :data="filteredSpecialStaff"
+          border
+          size="small"
+          height="260"
+        >
+          <el-table-column label="选择" width="80" align="center">
+            <template slot-scope="scope">
+              <el-radio v-model="selectedExecutor" :label="scope.row.name">&nbsp;</el-radio>
+            </template>
+          </el-table-column>
+        <el-table-column label="姓名" prop="name" width="120"></el-table-column>
+        <el-table-column label="角色" prop="role" width="120"></el-table-column>
+        <el-table-column label="职称" prop="title" width="100"></el-table-column>
+        <el-table-column label="当前任务数" prop="workload" width="110" align="center"></el-table-column>
+        <el-table-column label="状态" prop="status" width="100" align="center">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.status === '在岗' ? 'success' : 'info'">{{ scope.row.status }}</el-tag>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogAssignVisible = false">取 消</el-button>
+        <el-button type="primary" :disabled="!selectedExecutor" @click="confirmAssignExecutor">确 定</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -1468,6 +1564,7 @@
           status: '',
           type: '',
           acceptor: '',
+          executor: '',
           date: ''
         },
         assignInspectionList: [
@@ -1478,8 +1575,24 @@
           { name: '铬铁标本', no: 'J202512050025', regNo: 'YP202512050147', post: '质量室', date: '2025-12-05', limitDate: '2025-12-05', pos: 'E-03' }
         ],
         assignSpecialList: [
-          { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', date: '2024-01-12' },
-          { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', date: '2024-01-13' }
+          { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', executor: '', date: '2024-01-12' },
+          { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', executor: '王五', date: '2024-01-13' }
+        ],
+        dialogAssignVisible: false,
+        currentAssignRow: null,
+        selectedExecutor: '',
+        staffSearchKeyword: '',
+        specialStaff: [
+          { name: '张强', role: '检验工程师', title: '高级', workload: 6, status: '在岗' },
+          { name: '李敏', role: '检验工程师', title: '中级', workload: 3, status: '在岗' },
+          { name: '王五', role: '检验工程师', title: '中级', workload: 4, status: '在岗' },
+          { name: '赵云', role: '检验工程师', title: '初级', workload: 2, status: '在岗' },
+          { name: '陈静', role: '检验员', title: '中级', workload: 5, status: '在岗' },
+          { name: '孙磊', role: '检验员', title: '初级', workload: 1, status: '在岗' },
+          { name: '周峰', role: '检验员', title: '初级', workload: 2, status: '在岗' },
+          { name: '胡洋', role: '检验工程师', title: '高级', workload: 5, status: '在岗' },
+          { name: '高原', role: '检验员', title: '中级', workload: 3, status: '休假中' },
+          { name: '梁晨', role: '检验工程师', title: '中级', workload: 4, status: '休假中' }
         ],
         myTaskList: [
           { no: '20240115-GC-001', sample: '氧气瓶 50L', progress: 0, type: 'gas' },
@@ -1530,6 +1643,39 @@
               .toLowerCase()
             return text.indexOf(kw) !== -1
           })
+        },
+        filteredAssignSpecialList() {
+          return this.assignSpecialList.filter(item => {
+            if (this.assignSpecialSearch.no && item.no.indexOf(this.assignSpecialSearch.no) === -1) {
+              return false
+            }
+            if (this.assignSpecialSearch.type && item.type !== this.assignSpecialSearch.type) {
+              return false
+            }
+            if (this.assignSpecialSearch.status && item.status !== this.assignSpecialSearch.status) {
+              return false
+            }
+            if (this.assignSpecialSearch.acceptor && item.acceptor.indexOf(this.assignSpecialSearch.acceptor) === -1) {
+              return false
+            }
+            if (this.assignSpecialSearch.executor && (!item.executor || item.executor.indexOf(this.assignSpecialSearch.executor) === -1)) {
+              return false
+            }
+            if (this.assignSpecialSearch.date && item.date !== this.assignSpecialSearch.date) {
+              return false
+            }
+            return true
+          })
+        },
+        filteredSpecialStaff() {
+          const kw = this.staffSearchKeyword.trim().toLowerCase()
+          if (!kw) {
+            return this.specialStaff
+          }
+          return this.specialStaff.filter(item => {
+            const text = (item.name + ' ' + item.role + ' ' + item.title).toLowerCase()
+            return text.indexOf(kw) !== -1
+          })
         }
       },
         methods: {
@@ -1556,6 +1702,20 @@
           if (days < 0) return 'danger';
           if (days <= 3) return 'warning';
           return 'success';
+        },
+        openAssignDialog(row) {
+          this.currentAssignRow = row
+          this.selectedExecutor = row.executor || ''
+          this.staffSearchKeyword = ''
+          this.dialogAssignVisible = true
+        },
+        confirmAssignExecutor() {
+          if (!this.currentAssignRow || !this.selectedExecutor) {
+            return
+          }
+          this.currentAssignRow.executor = this.selectedExecutor
+          this.$message.success('分配成功')
+          this.dialogAssignVisible = false
         },
         // 任务分配 - 特种设备表头筛选
         handleAssignNoFilter(command) {
