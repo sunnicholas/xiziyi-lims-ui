@@ -282,22 +282,188 @@
           </el-tabs>
         </div>
 
-        <!-- ================= 页面 2: 任务分配 (独立) ================= -->
+        <!-- ================= 页面 2: 任务分配 (Tab 结构) ================= -->
         <div v-if="activeMenu === 'assign'" class="app-container">
           <el-alert title="检测组长/科室主任工作台" type="info" :closable="false" show-icon class="mb8"></el-alert>
-          <el-table :data="assignList" border style="width: 100%">
-            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
-            <el-table-column label="业务类型" prop="type"></el-table-column>
-            <el-table-column label="状态" prop="status">
-              <template slot-scope="scope"><el-tag type="danger">待分配</el-tag></template>
-            </el-table-column>
-            <el-table-column label="操作" align="center">
-              <template slot-scope="scope">
-                <el-button size="mini" type="primary" icon="el-icon-user" @click="$message.success('打开分配弹窗')">分配人员</el-button>
-                <el-button size="mini" icon="el-icon-time" @click="trackVisible = true">流程追踪</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+          
+          <el-tabs v-model="assignTab" type="card">
+            <!-- Tab 1: 送检分配 -->
+            <el-tab-pane label="送检分配" name="inspection">
+              <!-- 搜索栏 -->
+              <el-form :inline="true" size="small" class="demo-form-inline" style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                <el-row :gutter="20">
+                  <el-col :span="6"><el-form-item label="样品名称"><el-input v-model="assignSearch.name" placeholder="请输入样品名称"></el-input></el-form-item></el-col>
+                  <el-col :span="6"><el-form-item label="委托单号"><el-input v-model="assignSearch.no" placeholder="请输入委托单号"></el-input></el-form-item></el-col>
+                  <el-col :span="6"><el-form-item label="登记号"><el-input v-model="assignSearch.regNo" placeholder="请输入登记号"></el-input></el-form-item></el-col>
+                  <el-col :span="6"><el-form-item label="存放位置"><el-input v-model="assignSearch.pos" placeholder="请输入存放位置"></el-input></el-form-item></el-col>
+                </el-row>
+                <el-row :gutter="20">
+                  <el-col :span="8">
+                     <el-form-item label="受理日期">
+                       <el-date-picker v-model="assignSearch.dateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px;"></el-date-picker>
+                     </el-form-item>
+                  </el-col>
+                  <el-col :span="8">
+                    <el-form-item label="检测期限">
+                       <el-date-picker v-model="assignSearch.limitDateRange" type="daterange" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" style="width: 240px;"></el-date-picker>
+                     </el-form-item>
+                  </el-col>
+                  <el-col :span="8" style="text-align: right;">
+                    <el-form-item>
+                      <el-button type="primary" icon="el-icon-search">搜索</el-button>
+                      <el-button icon="el-icon-refresh">重置</el-button>
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </el-form>
+
+              <!-- 科室筛选 + 状态筛选 -->
+              <div class="mb8">
+                <el-radio-group v-model="assignDept" size="small" style="margin-bottom: 10px;">
+                  <el-radio-button label="all">全部</el-radio-button>
+                  <el-radio-button label="流量室">流量室</el-radio-button>
+                  <el-radio-button label="化学室">化学室</el-radio按钮>
+                  <el-radio-button label="压力室">压力室</el-radio-button>
+                  <el-radio-button label="质量室">质量室</el-radio-button>
+                  <el-radio-button label="容量室">容量室</el-radio-button>
+                  <el-radio-button label="长度室">长度室</el-radio-button>
+                  <el-radio-button label="硬度室">硬度室</el-radio按钮>
+                </el-radio-group>
+                <div style="float: right; display: flex; align-items: center;">
+                  <el-select
+                    v-model="assignInspectionStatusFilter"
+                    size="mini"
+                    style="width: 110px; margin-right: 8px;"
+                  >
+                    <el-option label="未分配" value="未分配"></el-option>
+                    <el-option label="已分配" value="已分配"></el-option>
+                  </el-select>
+                  <el-button type="primary" plain size="mini">批量任务分配</el-button>
+                  <el-button type="warning" plain size="mini" style="margin-left: 8px;">导出</el-button>
+                </div>
+              </div>
+
+              <!-- 列表 -->
+              <el-table :data="assignInspectionList" border style="width: 100%" size="small">
+                <el-table-column type="selection" width="55" align="center"></el-table-column>
+                <el-table-column label="样品名称" prop="name" show-overflow-tooltip></el-table-column>
+                <el-table-column label="委托单号" prop="no" width="140"></el-table-column>
+                <el-table-column label="登记号" prop="regNo" width="140"></el-table-column>
+                <el-table-column label="检测岗位" prop="post" width="100"></el-table-column>
+                <el-table-column label="受理日期" prop="date" width="100"></el-table-column>
+                <el-table-column label="检测期限" prop="limitDate" width="100"></el-table-column>
+                <el-table-column label="存放位置" prop="pos" width="100"></el-table-column>
+                <el-table-column label="操作" align="center" width="160">
+                  <template slot-scope="scope">
+                    <el-button size="mini" type="text" icon="el-icon-view">详情</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-user">任务分配</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <el-pagination
+                style="margin-top: 15px; text-align: right;"
+                background
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="43">
+              </el-pagination>
+            </el-tab-pane>
+
+            <!-- Tab 2: 特种设备 -->
+            <el-tab-pane label="特种设备" name="special">
+              <el-table :data="assignSpecialList" border style="width: 100%" size="small">
+                <el-table-column type="selection" width="55" align="center"></el-table-column>
+                
+                <!-- 委托单号（点击标题下拉选择/输入） -->
+                <el-table-column prop="no" width="180">
+                  <template slot="header" slot-scope="scope">
+                    <el-dropdown trigger="click" @command="handleAssignNoFilter">
+                      <span class="el-dropdown-link" style="cursor: pointer; color: #303133;">
+                        委托单号
+                        <i class="el-icon-arrow-down" style="margin-left: 4px; color: #909399;"></i>
+                      </span>
+                      <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="__clear__">全部</el-dropdown-item>
+                        <el-dropdown-item v-for="item in assignSpecialList" :key="item.no" :command="item.no">
+                          {{ item.no }}
+                        </el-dropdown-item>
+                      </el-dropdown-menu>
+                    </el-dropdown>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="业务类型" prop="type" width="140">
+                  <template slot="header" slot-scope="scope">
+                    <el-dropdown trigger="click" @command="handleAssignTypeFilter">
+                      <span class="el-dropdown-link" style="cursor: pointer; color: #303133;">
+                        业务类型
+                        <i class="el-icon-arrow-down" style="margin-left: 4px; color: #909399;"></i>
+                      </span>
+                      <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="__clear__">全部</el-dropdown-item>
+                        <el-dropdown-item command="gas">气瓶检测</el-dropdown-item>
+                        <el-dropdown-item command="valve">安全阀校验</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </el-dropdown>
+                  </template>
+                  <template slot-scope="scope">
+                    <el-tag v-if="scope.row.type === 'gas'" type="info">气瓶检测</el-tag>
+                    <el-tag v-else type="warning">安全阀校验</el-tag>
+                  </template>
+                </el-table-column>
+
+                <!-- 状态（点击标题下拉选择） -->
+                <el-table-column prop="status" width="120">
+                  <template slot="header" slot-scope="scope">
+                    <el-dropdown trigger="click" @command="handleAssignStatusFilter">
+                      <span class="el-dropdown-link" style="cursor: pointer; color: #303133;">
+                        状态
+                        <i class="el-icon-arrow-down" style="margin-left: 4px; color: #909399;"></i>
+                      </span>
+                      <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="__clear__">全部</el-dropdown-item>
+                        <el-dropdown-item command="待分配">待分配</el-dropdown-item>
+                        <el-dropdown-item command="已分配">已分配</el-dropdown-item>
+                      </el-dropdown-menu>
+                    </el-dropdown>
+                  </template>
+                  <template slot-scope="scope">
+                    <el-tag :type="scope.row.status === '待分配' ? 'danger' : 'success'">{{ scope.row.status }}</el-tag>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="受理人" prop="acceptor" width="100"></el-table-column>
+                <el-table-column label="委托日期" prop="date" width="120"></el-table-column>
+                
+                <el-table-column label="操作" align="center">
+                  <template slot="header" slot-scope="scope">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                      <span>操作</span>
+                      <el-button
+                        type="primary"
+                        size="mini"
+                        icon="el-icon-refresh"
+                        @click="assignSpecialSearch = { no: '', status: '', type: '' }"
+                      >
+                        重置筛选
+                      </el-button>
+                    </div>
+                  </template>
+                  <template slot-scope="scope">
+                    <el-button size="mini" type="primary" icon="el-icon-user" @click="$message.success('打开分配弹窗')">分配人员</el-button>
+                    <el-button size="mini" icon="el-icon-time" @click="trackVisible = true">流程追踪</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+               <el-pagination
+                style="margin-top: 15px; text-align: right;"
+                background
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="assignSpecialList.length">
+              </el-pagination>
+            </el-tab-pane>
+          </el-tabs>
         </div>
 
         <!-- ================= 页面 3: 原始记录列表 (入口) ================= -->
@@ -615,9 +781,6 @@
              </div>
            </div>
         </div>
-
-      </div>
-    </div>
 
       </div>
     </div>
@@ -1251,8 +1414,33 @@
           { no: '20240115-GC-001', company: '上海气体工厂', subType: 'gas', days: -2, status: '待流转', acceptor: '张三', entrustDate: '2024-01-12', auditStatus: '待审核' },
           { no: '20240115-SV-005', company: '江苏化工厂', subType: 'valve', days: 5, status: '待流转', acceptor: '李四', entrustDate: '2024-01-13', auditStatus: '已通过' },
         ],
-        assignList: [
-          { no: '20240115-GC-001', type: '气瓶检测', status: '待分配' }
+        // 任务分配页面数据
+        assignTab: 'inspection',
+        assignSearch: {
+          name: '',
+          no: '',
+          regNo: '',
+          pos: '',
+          dateRange: [],
+          limitDateRange: []
+        },
+        assignDept: 'all',
+        assignInspectionStatusFilter: '未分配',
+        assignSpecialSearch: {
+          no: '',
+          status: '',
+          type: ''
+        },
+        assignInspectionList: [
+          { name: '防腐制动软管检测', no: 'J202512090010', regNo: 'YP202512090063', post: '流量室', date: '2025-12-09', limitDate: '2025-12-09', pos: 'A-01' },
+          { name: '气体分离与液化设备', no: 'J202512090006', regNo: 'YP202512090049', post: '容量室', date: '2025-12-17', limitDate: '2025-12-19', pos: 'B-02' },
+          { name: '有毒有害物质', no: 'J202512090004', regNo: 'YP202512090051', post: '硬度室', date: '2025-12-17', limitDate: '2025-12-25', pos: 'C-05' },
+          { name: '饮用水净化耗氧量', no: 'J202512090002', regNo: 'YP202512090001', post: '压力室', date: '2025-12-26', limitDate: '/', pos: 'D-01' },
+          { name: '铬铁标本', no: 'J202512050025', regNo: 'YP202512050147', post: '质量室', date: '2025-12-05', limitDate: '2025-12-05', pos: 'E-03' }
+        ],
+        assignSpecialList: [
+          { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', date: '2024-01-12' },
+          { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', date: '2024-01-13' }
         ],
         myTaskList: [
           { no: '20240115-GC-001', sample: '氧气瓶 50L', progress: 0, type: 'gas' },
@@ -1329,6 +1517,28 @@
           if (days < 0) return 'danger';
           if (days <= 3) return 'warning';
           return 'success';
+        },
+        // 任务分配 - 特种设备表头筛选
+        handleAssignNoFilter(command) {
+          if (command === '__clear__') {
+            this.assignSpecialSearch.no = ''
+          } else {
+            this.assignSpecialSearch.no = command
+          }
+        },
+        handleAssignTypeFilter(command) {
+          if (command === '__clear__') {
+            this.assignSpecialSearch.type = ''
+          } else {
+            this.assignSpecialSearch.type = command
+          }
+        },
+        handleAssignStatusFilter(command) {
+          if (command === '__clear__') {
+            this.assignSpecialSearch.status = ''
+          } else {
+            this.assignSpecialSearch.status = command
+          }
         },
         handleSpecialSelect() {
           this.dialogTypeSelectVisible = false;
