@@ -374,21 +374,21 @@
               <el-table :data="assignSpecialList" border style="width: 100%" size="small">
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 
-                <!-- 委托单号（点击标题下拉选择/输入） -->
+                <!-- 委托单号（点击标题弹出输入框检索） -->
                 <el-table-column prop="no" width="180">
                   <template slot="header" slot-scope="scope">
-                    <el-dropdown trigger="click" @command="handleAssignNoFilter">
-                      <span class="el-dropdown-link" style="cursor: pointer; color: #303133;">
+                    <el-popover placement="bottom" width="220" trigger="click">
+                      <el-input
+                        v-model="assignSpecialSearch.no"
+                        size="mini"
+                        placeholder="输入委托单号检索"
+                        clearable
+                      ></el-input>
+                      <span slot="reference" style="cursor: pointer; color: #303133;">
                         委托单号
-                        <i class="el-icon-arrow-down" style="margin-left: 4px; color: #909399;"></i>
+                        <i class="el-icon-search" style="margin-left: 4px; color: #409EFF;"></i>
                       </span>
-                      <el-dropdown-menu slot="dropdown">
-                        <el-dropdown-item command="__clear__">全部</el-dropdown-item>
-                        <el-dropdown-item v-for="item in assignSpecialList" :key="item.no" :command="item.no">
-                          {{ item.no }}
-                        </el-dropdown-item>
-                      </el-dropdown-menu>
-                    </el-dropdown>
+                    </el-popover>
                   </template>
                 </el-table-column>
 
@@ -432,18 +432,55 @@
                   </template>
                 </el-table-column>
 
-                <el-table-column label="受理人" prop="acceptor" width="100"></el-table-column>
-                <el-table-column label="委托日期" prop="date" width="120"></el-table-column>
+                <!-- 受理人（点击标题弹出输入框检索） -->
+                <el-table-column label="受理人" prop="acceptor" width="120">
+                  <template slot="header" slot-scope="scope">
+                    <el-popover placement="bottom" width="200" trigger="click">
+                      <el-input
+                        v-model="assignSpecialSearch.acceptor"
+                        size="mini"
+                        placeholder="输入受理人检索"
+                        clearable
+                      ></el-input>
+                      <span slot="reference" style="cursor: pointer; color: #303133;">
+                        受理人
+                        <i class="el-icon-search" style="margin-left: 4px; color: #409EFF;"></i>
+                      </span>
+                    </el-popover>
+                  </template>
+                </el-table-column>
+
+                <!-- 委托日期（点击标题弹出日期选择检索） -->
+                <el-table-column label="委托日期" prop="date" width="140">
+                  <template slot="header" slot-scope="scope">
+                    <el-popover placement="bottom" width="220" trigger="click">
+                      <el-date-picker
+                        v-model="assignSpecialSearch.date"
+                        type="date"
+                        size="mini"
+                        placeholder="选择委托日期"
+                        style="width: 100%;"
+                        value-format="yyyy-MM-dd"
+                        clearable
+                      ></el-date-picker>
+                      <span slot="reference" style="cursor: pointer; color: #303133;">
+                        委托日期
+                        <i class="el-icon-date" style="margin-left: 4px; color: #409EFF;"></i>
+                      </span>
+                    </el-popover>
+                  </template>
+                </el-table-column>
                 
                 <el-table-column label="操作" align="center">
                   <template slot="header" slot-scope="scope">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                      <span>操作</span>
+                    <div style="display: flex; align-items: center;">
+                      <span style="flex: 1; text-align: center;">操作</span>
                       <el-button
                         type="primary"
                         size="mini"
                         icon="el-icon-refresh"
-                        @click="assignSpecialSearch = { no: '', status: '', type: '' }"
+                        style="margin-left: 8px;"
+                        @click="assignSpecialSearch = { no: '', status: '', type: '', acceptor: '', date: '' }"
                       >
                         重置筛选
                       </el-button>
@@ -1429,7 +1466,9 @@
         assignSpecialSearch: {
           no: '',
           status: '',
-          type: ''
+          type: '',
+          acceptor: '',
+          date: ''
         },
         assignInspectionList: [
           { name: '防腐制动软管检测', no: 'J202512090010', regNo: 'YP202512090063', post: '流量室', date: '2025-12-09', limitDate: '2025-12-09', pos: 'A-01' },
