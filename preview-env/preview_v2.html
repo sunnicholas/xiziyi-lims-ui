@@ -147,6 +147,9 @@
       flex: 1;
       overflow-y: auto;
     }
+    .assign-expand-container {
+      padding-left: 100px;
+    }
   </style>
 </head>
 <body>
@@ -371,7 +374,66 @@
 
             <!-- Tab 2: 特种设备 -->
             <el-tab-pane label="特种设备" name="special">
-              <el-table :data="filteredAssignSpecialList" border style="width: 100%" size="small">
+              <el-table ref="assignSpecialTable" :data="filteredAssignSpecialList" border style="width: 100%" size="small">
+                <el-table-column type="expand">
+                  <template slot-scope="props">
+                    <div class="assign-expand-container">
+                      <el-table
+                        :data="getAssignPagedDevices(props.row)"
+                        border
+                        size="small"
+                        @selection-change="handleDeviceSelectionChange(props.row, $event)"
+                      >
+                        <el-table-column type="selection" width="55" align="center"></el-table-column>
+                        <el-table-column label="设备编号" prop="no" width="140"></el-table-column>
+                        <el-table-column label="设备型号" prop="model" width="160" show-overflow-tooltip></el-table-column>
+                        <el-table-column label="检测员" prop="executor" width="120">
+                          <template slot-scope="scope">
+                            <span v-if="props.row.status === '已分配' && scope.row.executor">{{ scope.row.executor }}</span>
+                            <el-tag v-else type="info">未分配</el-tag>
+                          </template>
+                        </el-table-column>
+                        <el-table-column width="160" align="center">
+                          <template slot="header" slot-scope="scope">
+                            <el-button 
+                              type="text" 
+                              :disabled="!hasSelectedDevices(props.row)"
+                              @click="openAssignDialog(props.row, null, true)"
+                            >
+                              批量分配
+                            </el-button>
+                          </template>
+                          <template slot-scope="scope">
+                            <el-button
+                              size="mini"
+                              type="primary"
+                              plain
+                              icon="el-icon-user"
+                              @click="openAssignDialog(props.row, scope.row)"
+                            >
+                              分配人员
+                            </el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                      <div style="margin-top: 10px; text-align: right;">
+                        <el-pagination
+                          small
+                          background
+                          layout="total, sizes, prev, pager, next"
+                          :current-page="getAssignPagination(props.row).currentPage"
+                          :page-sizes="[5, 10, 50, 100]"
+                          :page-size="getAssignPagination(props.row).pageSize"
+                          :total="getAssignTotalDevices(props.row)"
+                          @size-change="(val) => handleAssignDeviceSizeChange(val, props.row)"
+                          @current-change="(val) => handleAssignDeviceCurrentChange(val, props.row)"
+                        >
+                        </el-pagination>
+                      </div>
+                    </div>
+                  </template>
+                </el-table-column>
+
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 
                 <!-- 委托单号（点击标题弹出输入框检索） -->
@@ -450,17 +512,17 @@
                   </template>
                 </el-table-column>
 
-                <el-table-column label="任务执行人" prop="executor" width="140">
+                <el-table-column label="检测员" prop="executor" width="140">
                   <template slot="header" slot-scope="scope">
                     <el-popover placement="bottom" width="200" trigger="click">
                       <el-input
                         v-model="assignSpecialSearch.executor"
                         size="mini"
-                        placeholder="输入执行人检索"
+                        placeholder="输入检测员检索"
                         clearable
                       ></el-input>
                       <span slot="reference" style="cursor: pointer; color: #303133;">
-                        任务执行人
+                        检测员
                         <i class="el-icon-search" style="margin-left: 4px; color: #409EFF;"></i>
                       </span>
                     </el-popover>
@@ -468,6 +530,12 @@
                   <template slot-scope="scope">
                     <span v-if="scope.row.executor">{{ scope.row.executor }}</span>
                     <el-tag v-else type="info">未分配</el-tag>
+                  </template>
+                </el-table-column>
+
+                <el-table-column label="报告出具截止日" prop="reportDeadline" width="160" align="center">
+                  <template slot-scope="scope">
+                    <span>{{ scope.row.reportDeadline || '-' }}</span>
                   </template>
                 </el-table-column>
 
@@ -508,7 +576,22 @@
                     </div>
                   </template>
                   <template slot-scope="scope">
-                    <el-button size="mini" type="primary" icon="el-icon-user" @click="openAssignDialog(scope.row)">分配人员</el-button>
+                    <el-button
+                      size="mini"
+                      type="primary"
+                      icon="el-icon-user"
+                      @click="openAssignDialog(scope.row)"
+                    >
+                      分配整单
+                    </el-button>
+                    <el-button
+                      size="mini"
+                      type="text"
+                      icon="el-icon-view"
+                      @click="$refs.assignSpecialTable && $refs.assignSpecialTable.toggleRowExpansion(scope.row)"
+                    >
+                      展开/收起设备
+                    </el-button>
                     <el-button size="mini" icon="el-icon-time" @click="trackVisible = true">流程追踪</el-button>
                   </template>
                 </el-table-column>
@@ -526,22 +609,168 @@
 
         <!-- ================= 页面 3: 原始记录列表 (入口) ================= -->
         <div v-if="activeMenu === 'record-list'" class="app-container">
-          <el-form :inline="true" size="small">
-            <el-form-item label="我的任务"><el-input placeholder="委托单号/样品名称"></el-input></el-form-item>
-            <el-form-item><el-button type="primary">查询</el-button></el-form-item>
-          </el-form>
-          <el-table :data="myTaskList" border style="width: 100%">
-            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
-            <el-table-column label="样品名称" prop="sample"></el-table-column>
-            <el-table-column label="检测进度" align="center">
-              <template slot-scope="scope">
-                <el-progress :percentage="scope.row.progress" :status="scope.row.progress===100?'success':''"></el-progress>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <el-form :inline="true" size="small">
+              <el-form-item label="搜索任务">
+                <el-input
+                  v-model="recordSearchKeyword"
+                  placeholder="委托单号/执行人/设备编号"
+                  clearable
+                  style="width: 260px;"
+                ></el-input>
+              </el-form-item>
+            </el-form>
+            <div>
+              <span style="margin-right: 8px; color: #909399;">当前视角：</span>
+              <el-select v-model="currentUserId" size="small" style="width: 200px;">
+                <el-option
+                  v-for="u in userProfiles"
+                  :key="u.id"
+                  :label="u.label"
+                  :value="u.id"
+                ></el-option>
+              </el-select>
+            </div>
+          </div>
+
+          <el-tabs v-model="recordDeviceTab" type="card" class="mb8">
+            <el-tab-pane label="全部设备" name="all"></el-tab-pane>
+            <el-tab-pane
+              v-for="dt in deviceTypes"
+              :key="dt.value"
+              :label="dt.sampleTitle"
+              :name="dt.value"
+            ></el-tab-pane>
+          </el-tabs>
+
+          <el-table
+            ref="recordEntrustTable"
+            :data="filteredRecordEntrustList"
+            border
+            style="width: 100%"
+            size="small"
+          >
+            <el-table-column type="expand">
+              <template slot-scope="props">
+                  <el-table :data="getPagedDevices(props.row)" size="small" border>
+                    <el-table-column label="气瓶编号" prop="no" width="140"></el-table-column>
+                    <el-table-column label="气瓶型号" prop="model" width="140" show-overflow-tooltip></el-table-column>
+                    <el-table-column label="备注" prop="remark" show-overflow-tooltip></el-table-column>
+                    <el-table-column label="设备类型" prop="deviceType" width="100">
+                      <template slot-scope="scope">
+                        <el-tag v-if="scope.row.deviceType === 'gas'" type="info">气瓶</el-tag>
+                        <el-tag v-else type="warning">安全阀</el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="检测员" prop="executor" width="100"></el-table-column>
+                  <el-table-column label="状态" prop="status" width="120">
+                    <template slot-scope="scope">
+                      <el-tag :type="getStatusTagType(scope.row.status)">
+                        {{ scope.row.status }}
+                      </el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="220" align="center">
+                    <template slot-scope="scope">
+                      <el-button
+                        size="mini"
+                        type="primary"
+                        plain
+                        :disabled="!canEditDevice(scope.row)"
+                        @click="openRecordEntryFromDevice(props.row, scope.row)"
+                      >
+                        {{ scope.row.hasRecord ? '编辑记录' : '录入记录' }}
+                      </el-button>
+                      <el-button
+                        size="mini"
+                        type="text"
+                        icon="el-icon-view"
+                        :disabled="!scope.row.hasRecord || !canPreviewDevice(scope.row)"
+                        @click="previewDeviceRecord(props.row, scope.row)"
+                      >
+                        预览
+                      </el-button>
+                      <el-button
+                        size="mini"
+                        type="text"
+                        icon="el-icon-upload"
+                        :disabled="!canSubmitDevice(scope.row)"
+                        @click="submitDeviceRecord(props.row, scope.row)"
+                      >
+                        提交
+                      </el-button>
+                    </template>
+                  </el-table-column>
+                  </el-table>
+                  <div style="margin-top: 10px; text-align: right;">
+                    <el-pagination
+                      small
+                      background
+                      layout="total, sizes, prev, pager, next"
+                      :current-page="props.row.pagination.currentPage"
+                      :page-sizes="[5, 10, 50, 100]"
+                      :page-size="props.row.pagination.pageSize"
+                      :total="getVisibleDevices(props.row).length"
+                      @size-change="(val) => handleDeviceSizeChange(val, props.row)"
+                      @current-change="(val) => handleDeviceCurrentChange(val, props.row)"
+                    >
+                    </el-pagination>
+                  </div>
               </template>
             </el-table-column>
-            <el-table-column label="操作" align="center">
+            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
+            <el-table-column label="报告出具截止日" prop="expectedReportDate" width="160" align="center">
               <template slot-scope="scope">
-                <el-button size="mini" type="primary" plain @click="openRecordEntry(scope.row)">
-                  <i class="el-icon-edit"></i> 录入记录
+                <span>{{ scope.row.expectedReportDate || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="设备总数" width="100" align="center">
+              <template slot-scope="scope">
+                {{ getEntrustStats(scope.row).total }}
+              </template>
+            </el-table-column>
+            <el-table-column label="已提交" width="120" align="center">
+              <template slot-scope="scope">
+                {{ getEntrustStats(scope.row).submitted }} / {{ getEntrustStats(scope.row).total }}
+              </template>
+            </el-table-column>
+            <el-table-column label="检测进度" width="220" align="center">
+              <template slot-scope="scope">
+                <el-progress
+                  :percentage="getEntrustStats(scope.row).percentage"
+                  :status="getEntrustStats(scope.row).percentage === 100 ? 'success' : ''"
+                  stroke-width="16"
+                ></el-progress>
+              </template>
+            </el-table-column>
+            <el-table-column label="我的任务" width="140" align="center">
+              <template slot-scope="scope">
+                <span v-if="!isCurrentUserLeader">
+                  {{ getEntrustStats(scope.row).mySubmitted }} / {{ getEntrustStats(scope.row).myTotal }}
+                </span>
+                <span v-else style="color: #909399;">仅查看</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="220" align="center">
+              <template slot-scope="scope">
+                <el-button
+                  v-if="!isCurrentUserLeader"
+                  size="mini"
+                  type="primary"
+                  plain
+                  :disabled="isBatchSubmitDisabled(scope.row)"
+                  @click="batchSubmitMyRecords(scope.row)"
+                >
+                  批量提交我的记录
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="text"
+                  icon="el-icon-view"
+                  @click="$refs.recordEntrustTable.toggleRowExpansion(scope.row)"
+                >
+                  展开/收起设备
                 </el-button>
               </template>
             </el-table-column>
@@ -554,7 +783,8 @@
             <div>
                <span style="font-size: 18px; font-weight: bold;">原始记录录入</span>
                <el-tag size="small" style="margin-left: 10px;">{{ currentRecordType === 'gas' ? '气瓶检测' : '安全阀校验' }}</el-tag>
-               <span style="color: #909399; font-size: 13px; margin-left: 10px;">单号：20240115-GC-001</span>
+               <span style="color: #909399; font-size: 13px; margin-left: 10px;">单号：{{ currentRecordEntrust ? currentRecordEntrust.no : '-' }}</span>
+               <span style="color: #909399; font-size: 13px; margin-left: 10px;">设备：{{ currentRecordDevice ? (currentRecordDevice.no + ' ' + currentRecordDevice.model) : '-' }}</span>
             </div>
             <div>
                <el-button size="small" @click="activeMenu='record-list'">返回列表</el-button>
@@ -685,7 +915,107 @@
                </div>
         </div>
 
-        <!-- ================= 页面 5: 报告列表 ================= -->
+        <!-- ================= 页面 5: 审核管理 ================= -->
+        <div v-if="activeMenu === 'audit'" class="app-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <el-form :inline="true" size="small">
+              <el-form-item label="搜索">
+                <el-input
+                  v-model="auditSearchKeyword"
+                  placeholder="委托单号/设备编号/检测员"
+                  clearable
+                  style="width: 260px;"
+                ></el-input>
+              </el-form-item>
+              <el-form-item label="状态">
+                <el-select v-model="auditStatusFilter" placeholder="全部" clearable style="width: 160px;">
+                  <el-option label="全部" value=""></el-option>
+                  <el-option label="已提交" value="已提交"></el-option>
+                  <el-option label="驳回" value="驳回"></el-option>
+                  <el-option label="已审核" value="已审核"></el-option>
+                  <el-option label="已批准" value="已批准"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-form>
+            <div style="color: #909399;">
+              <span v-if="!isCurrentUserLeader">当前仅限科室主任/检测部长使用</span>
+              <span v-else>当前用户：{{ currentUser.name }}（{{ currentUser.role === 'leader' ? '管理角色' : '检测员' }}）</span>
+            </div>
+          </div>
+
+          <el-tabs v-model="auditStage" type="card" class="mb8">
+            <el-tab-pane label="待审核" name="to-audit"></el-tab-pane>
+            <el-tab-pane label="待批准" name="to-approve"></el-tab-pane>
+            <el-tab-pane label="全部记录" name="all"></el-tab-pane>
+          </el-tabs>
+
+          <el-alert
+            v-if="!isCurrentUserLeader"
+            type="info"
+            show-icon
+            title="当前为检测员视角，仅可查看审核进度，不能执行审核/批准操作。"
+            style="margin-bottom: 10px;"
+          ></el-alert>
+
+          <el-table :data="auditDeviceList" border size="small" style="width: 100%;">
+            <el-table-column label="委托单号" prop="entrustNo" width="160"></el-table-column>
+            <el-table-column label="设备编号" prop="deviceNo" width="140"></el-table-column>
+            <el-table-column label="设备类型" prop="deviceType" width="90">
+              <template slot-scope="scope">
+                <el-tag v-if="scope.row.deviceType === 'gas'" type="info">气瓶</el-tag>
+                <el-tag v-else type="warning">安全阀</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="检测员" prop="executor" width="100"></el-table-column>
+            <el-table-column label="当前状态" prop="status" width="100">
+              <template slot-scope="scope">
+                <el-tag :type="getStatusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="备注" prop="remark" show-overflow-tooltip></el-table-column>
+            <el-table-column label="操作" width="260" align="center">
+              <template slot-scope="scope">
+                <el-button
+                  size="mini"
+                  type="text"
+                  icon="el-icon-view"
+                  @click="previewDeviceRecord(scope.row.entrustRef, scope.row.deviceRef)"
+                >
+                  预览记录
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="primary"
+                  plain
+                  :disabled="!canAuditApprove(scope.row.deviceRef, 'audit')"
+                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'audit-pass')"
+                >
+                  审核通过
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="success"
+                  plain
+                  :disabled="!canAuditApprove(scope.row.deviceRef, 'approve')"
+                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'approve-pass')"
+                >
+                  批准通过
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="danger"
+                  plain
+                  :disabled="!canAuditReject(scope.row.deviceRef)"
+                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'reject')"
+                >
+                  驳回
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+        <!-- ================= 页面 6: 报告列表 ================= -->
         <div v-if="activeMenu === 'report-list'" class="app-container">
           <el-form :inline="true" size="small">
             <el-form-item label="委托单号"><el-input placeholder="请输入"></el-input></el-form-item>
@@ -1332,7 +1662,33 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="当前执行人">
+              <el-form-item v-if="currentAssignDevice" label="设备编号">
+                <span>{{ currentAssignDevice.no }}</span>
+              </el-form-item>
+              <el-form-item v-else label="检测员">
+                <span>{{ currentAssignRow.executor || '未分配' }}</span>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-form-item label="报告出具截止日">
+                <el-date-picker
+                  v-model="assignReportDeadline"
+                  type="date"
+                  placeholder="请选择"
+                  style="width: 100%;"
+                  value-format="yyyy-MM-dd"
+                  clearable
+                  :disabled="!isCurrentUserLeader"
+                ></el-date-picker>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item v-if="currentAssignDevice" label="检测员">
+                <span>{{ currentAssignDevice.executor || '未分配' }}</span>
+              </el-form-item>
+              <el-form-item v-else label="检测员">
                 <span>{{ currentAssignRow.executor || '未分配' }}</span>
               </el-form-item>
             </el-col>
@@ -1543,6 +1899,50 @@
           fileList: []
         },
 
+        currentUserId: 'inspector-zhang',
+        userProfiles: [
+          { id: 'inspector-zhang', name: '张强', role: 'inspector', label: '张强（检测员）' },
+          { id: 'inspector-li', name: '李敏', role: 'inspector', label: '李敏（检测员）' },
+          { id: 'leader-chief', name: '王主任', role: 'leader', label: '王主任（科室主任）' },
+          { id: 'leader-manager', name: '李部长', role: 'leader', label: '李部长（检测部长）' }
+        ],
+        recordDeviceTab: 'all',
+        recordSearchKeyword: '',
+        currentRecordEntrust: null,
+        currentRecordDevice: null,
+        recordEntrustList: [
+          {
+            no: '20240115-GC-001',
+            company: '上海气体工厂',
+            type: 'gas',
+            entrustDate: '2024-01-12',
+            acceptor: '张三',
+            expectedReportDate: '2024-01-20',
+            pagination: { currentPage: 1, pageSize: 5 },
+            devices: [
+              { no: 'GC-001-001', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
+              { no: 'GC-001-002', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已录入', hasRecord: true, remark: '待核对' },
+              { no: 'GC-001-003', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已提交', hasRecord: true, remark: '' },
+              { no: 'GC-001-004', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已审核', hasRecord: true, remark: '' },
+              { no: 'GC-001-005', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已批准', hasRecord: true, remark: '' },
+              { no: 'GC-001-006', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '驳回', hasRecord: true, remark: '壁厚异常，需复核' }
+            ]
+          },
+          {
+            no: '20240114-SV-002',
+            company: '江苏化工厂',
+            type: 'valve',
+            entrustDate: '2024-01-11',
+            acceptor: '李四',
+            expectedReportDate: '2024-01-18',
+            pagination: { currentPage: 1, pageSize: 5 },
+            devices: [
+              { no: 'SV-002-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '' },
+              { no: 'SV-002-002', model: 'A48Y-16C', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '' }
+            ]
+          }
+        ],
+
         specialList: [
           { no: '20240115-GC-001', company: '上海气体工厂', subType: 'gas', days: -2, status: '待流转', acceptor: '张三', entrustDate: '2024-01-12', auditStatus: '待审核' },
           { no: '20240115-SV-005', company: '江苏化工厂', subType: 'valve', days: 5, status: '待流转', acceptor: '李四', entrustDate: '2024-01-13', auditStatus: '已通过' },
@@ -1575,13 +1975,17 @@
           { name: '铬铁标本', no: 'J202512050025', regNo: 'YP202512050147', post: '质量室', date: '2025-12-05', limitDate: '2025-12-05', pos: 'E-03' }
         ],
         assignSpecialList: [
-          { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', executor: '', date: '2024-01-12' },
-          { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', executor: '王五', date: '2024-01-13' }
+          { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', executor: '', date: '2024-01-12', reportDeadline: '2024-01-20' },
+          { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', executor: '王五', date: '2024-01-13', reportDeadline: '2024-01-19' }
         ],
         dialogAssignVisible: false,
         currentAssignRow: null,
+        currentAssignDevice: null,
+        assignMode: 'entrust',
+        assignReportDeadline: '',
         selectedExecutor: '',
         staffSearchKeyword: '',
+        assignDeviceSelectionMap: {},
         specialStaff: [
           { name: '张强', role: '检验工程师', title: '高级', workload: 6, status: '在岗' },
           { name: '李敏', role: '检验工程师', title: '中级', workload: 3, status: '在岗' },
@@ -1594,11 +1998,12 @@
           { name: '高原', role: '检验员', title: '中级', workload: 3, status: '休假中' },
           { name: '梁晨', role: '检验工程师', title: '中级', workload: 4, status: '休假中' }
         ],
-        myTaskList: [
-          { no: '20240115-GC-001', sample: '氧气瓶 50L', progress: 0, type: 'gas' },
-          { no: '20240114-SV-002', sample: '安全阀 DN50', progress: 100, type: 'valve' }
-        ],
         
+        // 审核管理相关
+        auditSearchKeyword: '',
+        auditStatusFilter: '',
+        auditStage: 'to-audit',
+
         // 报告相关
         reportList: [
           { no: '20240115-GC-001', name: '上海气体工厂-气瓶定期检验报告', author: '张三', status: '待审批', type: 'gas' },
@@ -1607,6 +2012,12 @@
         currentReport: null
       },
       computed: {
+        currentUser() {
+          return this.userProfiles.find(u => u.id === this.currentUserId) || this.userProfiles[0]
+        },
+        isCurrentUserLeader() {
+          return this.currentUser && this.currentUser.role === 'leader'
+        },
         currentDevice() {
           return this.deviceTypes.find(item => item.value === this.selectedSubType) || this.deviceTypes[0]
         },
@@ -1667,6 +2078,50 @@
             return true
           })
         },
+        auditDeviceList() {
+          const list = []
+          const keyword = this.auditSearchKeyword.trim().toLowerCase()
+          const statusFilter = this.auditStatusFilter
+          const stage = this.auditStage
+          this.recordEntrustList.forEach(entrust => {
+            (entrust.devices || []).forEach(device => {
+              if (!device.hasRecord) {
+                return
+              }
+              if (stage === 'to-audit' && device.status !== '已提交' && device.status !== '驳回') {
+                return
+              }
+              if (stage === 'to-approve' && device.status !== '已审核') {
+                return
+              }
+              if (statusFilter && device.status !== statusFilter) {
+                return
+              }
+              const text = [
+                entrust.no,
+                device.no,
+                device.executor
+              ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase()
+              if (keyword && text.indexOf(keyword) === -1) {
+                return
+              }
+              list.push({
+                entrustNo: entrust.no,
+                deviceNo: device.no,
+                deviceType: device.deviceType,
+                executor: device.executor,
+                status: device.status,
+                remark: device.remark,
+                entrustRef: entrust,
+                deviceRef: device
+              })
+            })
+          })
+          return list
+        },
         filteredSpecialStaff() {
           const kw = this.staffSearchKeyword.trim().toLowerCase()
           if (!kw) {
@@ -1676,9 +2131,295 @@
             const text = (item.name + ' ' + item.role + ' ' + item.title).toLowerCase()
             return text.indexOf(kw) !== -1
           })
+        },
+        filteredRecordEntrustList() {
+          const keyword = this.recordSearchKeyword.trim()
+          const type = this.recordDeviceTab
+          return this.recordEntrustList.filter(entrust => {
+            if (this.isCurrentUserLeader) {
+              if (!this.matchesRecordFilter(entrust, keyword)) {
+                return false
+              }
+              if (type !== 'all') {
+                return entrust.devices && entrust.devices.some(d => d.deviceType === type)
+              }
+              return true
+            }
+            const user = this.currentUser
+            if (!user) {
+              return false
+            }
+            const hasMyDevice = entrust.devices && entrust.devices.some(d => d.executor === user.name)
+            if (!hasMyDevice) {
+              return false
+            }
+            if (!this.matchesRecordFilter(entrust, keyword)) {
+              return false
+            }
+            if (type !== 'all') {
+              return entrust.devices && entrust.devices.some(d => d.deviceType === type && d.executor === user.name)
+            }
+            return true
+          })
         }
       },
-        methods: {
+      methods: {
+        getAssignPagination(row) {
+          if (row && row.pagination && typeof row.pagination.currentPage === 'number' && typeof row.pagination.pageSize === 'number') {
+            return row.pagination
+          }
+          return { currentPage: 1, pageSize: 5 }
+        },
+        getAssignDevices(row) {
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          if (!entrust || !entrust.devices) {
+            return []
+          }
+          return entrust.devices
+        },
+        getAssignEntrust(row) {
+          return this.recordEntrustList.find(e => e.no === row.no) || { pagination: { currentPage: 1, pageSize: 5 } }
+        },
+        getAssignPagedDevices(row) {
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          if (!entrust || !entrust.devices) {
+            return []
+          }
+          if (!row.pagination) {
+            return entrust.devices
+          }
+          const { currentPage, pageSize } = row.pagination
+          const start = (currentPage - 1) * pageSize
+          const end = start + pageSize
+          return entrust.devices.slice(start, end)
+        },
+        getAssignTotalDevices(row) {
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          return entrust && entrust.devices ? entrust.devices.length : 0
+        },
+        handleAssignDeviceSizeChange(val, row) {
+          if (row.pagination) {
+            row.pagination.pageSize = val
+            row.pagination.currentPage = 1
+          }
+        },
+        handleAssignDeviceCurrentChange(val, row) {
+          if (row.pagination) {
+            row.pagination.currentPage = val
+          }
+        },
+        handleDeviceSelectionChange(row, selection) {
+          this.assignDeviceSelectionMap = Object.assign({}, this.assignDeviceSelectionMap, {
+            [row.no]: selection || []
+          })
+        },
+        hasSelectedDevices(row) {
+          const list = this.assignDeviceSelectionMap[row.no]
+          return Array.isArray(list) && list.length > 0
+        },
+        syncEntrustExecutorFromDevices(row, entrust) {
+          if (!entrust || !entrust.devices || !entrust.devices.length) {
+            row.executor = ''
+            return
+          }
+          const executors = entrust.devices.map(d => d.executor).filter(Boolean)
+          const uniqueExecutors = Array.from(new Set(executors))
+          row.executor = uniqueExecutors.join('/')
+        },
+        matchesRecordFilter(entrust, keyword) {
+          if (!keyword) {
+            return true
+          }
+          const lower = keyword.toLowerCase()
+          if ((entrust.no && entrust.no.toLowerCase().indexOf(lower) !== -1) || (entrust.company && entrust.company.toLowerCase().indexOf(lower) !== -1)) {
+            return true
+          }
+          if (!entrust.devices || !entrust.devices.length) {
+            return false
+          }
+          return entrust.devices.some(d => {
+            return (d.no && d.no.toLowerCase().indexOf(lower) !== -1) || (d.executor && d.executor.toLowerCase().indexOf(lower) !== -1)
+          })
+        },
+        getEntrustStats(entrust) {
+          const devices = entrust.devices || []
+          const total = devices.length
+          let submitted = 0
+          let myTotal = 0
+          let mySubmitted = 0
+          const user = this.currentUser
+          devices.forEach(d => {
+            if (['已提交', '已审核', '已批准'].indexOf(d.status) !== -1) {
+              submitted += 1
+            }
+            if (user && d.executor === user.name) {
+              myTotal += 1
+              if (['已提交', '已审核', '已批准'].indexOf(d.status) !== -1) {
+                mySubmitted += 1
+              }
+            }
+          })
+          const percentage = total === 0 ? 0 : Math.round((submitted / total) * 100)
+          return { total, submitted, percentage, myTotal, mySubmitted }
+        },
+        getVisibleDevices(entrust) {
+          const devices = entrust.devices || []
+          if (this.recordDeviceTab === 'all') {
+            return devices
+          }
+          return devices.filter(d => d.deviceType === this.recordDeviceTab)
+        },
+        getPagedDevices(entrust) {
+          const visible = this.getVisibleDevices(entrust)
+          if (!entrust.pagination) {
+            return visible
+          }
+          const { currentPage, pageSize } = entrust.pagination
+          const start = (currentPage - 1) * pageSize
+          const end = start + pageSize
+          return visible.slice(start, end)
+        },
+        handleDeviceSizeChange(val, entrust) {
+          if (entrust.pagination) {
+            entrust.pagination.pageSize = val
+            entrust.pagination.currentPage = 1
+          }
+        },
+        handleDeviceCurrentChange(val, entrust) {
+          if (entrust.pagination) {
+            entrust.pagination.currentPage = val
+          }
+        },
+        getStatusTagType(status) {
+          if (status === '未录入') return 'info'
+          if (status === '已录入') return 'warning'
+          if (status === '驳回') return 'danger'
+          if (status === '已审核') return 'primary'
+          if (status === '已批准') return 'success'
+          if (status === '已提交') return 'success'
+          return 'info'
+        },
+        canOperateDevice(device) {
+          const user = this.currentUser
+          if (!user) {
+            return false
+          }
+          if (user.role === 'leader') {
+            return false
+          }
+          return device.executor === user.name
+        },
+        canEditDevice(device) {
+          if (!this.canOperateDevice(device)) {
+            return false
+          }
+          return ['未录入', '已录入', '驳回'].indexOf(device.status) !== -1
+        },
+        canPreviewDevice(device) {
+          if (!device.hasRecord) {
+            return false
+          }
+          return device.status !== '未录入'
+        },
+        canSubmitDevice(device) {
+          if (!this.canOperateDevice(device)) {
+            return false
+          }
+          return ['已录入', '驳回'].indexOf(device.status) !== -1
+        },
+        openRecordEntryFromDevice(entrust, device) {
+          if (!this.canOperateDevice(device)) {
+            return
+          }
+          this.currentRecordType = device.deviceType === 'valve' ? 'valve' : 'gas'
+          this.currentRecordEntrust = entrust
+          this.currentRecordDevice = device
+          if (device.status === '未录入') {
+            device.status = '已录入'
+            device.hasRecord = true
+          }
+          this.activeMenu = 'record-entry'
+        },
+        previewDeviceRecord(entrust, device) {
+          if (!device.hasRecord) {
+            return
+          }
+          this.$message.info('模拟打开设备原始记录预览')
+        },
+        canAuditApprove(device, type) {
+          if (!this.isCurrentUserLeader) {
+            return false
+          }
+          if (type === 'audit') {
+            return device.status === '已提交' || device.status === '驳回'
+          }
+          if (type === 'approve') {
+            return device.status === '已审核'
+          }
+          return false
+        },
+        canAuditReject(device) {
+          if (!this.isCurrentUserLeader) {
+            return false
+          }
+          return device.status === '已提交' || device.status === '已审核' || device.status === '已批准'
+        },
+        handleAuditAction(entrust, device, action) {
+          if (action === 'audit-pass') {
+            if (!this.canAuditApprove(device, 'audit')) {
+              return
+            }
+            device.status = '已审核'
+            this.$message.success('已审核通过')
+          } else if (action === 'approve-pass') {
+            if (!this.canAuditApprove(device, 'approve')) {
+              return
+            }
+            device.status = '已批准'
+            this.$message.success('已批准通过')
+          } else if (action === 'reject') {
+            if (!this.canAuditReject(device)) {
+              return
+            }
+            device.status = '驳回'
+            this.$message.warning('已驳回原始记录，等待检测员重新处理')
+          }
+        },
+        submitDeviceRecord(entrust, device) {
+          if (!this.canSubmitDevice(device)) {
+            return
+          }
+          device.status = '已提交'
+          this.$message.success('原始记录已提交')
+        },
+        isBatchSubmitDisabled(entrust) {
+          if (this.isCurrentUserLeader) {
+            return true
+          }
+          const user = this.currentUser
+          if (!user) {
+            return true
+          }
+          const devices = entrust.devices || []
+          return !devices.some(d => d.executor === user.name && ['已录入', '驳回'].indexOf(d.status) !== -1)
+        },
+        batchSubmitMyRecords(entrust) {
+          if (this.isBatchSubmitDisabled(entrust)) {
+            return
+          }
+          const user = this.currentUser
+          let count = 0
+          const devices = entrust.devices || []
+          devices.forEach(d => {
+            if (d.executor === user.name && ['已录入', '驳回'].indexOf(d.status) !== -1) {
+              d.status = '已提交'
+              count += 1
+            }
+          })
+          if (count > 0) {
+            this.$message.success('已提交' + count + '条原始记录')
+          }
+        },
         handleMenuSelect(index) {
           if (index.indexOf('record') === -1 && index.indexOf('report') === -1) {
              this.activeMenu = index;
@@ -1703,17 +2444,55 @@
           if (days <= 3) return 'warning';
           return 'success';
         },
-        openAssignDialog(row) {
+        openAssignDialog(row, device, isBatch) {
           this.currentAssignRow = row
-          this.selectedExecutor = row.executor || ''
+          this.currentAssignDevice = device || null
+          this.assignMode = isBatch ? 'device-batch' : (device ? 'device' : 'entrust')
+          this.selectedExecutor = device ? (device.executor || '') : (row.executor || '')
           this.staffSearchKeyword = ''
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          const deadline = (entrust && entrust.expectedReportDate) || row.reportDeadline || ''
+          this.assignReportDeadline = deadline
           this.dialogAssignVisible = true
         },
         confirmAssignExecutor() {
           if (!this.currentAssignRow || !this.selectedExecutor) {
             return
           }
-          this.currentAssignRow.executor = this.selectedExecutor
+          const entrust = this.recordEntrustList.find(e => e.no === this.currentAssignRow.no)
+          if (this.assignMode === 'entrust') {
+            if (entrust && entrust.devices) {
+              entrust.devices.forEach(d => {
+                if (!d.executor) {
+                  d.executor = this.selectedExecutor
+                }
+              })
+            }
+            this.syncEntrustExecutorFromDevices(this.currentAssignRow, entrust)
+            this.currentAssignRow.status = '已分配'
+          } else if (this.assignMode === 'device' && this.currentAssignDevice) {
+            this.currentAssignDevice.executor = this.selectedExecutor
+            this.syncEntrustExecutorFromDevices(this.currentAssignRow, entrust)
+            this.currentAssignRow.status = '已分配'
+          } else if (this.assignMode === 'device-batch') {
+            const selected = this.assignDeviceSelectionMap[this.currentAssignRow.no] || []
+            if (entrust && entrust.devices && selected.length) {
+              selected.forEach(sel => {
+                const d = entrust.devices.find(x => x.no === sel.no)
+                if (d) {
+                  d.executor = this.selectedExecutor
+                }
+              })
+            }
+            this.syncEntrustExecutorFromDevices(this.currentAssignRow, entrust)
+            this.currentAssignRow.status = '已分配'
+          }
+          if (this.isCurrentUserLeader) {
+            this.currentAssignRow.reportDeadline = this.assignReportDeadline || ''
+            if (entrust) {
+              entrust.expectedReportDate = this.assignReportDeadline || ''
+            }
+          }
           this.$message.success('分配成功')
           this.dialogAssignVisible = false
         },
