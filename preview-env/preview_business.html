@@ -463,7 +463,6 @@
               <el-col :span="12">
                 <el-form-item label="使用单位" required>
                   <el-input v-model="form.useCompany" placeholder="同委托单位可不填">
-                     <el-button slot="append" icon="el-icon-search"></el-button>
                   </el-input>
                 </el-form-item>
               </el-col>
@@ -476,14 +475,7 @@
                 <el-form-item label="设计单位"><el-input v-model="form.designCompany"></el-input></el-form-item>
               </el-col>
             </el-row>
-            <el-row v-if="currentDevice && currentDevice.value === 'gas'" :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="安装单位"><el-input v-model="form.installCompany"></el-input></el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="见证单位"><el-input v-model="form.witnessCompany"></el-input></el-form-item>
-              </el-col>
-            </el-row>
+
             
             <div class="section-header">联系方式</div>
             <el-row :gutter="20">
@@ -898,13 +890,13 @@
               { prop: 'bottleName', label: '气瓶名称', required: true },
               { prop: 'model', label: '气瓶型号', required: true },
               { prop: 'number', label: '气瓶编号', required: true },
-              { prop: 'waterVolume', label: '气瓶水容积(L)', required: true },
-              { prop: 'nominalPressure', label: '公称工作压力(MPa)', required: true },
+              { prop: 'waterVolume', label: '气瓶水容积L', required: true },
+              { prop: 'nominalPressure', label: '公称工作压力MPa', required: true },
               { prop: 'repaired', label: '是否修理过', required: true, type: 'radio', options: ['是','否'] },
               { prop: 'hasValve', label: '有无气阀', required: true, type: 'radio', options: ['有','无'] },
               { prop: 'medium', label: '使用介质', required: true },
               { prop: 'hasGas', label: '有无气体', required: true, type: 'radio', options: ['有','无'] },
-              { prop: 'remark', label: '备注', required: false }
+              { prop: 'remark', label: '备注（制造许可证号）', required: false }
             ]
           },
           {
