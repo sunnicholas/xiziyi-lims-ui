@@ -256,7 +256,7 @@
                 </el-table-column>
                 <el-table-column label="操作" width="260" align="center">
                   <template slot-scope="scope">
-                    <el-button size="mini" type="text" icon="el-icon-s-promotion">流转</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-s-promotion" @click="handleTransfer(scope.row)" :disabled="scope.row.status === '待分配'">流转</el-button>
                     <el-button size="mini" type="text" icon="el-icon-edit">修改</el-button>
                     <el-button size="mini" type="text" icon="el-icon-view">详情</el-button>
                     <el-button size="mini" type="text" icon="el-icon-link">复制签名链接</el-button>
@@ -439,6 +439,18 @@
                   <el-input v-model="form.maker"></el-input>
                 </el-form-item>
               </el-col>
+              <el-col :span="6">
+                <el-form-item label="接样人" required>
+                  <el-select v-model="form.receiver" placeholder="请选择接样人" style="width: 100%">
+                    <el-option
+                      v-for="item in businessStaff"
+                      :key="item.id"
+                      :label="item.name"
+                      :value="item.name">
+                    </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
             </el-row>
             <el-row v-if="currentDevice && currentDevice.value === 'valve'">
               <el-col :span="8">
@@ -469,7 +481,7 @@
             </el-row>
             <el-row v-if="currentDevice && currentDevice.value === 'gas'" :gutter="20">
               <el-col :span="12">
-                <el-form-item label="制造单位"><el-input v-model="form.manufacturer"></el-input></el-form-item>
+                <el-form-item label="制造单位" required><el-input v-model="form.manufacturer"></el-input></el-form-item>
               </el-col>
               <el-col :span="12">
                 <el-form-item label="设计单位"><el-input v-model="form.designCompany"></el-input></el-form-item>
@@ -947,6 +959,7 @@
           witnessCompany: '',
           witnessPerson: '',
           maker: '',
+          receiver: '',
           unitCode: '',
           
           // 样品信息
@@ -1062,6 +1075,11 @@
           { id: 'inspector-li', name: '李敏', role: 'inspector', label: '李敏（检测员）' },
           { id: 'leader-chief', name: '王主任', role: 'leader', label: '王主任（科室主任）' },
           { id: 'leader-manager', name: '李部长', role: 'leader', label: '李部长（检测部长）' }
+        ],
+        businessStaff: [
+          { id: 'biz-wang', name: '王业务', dept: '业务部' },
+          { id: 'biz-li', name: '李受理', dept: '业务部' },
+          { id: 'biz-zhang', name: '张接待', dept: '业务部' }
         ],
         recordDeviceTab: 'all',
         recordSearchKeyword: '',
@@ -1773,6 +1791,27 @@
           this.currentReport = row;
           this.currentRecordType = row.type; // 借用这个变量来控制模板显示
           this.activeMenu = 'report-preview';
+        },
+        handleTransfer(row) {
+          if (row.status !== '待流转') {
+            this.$message.warning('当前状态不可流转');
+            return;
+          }
+          
+          this.$confirm('确认将此委托单流转至任务分配环节？\n流转后将无法再修改委托信息。', '确认流转', {
+            confirmButtonText: '确定流转',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            // 模拟流转逻辑
+            row.status = '待分配';
+            this.$message.success('流转成功！任务已发送至分配环节');
+            
+            // 如果有后端接口，这里应该调用 API
+            // this.updateStatus(row.id, '待分配')
+          }).catch(() => {
+            this.$message.info('已取消流转');
+          });
         }
       }
     })
