@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>西自仪 LIMS - 业务受理与特种设备流程</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <style>
+    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f0f2f5; }
+    #app { display: flex; height: 100vh; overflow: hidden; }
+    
+    /* 侧边栏 */
+    .sidebar-container { width: 220px; background-color: #304156; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+    .logo { height: 50px; line-height: 50px; text-align: center; font-size: 16px; font-weight: 600; background-color: #2b2f3a; color: #fff; border-bottom: 1px solid #1f2d3d; }
+    .el-menu { border-right: none; }
+    
+    /* 主体区域 */
+    .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
+    .navbar { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10; }
+    .app-main { flex: 1; padding: 20px; overflow-y: auto; }
+    .app-container { background: #fff; padding: 20px; border-radius: 4px; min-height: calc(100vh - 90px); box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
+    
+    /* 通用工具类 */
+    .mb8 { margin-bottom: 8px; }
+    .mt20 { margin-top: 20px; }
+    .text-center { text-align: center; }
+    
+    .type-card {
+      cursor: pointer;
+      border: 1px solid #e6e6e6;
+      border-radius: 8px;
+      padding: 30px 20px;
+      text-align: center;
+      transition: all 0.3s;
+      height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #fcfcfc;
+    }
+    .type-card:hover {
+      border-color: #409EFF;
+      box-shadow: 0 4px 12px rgba(64,158,255,0.15);
+      transform: translateY(-2px);
+      background: #fff;
+    }
+    .type-card i { font-size: 48px; color: #409EFF; margin-bottom: 15px; }
+    .type-card h3 { margin: 0; font-size: 18px; color: #303133; }
+    .type-card p { margin: 10px 0 0; color: #909399; font-size: 13px; }
+
+    .device-type-toolbar {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .device-type-toolbar .el-input {
+      flex: 1;
+    }
+    .device-type-grid {
+      max-height: 320px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 4px;
+    }
+    .device-type-card {
+      cursor: pointer;
+      border: 1px solid #e4e7ed;
+      border-radius: 6px;
+      padding: 14px 16px;
+      transition: all 0.2s;
+      background: #fcfcfc;
+    }
+    .device-type-card:hover {
+      border-color: #409EFF;
+      box-shadow: 0 2px 8px rgba(64,158,255,0.15);
+      background: #fff;
+    }
+    .device-type-card.is-active {
+      border-color: #409EFF;
+      background: #f0f7ff;
+    }
+    .device-type-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .device-type-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #303133;
+    }
+    .device-type-code {
+      font-size: 12px;
+      color: #909399;
+      margin-bottom: 4px;
+    }
+    .device-type-desc {
+      font-size: 12px;
+      color: #606266;
+      line-height: 1.4;
+    }
+    .device-type-tags {
+      margin-top: 6px;
+    }
+
+    /* 分步表单样式 */
+    .step-form-container { padding: 0 20px; }
+    .step-content { margin-top: 30px; border: 1px solid #eee; padding: 30px; border-radius: 4px; }
+    .section-header { font-size: 15px; font-weight: bold; color: #303133; margin-bottom: 20px; padding-left: 10px; border-left: 4px solid #409EFF; }
+
+    /* A4 纸张模拟 */
+    .a4-page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .report-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+    .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .report-table td, .report-table th { border: 1px solid #000; padding: 8px; text-align: center; font-size: 14px; }
+    .report-info { margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
+    
+    [v-cloak] { display: none; }
+
+    .assign-expand-container {
+      padding-left: 100px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <!-- 侧边栏 -->
+    <div class="sidebar-container">
+      <div class="logo">西自仪 LIMS</div>
+      <el-menu
+        :default-active="activeMenu"
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409EFF"
+        @select="handleMenuSelect"
+      >
+        <el-menu-item index="business">
+          <i class="el-icon-s-order"></i>
+          <span slot="title">业务受理</span>
+        </el-menu-item>
+        <el-menu-item index="assign">
+          <i class="el-icon-s-custom"></i>
+          <span slot="title">任务分配</span>
+        </el-menu-item>
+        <el-submenu index="record">
+          <template slot="title">
+            <i class="el-icon-edit-outline"></i>
+            <span>原始记录</span>
+          </template>
+          <el-menu-item index="record-list">记录列表</el-menu-item>
+          <el-menu-item index="record-entry" style="display:none">录入详情</el-menu-item>
+        </el-submenu>
+        <el-menu-item index="audit">
+          <i class="el-icon-s-check"></i>
+          <span slot="title">审核管理</span>
+        </el-menu-item>
+        <el-submenu index="report">
+          <template slot="title">
+            <i class="el-icon-document"></i>
+            <span>报告管理</span>
+          </template>
+          <el-menu-item index="report-list">报告列表</el-menu-item>
+          <el-menu-item index="report-preview" style="display:none">报告预览</el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+      <div class="navbar">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item>首页</el-breadcrumb-item>
+          <el-breadcrumb-item>{{ getPageTitle() }}</el-breadcrumb-item>
+        </el-breadcrumb>
+        <el-dropdown>
+          <span class="el-dropdown-link" style="cursor: pointer;">
+            <i class="el-icon-user-solid"></i> 管理员 <i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>个人中心</el-dropdown-item>
+            <el-dropdown-item divided>退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+
+      <div class="app-main">
+        
+        <!-- ================= 页面 5: 审核管理 ================= -->
+        <div v-if="activeMenu === 'audit'" class="app-container">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <el-form :inline="true" size="small">
+              <el-form-item label="搜索">
+                <el-input
+                  v-model="auditSearchKeyword"
+                  placeholder="委托单号/设备编号/检测员"
+                  clearable
+                  style="width: 260px;"
+                ></el-input>
+              </el-form-item>
+              <el-form-item label="状态">
+                <el-select v-model="auditStatusFilter" placeholder="全部" clearable style="width: 160px;">
+                  <el-option label="全部" value=""></el-option>
+                  <el-option label="已提交" value="已提交"></el-option>
+                  <el-option label="驳回" value="驳回"></el-option>
+                  <el-option label="已审核" value="已审核"></el-option>
+                  <el-option label="已批准" value="已批准"></el-option>
+                </el-select>
+              </el-form-item>
+            </el-form>
+            <div style="color: #909399;">
+              <span v-if="!isCurrentUserLeader">当前仅限科室主任/检测部长使用</span>
+              <span v-else>当前用户：{{ currentUser.name }}（{{ currentUser.role === 'leader' ? '管理角色' : '检测员' }}）</span>
+            </div>
+          </div>
+
+          <el-tabs v-model="auditStage" type="card" class="mb8">
+            <el-tab-pane label="待审核" name="to-audit"></el-tab-pane>
+            <el-tab-pane label="待批准" name="to-approve"></el-tab-pane>
+            <el-tab-pane label="全部记录" name="all"></el-tab-pane>
+          </el-tabs>
+
+          <el-alert
+            v-if="!isCurrentUserLeader"
+            type="info"
+            show-icon
+            title="当前为检测员视角，仅可查看审核进度，不能执行审核/批准操作。"
+            style="margin-bottom: 10px;"
+          ></el-alert>
+
+          <el-table :data="auditDeviceList" border size="small" style="width: 100%;">
+            <el-table-column label="委托单号" prop="entrustNo" width="160"></el-table-column>
+            <el-table-column label="设备编号" prop="deviceNo" width="140"></el-table-column>
+            <el-table-column label="设备类型" prop="deviceType" width="90">
+              <template slot-scope="scope">
+                <el-tag v-if="scope.row.deviceType === 'gas'" type="info">气瓶</el-tag>
+                <el-tag v-else type="warning">安全阀</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="检测员" prop="executor" width="100"></el-table-column>
+            <el-table-column label="当前状态" prop="status" width="100">
+              <template slot-scope="scope">
+                <el-tag :type="getStatusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="备注" prop="remark" show-overflow-tooltip></el-table-column>
+            <el-table-column label="操作" width="260" align="center">
+              <template slot-scope="scope">
+                <el-button
+                  size="mini"
+                  type="text"
+                  icon="el-icon-view"
+                  @click="previewDeviceRecord(scope.row.entrustRef, scope.row.deviceRef)"
+                >
+                  预览记录
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="primary"
+                  plain
+                  :disabled="!canAuditApprove(scope.row.deviceRef, 'audit')"
+                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'audit-pass')"
+                >
+                  审核通过
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="success"
+                  plain
+                  :disabled="!canAuditApprove(scope.row.deviceRef, 'approve')"
+                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'approve-pass')"
+                >
+                  批准通过
+                </el-button>
+                <el-button
+                  size="mini"
+                  type="danger"
+                  plain
+                  :disabled="!canAuditReject(scope.row.deviceRef)"
+                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'reject')"
+                >
+                  驳回
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        activeMenu: 'audit',
+        activeTab: 'special',
+        
+        dialogTypeSelectVisible: false,
+        dialogSubTypeVisible: false,
+        dialogFormVisible: false,
+        trackVisible: false,
+        
+        selectedSubType: 'gas',
+        typeSearchKeyword: '',
+        typeCategoryFilter: 'all',
+        deviceTypes: [
+          {
+            value: 'gas',
+            label: '气瓶检测',
+            category: '气瓶类',
+            scene: '定期检验',
+            description: '适用于各类气瓶的定期检验业务',
+            testStandard: 'TSG 23-2021《气瓶安全技术规范》和GB/T 24161-2009《呼吸器用复合气瓶定期检验与评定》',
+            hot: true,
+            sampleTitle: '气瓶',
+            sampleFields: [
+              { prop: 'bottleName', label: '气瓶名称', required: true },
+              { prop: 'model', label: '气瓶型号', required: true },
+              { prop: 'number', label: '气瓶编号', required: true },
+              { prop: 'waterVolume', label: '气瓶水容积(L)', required: true },
+              { prop: 'nominalPressure', label: '公称工作压力(MPa)', required: true },
+              { prop: 'repaired', label: '是否修理过', required: true, type: 'radio', options: ['是','否'] },
+              { prop: 'hasValve', label: '有无气阀', required: true, type: 'radio', options: ['有','无'] },
+              { prop: 'medium', label: '使用介质', required: true },
+              { prop: 'hasGas', label: '有无气体', required: true, type: 'radio', options: ['有','无'] },
+              { prop: 'remark', label: '备注', required: false }
+            ]
+          },
+          {
+            value: 'valve',
+            label: '安全阀校验',
+            category: '阀门类',
+            scene: '校验检测',
+            description: '适用于安全阀的校验检测业务',
+            sampleTitle: '安全阀',
+            sampleFields: [
+              { prop: 'installPos', label: '安装位置', required: true },
+              { prop: 'workMedium', label: '工作介质', required: true },
+              { prop: 'equipmentType', label: '使用设备类型', required: true },
+              { prop: 'setPressureReq', label: '要求整定压力(MPa)', required: true },
+              { prop: 'manufacturer', label: '制造单位', required: false },
+              { prop: 'model', label: '型号', required: true },
+              { prop: 'factoryNo', label: '出厂编号', required: false },
+              { prop: 'dn', label: '公称通径(mm)', required: true },
+              { prop: 'pn', label: '公称压力', required: true },
+              { prop: 'pressureRange', label: '压力级别范围', required: false },
+              { prop: 'workPressure', label: '工作压力(MPa)', required: false },
+              { prop: 'licenceNo', label: '生产制造许可证编号', required: false },
+              { prop: 'produceDate', label: '生产日期', required: false },
+              { prop: 'remark', label: '备注', required: false }
+            ]
+          }
+        ],
+        activeStep: 0,
+        platformCompany: {
+          accountName: '西安西自仪检测技术有限公司',
+          bankAccount: '6113107077018150008144',
+          bankName: '交通银行股份有限公司西安西稍门支行'
+        },
+        form: {
+          // 委托方信息
+          category: '送检',
+          isUrgent: false,
+          entrustDate: new Date(),
+          valveMode: '离线',
+          company: '',
+          useCompany: '',
+          contact: '',
+          phone: '',
+          address: '',
+          manufacturer: '',
+          designCompany: '',
+          installCompany: '',
+          witnessCompany: '',
+          witnessPerson: '',
+          maker: '',
+          unitCode: '',
+          
+          // 样品信息
+          sampleCount: 1,
+          samples: [],
+          // 气瓶字段
+          medium: '',
+          nominalPressure: '',
+          volume: '',
+          designLife: '',
+          manufactureDate: '',
+          // 安全阀字段
+          deviceName: '安全阀',
+          model: '',
+          sampleManufacturer: '',
+          installPos: '',
+          dn: '',
+          pn: '',
+          setPressure: '',
+          runTemp: '',
+          
+          // 检验要求
+          testCategory: '定期检验',
+          testStandard: '',
+          expectedReportDate: '',
+          
+          // 交付信息
+          deliveryType: ['电子版'],
+          reportCopies: 2,
+          pickupMethod: '自取',
+          subcontract: '无分包',
+          cnas: true,
+          remarks: ''
+        },
+        
+        // 原始记录相关数据
+        dialogRecordEntryVisible: false,
+        activeRecordTab: 'appearance', // 气瓶记录当前 Tab
+        currentRecordType: 'gas', // gas | valve
+        recordForm: {
+          // 公共：环境条件
+          envTemperature: '23.5',
+          envHumidity: '55',
+          envPressure: '101.3',
+          
+          // 气瓶专用 - 四表结构
+              gas: {
+             // 表1：外观检查评估
+             appearance: {
+               items: [
+                 { id: 1, content: '1. 瓶体表面（划伤、腐蚀、热损伤等）', result: '合格', remark: '' },
+                 { id: 2, content: '2. 缠绕层（磨损、松脱、断裂等）', result: '合格', remark: '' },
+                 { id: 3, content: '3. 瓶口螺纹（滑牙、裂纹、变形）', result: '合格', remark: '' },
+                 { id: 4, content: '4. 瓶阀及安全泄压装置', result: '合格', remark: '' },
+                 { id: 5, content: '5. 内部检查（异物、腐蚀）', result: '合格', remark: '' }
+               ],
+               conclusion: '合格',
+               photoList: []
+             },
+             // 表2：水压试验装置校验 (一行记录)
+             calibration: {
+               stdDeviceNo: 'STD-2024-001', // 标准表编号
+               range: '0-60 MPa',
+               accuracy: '0.4级',
+               stdValue: '30.00', // 标准值
+               measuredValue: '30.05', // 实测值
+               error: '0.05', // 误差
+               result: '合格'
+             },
+             // 表3：水压试验数据
+             hydrostatic: {
+               testPressure: '30.0', // 试验压力
+               holdTime: '60', // 保压时间(s)
+               pressureDrop: '0.00', // 压降
+               totalExpansion: '', // 全变形(mL)
+               residualExpansion: '', // 残余变形(mL)
+               deformationRate: '', // 残余变形率(%)
+               temp: '20.0', // 水温
+               result: '合格'
+             },
+             // 表4：气密性试验数据
+            airtightness: {
+              medium: '氮气',
+              pressure: '20.0', // 试验压力
+              holdTime: '60', // 保压时间
+              temp: '21.0',
+              leakage: '无泄漏',
+              result: '合格'
+            },
+
+            result: '合格'
+          },
+          
+          // 安全阀专用 (保持原有简化结构，也可按需扩展)
+          valve: {
+             appearance: '完好',
+             media: '空气',
+             openPressure1: '',
+             openPressure2: '',
+             openPressure3: '',
+             returnPressure: '',
+             sealTestPressure: '',
+             result: '合格'
+          },
+          
+          // 附件/图片 (通用)
+          fileList: []
+        },
+
+        currentUserId: 'inspector-zhang',
+        userProfiles: [
+          { id: 'inspector-zhang', name: '张强', role: 'inspector', label: '张强（检测员）' },
+          { id: 'inspector-li', name: '李敏', role: 'inspector', label: '李敏（检测员）' },
+          { id: 'leader-chief', name: '王主任', role: 'leader', label: '王主任（科室主任）' },
+          { id: 'leader-manager', name: '李部长', role: 'leader', label: '李部长（检测部长）' }
+        ],
+        recordDeviceTab: 'all',
+        recordSearchKeyword: '',
+        currentRecordEntrust: null,
+        currentRecordDevice: null,
+        recordEntrustList: [
+          {
+            no: '20240115-GC-001',
+            company: '上海气体工厂',
+            type: 'gas',
+            entrustDate: '2024-01-12',
+            acceptor: '张三',
+            expectedReportDate: '2024-01-20',
+            pagination: { currentPage: 1, pageSize: 5 },
+            devices: [
+              { no: 'GC-001-001', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
+              { no: 'GC-001-002', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已录入', hasRecord: true, remark: '待核对' },
+              { no: 'GC-001-003', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已提交', hasRecord: true, remark: '' },
+              { no: 'GC-001-004', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已审核', hasRecord: true, remark: '' },
+              { no: 'GC-001-005', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已批准', hasRecord: true, remark: '' },
+              { no: 'GC-001-006', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '驳回', hasRecord: true, remark: '壁厚异常，需复核' }
+            ]
+          },
+          {
+            no: '20240114-SV-002',
+            company: '江苏化工厂',
+            type: 'valve',
+            entrustDate: '2024-01-11',
+            acceptor: '李四',
+            expectedReportDate: '2024-01-18',
+            pagination: { currentPage: 1, pageSize: 5 },
+            devices: [
+              { no: 'SV-002-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '' },
+              { no: 'SV-002-002', model: 'A48Y-16C', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '' }
+            ]
+          }
+        ],
+
+        specialList: [
+          { no: '20240115-GC-001', company: '上海气体工厂', subType: 'gas', days: -2, status: '待流转', acceptor: '张三', entrustDate: '2024-01-12', auditStatus: '待审核' },
+          { no: '20240115-SV-005', company: '江苏化工厂', subType: 'valve', days: 5, status: '待流转', acceptor: '李四', entrustDate: '2024-01-13', auditStatus: '已通过' },
+        ],
+        // 任务分配页面数据
+        assignTab: 'inspection',
+        assignSearch: {
+          name: '',
+          no: '',
+          regNo: '',
+          pos: '',
+          dateRange: [],
+          limitDateRange: []
+        },
+        assignDept: 'all',
+        assignInspectionStatusFilter: '未分配',
+        assignSpecialSearch: {
+          no: '',
+          status: '',
+          type: '',
+          acceptor: '',
+          executor: '',
+          date: ''
+        },
+        assignInspectionList: [
+          { name: '防腐制动软管检测', no: 'J202512090010', regNo: 'YP202512090063', post: '流量室', date: '2025-12-09', limitDate: '2025-12-09', pos: 'A-01' },
+          { name: '气体分离与液化设备', no: 'J202512090006', regNo: 'YP202512090049', post: '容量室', date: '2025-12-17', limitDate: '2025-12-19', pos: 'B-02' },
+          { name: '有毒有害物质', no: 'J202512090004', regNo: 'YP202512090051', post: '硬度室', date: '2025-12-17', limitDate: '2025-12-25', pos: 'C-05' },
+          { name: '饮用水净化耗氧量', no: 'J202512090002', regNo: 'YP202512090001', post: '压力室', date: '2025-12-26', limitDate: '/', pos: 'D-01' },
+          { name: '铬铁标本', no: 'J202512050025', regNo: 'YP202512050147', post: '质量室', date: '2025-12-05', limitDate: '2025-12-05', pos: 'E-03' }
+        ],
+        assignSpecialList: [
+          { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', executor: '', date: '2024-01-12', reportDeadline: '2024-01-20' },
+          { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', executor: '王五', date: '2024-01-13', reportDeadline: '2024-01-19' }
+        ],
+        dialogAssignVisible: false,
+        currentAssignRow: null,
+        currentAssignDevice: null,
+        assignMode: 'entrust',
+        assignReportDeadline: '',
+        selectedExecutor: '',
+        staffSearchKeyword: '',
+        workInstructionContent: '',
+        workInstructionDeadline: '',
+        workInstructionIssuer: '',
+        workInstructionReceiver: '',
+        assignDeviceSelectionMap: {},
+        specialStaff: [
+          { name: '张强', role: '检验工程师', title: '高级', workload: 6, status: '在岗' },
+          { name: '李敏', role: '检验工程师', title: '中级', workload: 3, status: '在岗' },
+          { name: '王五', role: '检验工程师', title: '中级', workload: 4, status: '在岗' },
+          { name: '赵云', role: '检验工程师', title: '初级', workload: 2, status: '在岗' },
+          { name: '陈静', role: '检验员', title: '中级', workload: 5, status: '在岗' },
+          { name: '孙磊', role: '检验员', title: '初级', workload: 1, status: '在岗' },
+          { name: '周峰', role: '检验员', title: '初级', workload: 2, status: '在岗' },
+          { name: '胡洋', role: '检验工程师', title: '高级', workload: 5, status: '在岗' },
+          { name: '高原', role: '检验员', title: '中级', workload: 3, status: '休假中' },
+          { name: '梁晨', role: '检验工程师', title: '中级', workload: 4, status: '休假中' }
+        ],
+        
+        // 审核管理相关
+        auditSearchKeyword: '',
+        auditStatusFilter: '',
+        auditStage: 'to-audit',
+
+        // 报告相关
+        reportList: [
+          { no: '20240115-GC-001', name: '上海气体工厂-气瓶定期检验报告', author: '张三', status: '待审批', type: 'gas' },
+          { no: '20240115-SV-005', name: '江苏化工厂-安全阀校验报告', author: '李四', status: '已批准', type: 'valve' }
+        ],
+        currentReport: null
+      },
+      computed: {
+        currentUser() {
+          return this.userProfiles.find(u => u.id === this.currentUserId) || this.userProfiles[0]
+        },
+        isCurrentUserLeader() {
+          return this.currentUser && this.currentUser.role === 'leader'
+        },
+        currentDevice() {
+          return this.deviceTypes.find(item => item.value === this.selectedSubType) || this.deviceTypes[0]
+        },
+        currentSampleFields() {
+          return this.currentDevice ? this.currentDevice.sampleFields : []
+        },
+        deviceCategories() {
+          const set = new Set()
+          this.deviceTypes.forEach(item => {
+            if (item.category) {
+              set.add(item.category)
+            }
+          })
+          return Array.from(set)
+        },
+        filteredDeviceTypes() {
+          const kw = this.typeSearchKeyword.trim().toLowerCase()
+          return this.deviceTypes.filter(item => {
+            if (this.typeCategoryFilter !== 'all' && item.category !== this.typeCategoryFilter) {
+              return false
+            }
+            if (!kw) {
+              return true
+            }
+            const text = [
+              item.label,
+              item.value,
+              item.category,
+              item.scene,
+              item.description
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+            return text.indexOf(kw) !== -1
+          })
+        },
+        filteredAssignSpecialList() {
+          return this.assignSpecialList.filter(item => {
+            if (this.assignSpecialSearch.no && item.no.indexOf(this.assignSpecialSearch.no) === -1) {
+              return false
+            }
+            if (this.assignSpecialSearch.type && item.type !== this.assignSpecialSearch.type) {
+              return false
+            }
+            if (this.assignSpecialSearch.status && item.status !== this.assignSpecialSearch.status) {
+              return false
+            }
+            if (this.assignSpecialSearch.acceptor && item.acceptor.indexOf(this.assignSpecialSearch.acceptor) === -1) {
+              return false
+            }
+            if (this.assignSpecialSearch.executor && (!item.executor || item.executor.indexOf(this.assignSpecialSearch.executor) === -1)) {
+              return false
+            }
+            if (this.assignSpecialSearch.date && item.date !== this.assignSpecialSearch.date) {
+              return false
+            }
+            return true
+          })
+        },
+        auditDeviceList() {
+          const list = []
+          const keyword = this.auditSearchKeyword.trim().toLowerCase()
+          const statusFilter = this.auditStatusFilter
+          const stage = this.auditStage
+          this.recordEntrustList.forEach(entrust => {
+            (entrust.devices || []).forEach(device => {
+              if (!device.hasRecord) {
+                return
+              }
+              if (stage === 'to-audit' && device.status !== '已提交' && device.status !== '驳回') {
+                return
+              }
+              if (stage === 'to-approve' && device.status !== '已审核') {
+                return
+              }
+              if (statusFilter && device.status !== statusFilter) {
+                return
+              }
+              const text = [
+                entrust.no,
+                device.no,
+                device.executor
+              ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase()
+              if (keyword && text.indexOf(keyword) === -1) {
+                return
+              }
+              list.push({
+                entrustNo: entrust.no,
+                deviceNo: device.no,
+                deviceType: device.deviceType,
+                executor: device.executor,
+                status: device.status,
+                remark: device.remark,
+                entrustRef: entrust,
+                deviceRef: device
+              })
+            })
+          })
+          return list
+        },
+        filteredSpecialStaff() {
+          const kw = this.staffSearchKeyword.trim().toLowerCase()
+          if (!kw) {
+            return this.specialStaff
+          }
+          return this.specialStaff.filter(item => {
+            const text = (item.name + ' ' + item.role + ' ' + item.title).toLowerCase()
+            return text.indexOf(kw) !== -1
+          })
+        },
+        filteredRecordEntrustList() {
+          const keyword = this.recordSearchKeyword.trim()
+          const type = this.recordDeviceTab
+          return this.recordEntrustList.filter(entrust => {
+            if (this.isCurrentUserLeader) {
+              if (!this.matchesRecordFilter(entrust, keyword)) {
+                return false
+              }
+              if (type !== 'all') {
+                return entrust.devices && entrust.devices.some(d => d.deviceType === type)
+              }
+              return true
+            }
+            const user = this.currentUser
+            if (!user) {
+              return false
+            }
+            const hasMyDevice = entrust.devices && entrust.devices.some(d => d.executor === user.name)
+            if (!hasMyDevice) {
+              return false
+            }
+            if (!this.matchesRecordFilter(entrust, keyword)) {
+              return false
+            }
+            if (type !== 'all') {
+              return entrust.devices && entrust.devices.some(d => d.deviceType === type && d.executor === user.name)
+            }
+            return true
+          })
+        }
+      },
+
+      watch: {
+        selectedExecutor(val) {
+          this.workInstructionReceiver = val
+        }
+      },
+      methods: {
+        closeAllDialogs() {
+          this.dialogTypeSelectVisible = false
+          this.dialogSubTypeVisible = false
+          this.dialogFormVisible = false
+          this.trackVisible = false
+          this.dialogAssignVisible = false
+          this.dialogRecordEntryVisible = false
+        },
+        getAssignPagination(row) {
+          if (row && row.pagination && typeof row.pagination.currentPage === 'number' && typeof row.pagination.pageSize === 'number') {
+            return row.pagination
+          }
+          return { currentPage: 1, pageSize: 5 }
+        },
+        getAssignDevices(row) {
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          if (!entrust || !entrust.devices) {
+            return []
+          }
+          return entrust.devices
+        },
+        getAssignEntrust(row) {
+          return this.recordEntrustList.find(e => e.no === row.no) || { pagination: { currentPage: 1, pageSize: 5 } }
+        },
+        getAssignPagedDevices(row) {
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          if (!entrust || !entrust.devices) {
+            return []
+          }
+          if (!row.pagination) {
+            return entrust.devices
+          }
+          const { currentPage, pageSize } = row.pagination
+          const start = (currentPage - 1) * pageSize
+          const end = start + pageSize
+          return entrust.devices.slice(start, end)
+        },
+        getAssignTotalDevices(row) {
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          return entrust && entrust.devices ? entrust.devices.length : 0
+        },
+        handleAssignDeviceSizeChange(val, row) {
+          if (row.pagination) {
+            row.pagination.pageSize = val
+            row.pagination.currentPage = 1
+          }
+        },
+        handleAssignDeviceCurrentChange(val, row) {
+          if (row.pagination) {
+            row.pagination.currentPage = val
+          }
+        },
+        handleDeviceSelectionChange(row, selection) {
+          this.assignDeviceSelectionMap = Object.assign({}, this.assignDeviceSelectionMap, {
+            [row.no]: selection || []
+          })
+        },
+        hasSelectedDevices(row) {
+          const list = this.assignDeviceSelectionMap[row.no]
+          return Array.isArray(list) && list.length > 0
+        },
+        syncEntrustExecutorFromDevices(row, entrust) {
+          if (!entrust || !entrust.devices || !entrust.devices.length) {
+            row.executor = ''
+            return
+          }
+          const executors = entrust.devices.map(d => d.executor).filter(Boolean)
+          const uniqueExecutors = Array.from(new Set(executors))
+          row.executor = uniqueExecutors.join('/')
+        },
+        matchesRecordFilter(entrust, keyword) {
+          if (!keyword) {
+            return true
+          }
+          const lower = keyword.toLowerCase()
+          if ((entrust.no && entrust.no.toLowerCase().indexOf(lower) !== -1) || (entrust.company && entrust.company.toLowerCase().indexOf(lower) !== -1)) {
+            return true
+          }
+          if (!entrust.devices || !entrust.devices.length) {
+            return false
+          }
+          return entrust.devices.some(d => {
+            return (d.no && d.no.toLowerCase().indexOf(lower) !== -1) || (d.executor && d.executor.toLowerCase().indexOf(lower) !== -1)
+          })
+        },
+        getEntrustStats(entrust) {
+          const devices = entrust.devices || []
+          const total = devices.length
+          let submitted = 0
+          let myTotal = 0
+          let mySubmitted = 0
+          const user = this.currentUser
+          devices.forEach(d => {
+            if (['已提交', '已审核', '已批准'].indexOf(d.status) !== -1) {
+              submitted += 1
+            }
+            if (user && d.executor === user.name) {
+              myTotal += 1
+              if (['已提交', '已审核', '已批准'].indexOf(d.status) !== -1) {
+                mySubmitted += 1
+              }
+            }
+          })
+          const percentage = total === 0 ? 0 : Math.round((submitted / total) * 100)
+          return { total, submitted, percentage, myTotal, mySubmitted }
+        },
+        getVisibleDevices(entrust) {
+          const devices = entrust.devices || []
+          if (this.recordDeviceTab === 'all') {
+            return devices
+          }
+          return devices.filter(d => d.deviceType === this.recordDeviceTab)
+        },
+        getPagedDevices(entrust) {
+          const visible = this.getVisibleDevices(entrust)
+          if (!entrust.pagination) {
+            return visible
+          }
+          const { currentPage, pageSize } = entrust.pagination
+          const start = (currentPage - 1) * pageSize
+          const end = start + pageSize
+          return visible.slice(start, end)
+        },
+        handleDeviceSizeChange(val, entrust) {
+          if (entrust.pagination) {
+            entrust.pagination.pageSize = val
+            entrust.pagination.currentPage = 1
+          }
+        },
+        handleDeviceCurrentChange(val, entrust) {
+          if (entrust.pagination) {
+            entrust.pagination.currentPage = val
+          }
+        },
+        getStatusTagType(status) {
+          if (status === '未录入') return 'info'
+          if (status === '已录入') return 'warning'
+          if (status === '驳回') return 'danger'
+          if (status === '已审核') return 'primary'
+          if (status === '已批准') return 'success'
+          if (status === '已提交') return 'success'
+          return 'info'
+        },
+        canOperateDevice(device) {
+          const user = this.currentUser
+          if (!user) {
+            return false
+          }
+          if (user.role === 'leader') {
+            return false
+          }
+          return device.executor === user.name
+        },
+        canEditDevice(device) {
+          if (!this.canOperateDevice(device)) {
+            return false
+          }
+          return ['未录入', '已录入', '驳回'].indexOf(device.status) !== -1
+        },
+        canPreviewDevice(device) {
+          if (!device.hasRecord) {
+            return false
+          }
+          return device.status !== '未录入'
+        },
+        canSubmitDevice(device) {
+          if (!this.canOperateDevice(device)) {
+            return false
+          }
+          return ['已录入', '驳回'].indexOf(device.status) !== -1
+        },
+        openRecordEntryFromDevice(entrust, device) {
+          if (!this.canOperateDevice(device)) {
+            return
+          }
+          this.closeAllDialogs()
+          this.currentRecordType = device.deviceType === 'valve' ? 'valve' : 'gas'
+          this.currentRecordEntrust = entrust
+          this.currentRecordDevice = device
+          if (device.status === '未录入') {
+            device.status = '已录入'
+            device.hasRecord = true
+          }
+          this.dialogRecordEntryVisible = true
+        },
+        previewDeviceRecord(entrust, device) {
+          if (!device.hasRecord) {
+            return
+          }
+          this.$message.info('模拟打开设备原始记录预览')
+        },
+        canAuditApprove(device, type) {
+          if (!this.isCurrentUserLeader) {
+            return false
+          }
+          if (type === 'audit') {
+            return device.status === '已提交' || device.status === '驳回'
+          }
+          if (type === 'approve') {
+            return device.status === '已审核'
+          }
+          return false
+        },
+        canAuditReject(device) {
+          if (!this.isCurrentUserLeader) {
+            return false
+          }
+          return device.status === '已提交' || device.status === '已审核' || device.status === '已批准'
+        },
+        handleAuditAction(entrust, device, action) {
+          if (action === 'audit-pass') {
+            if (!this.canAuditApprove(device, 'audit')) {
+              return
+            }
+            device.status = '已审核'
+            this.$message.success('已审核通过')
+          } else if (action === 'approve-pass') {
+            if (!this.canAuditApprove(device, 'approve')) {
+              return
+            }
+            device.status = '已批准'
+            this.$message.success('已批准通过')
+          } else if (action === 'reject') {
+            if (!this.canAuditReject(device)) {
+              return
+            }
+            device.status = '驳回'
+            this.$message.warning('已驳回原始记录，等待检测员重新处理')
+          }
+        },
+        submitDeviceRecord(entrust, device) {
+          if (!this.canSubmitDevice(device)) {
+            return
+          }
+          device.status = '已提交'
+          this.$message.success('原始记录已提交')
+        },
+        isBatchSubmitDisabled(entrust) {
+          if (this.isCurrentUserLeader) {
+            return true
+          }
+          const user = this.currentUser
+          if (!user) {
+            return true
+          }
+          const devices = entrust.devices || []
+          return !devices.some(d => d.executor === user.name && ['已录入', '驳回'].indexOf(d.status) !== -1)
+        },
+        batchSubmitMyRecords(entrust) {
+          if (this.isBatchSubmitDisabled(entrust)) {
+            return
+          }
+          const user = this.currentUser
+          let count = 0
+          const devices = entrust.devices || []
+          devices.forEach(d => {
+            if (d.executor === user.name && ['已录入', '驳回'].indexOf(d.status) !== -1) {
+              d.status = '已提交'
+              count += 1
+            }
+          })
+          if (count > 0) {
+            this.$message.success('已提交' + count + '条原始记录')
+          }
+        },
+        handleMenuSelect(index) {
+          const map = {
+            'business': 'preview_business.html',
+            'assign': 'preview_assign.html',
+            'record-list': 'preview_record.html',
+            'audit': 'preview_audit.html',
+            'report-list': 'preview_report.html'
+          };
+          if (map[index]) {
+            window.location.href = map[index];
+          }
+        },
+        getPageTitle() {
+          const map = {
+            'business': '业务受理',
+            'assign': '任务分配',
+            'record-list': '原始记录 / 列表',
+            'record-entry': '原始记录 / 录入',
+            'audit': '审核管理',
+            'report-list': '报告管理 / 列表',
+            'report-preview': '报告管理 / 预览'
+          };
+          return map[this.activeMenu] || '首页';
+        },
+        getRiskColor(days) {
+          if (days < 0) return 'danger';
+          if (days <= 3) return 'warning';
+          return 'success';
+        },
+        openAssignDialog(row, device, isBatch) {
+          this.currentAssignRow = row
+          this.currentAssignDevice = device || null
+          this.assignMode = isBatch ? 'device-batch' : (device ? 'device' : 'entrust')
+          this.selectedExecutor = device ? (device.executor || '') : (row.executor || '')
+          this.staffSearchKeyword = ''
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          const deadline = (entrust && entrust.expectedReportDate) || row.reportDeadline || ''
+          this.assignReportDeadline = deadline
+          this.workInstructionContent = ''
+          this.workInstructionDeadline = deadline
+          this.workInstructionIssuer = this.currentUser ? this.currentUser.name : ''
+          this.workInstructionReceiver = this.selectedExecutor
+          this.dialogAssignVisible = true
+        },
+        confirmAssignExecutor() {
+          if (!this.currentAssignRow || !this.selectedExecutor) {
+            return
+          }
+          if (!this.workInstructionIssuer) {
+            this.workInstructionIssuer = this.currentUser ? this.currentUser.name : ''
+          }
+          if (!this.workInstructionReceiver) {
+            this.workInstructionReceiver = this.selectedExecutor
+          }
+          if (!this.workInstructionContent || !this.workInstructionDeadline) {
+            this.$message.warning('请填写工作指令内容和要求完成期限')
+            return
+          }
+          const entrust = this.recordEntrustList.find(e => e.no === this.currentAssignRow.no)
+          if (this.assignMode === 'entrust') {
+            if (entrust && entrust.devices) {
+              entrust.devices.forEach(d => {
+                if (!d.executor) {
+                  d.executor = this.selectedExecutor
+                }
+              })
+            }
+            this.syncEntrustExecutorFromDevices(this.currentAssignRow, entrust)
+            this.currentAssignRow.status = '已分配'
+          } else if (this.assignMode === 'device' && this.currentAssignDevice) {
+            this.currentAssignDevice.executor = this.selectedExecutor
+            this.syncEntrustExecutorFromDevices(this.currentAssignRow, entrust)
+            this.currentAssignRow.status = '已分配'
+          } else if (this.assignMode === 'device-batch') {
+            const selected = this.assignDeviceSelectionMap[this.currentAssignRow.no] || []
+            if (entrust && entrust.devices && selected.length) {
+              selected.forEach(sel => {
+                const d = entrust.devices.find(x => x.no === sel.no)
+                if (d) {
+                  d.executor = this.selectedExecutor
+                }
+              })
+            }
+            this.syncEntrustExecutorFromDevices(this.currentAssignRow, entrust)
+            this.currentAssignRow.status = '已分配'
+          }
+          if (this.isCurrentUserLeader) {
+            this.currentAssignRow.reportDeadline = this.assignReportDeadline || ''
+            if (entrust) {
+              entrust.expectedReportDate = this.assignReportDeadline || ''
+            }
+          }
+          this.$message.success('分配成功，已生成工作指令')
+          this.dialogAssignVisible = false
+        },
+        // 任务分配 - 特种设备表头筛选
+        handleAssignNoFilter(command) {
+          if (command === '__clear__') {
+            this.assignSpecialSearch.no = ''
+          } else {
+            this.assignSpecialSearch.no = command
+          }
+        },
+        handleAssignTypeFilter(command) {
+          if (command === '__clear__') {
+            this.assignSpecialSearch.type = ''
+          } else {
+            this.assignSpecialSearch.type = command
+          }
+        },
+        handleAssignStatusFilter(command) {
+          if (command === '__clear__') {
+            this.assignSpecialSearch.status = ''
+          } else {
+            this.assignSpecialSearch.status = command
+          }
+        },
+        handleSpecialSelect() {
+          this.closeAllDialogs()
+          this.dialogSubTypeVisible = true
+        },
+        openSpecialForm() {
+          this.closeAllDialogs()
+          this.activeStep = 0;
+          this.form.sampleBatchNo = '';
+          this.form.samples = [];
+          this.addSampleRow();
+          this.updateTestStandard();
+          this.dialogFormVisible = true;
+        },
+        updateTestStandard() {
+          if (this.currentDevice && this.currentDevice.value === 'valve') {
+            this.form.testStandard = this.form.valveMode === '在线'
+              ? 'TSGZF001-2006'
+              : 'TSGZF001-2006《安全阀安全技术监察规程》';
+          } else if (this.currentDevice && this.currentDevice.testStandard) {
+            this.form.testStandard = this.currentDevice.testStandard;
+          } else {
+            this.form.testStandard = '';
+          }
+        },
+        submitEntrust() {
+          this.form.sampleCount = this.form.samples.length;
+          this.$message.success('委托单创建成功！');
+          this.dialogFormVisible = false;
+        },
+        addSampleRow() {
+          const sample = {};
+          this.currentSampleFields.forEach(field => {
+            sample[field.prop] = '';
+          });
+          this.form.samples.push(sample);
+        },
+        copyLastSample() {
+          if (!this.form.samples.length) {
+            this.addSampleRow();
+            return;
+          }
+          const last = this.form.samples[this.form.samples.length - 1];
+          const copy = {};
+          this.currentSampleFields.forEach(field => {
+            copy[field.prop] = last[field.prop];
+          });
+          this.form.samples.push(copy);
+        },
+        removeSampleRow(index) {
+          this.form.samples.splice(index, 1);
+        },
+        openRecordEntry(row) {
+          this.closeAllDialogs()
+          this.currentRecordType = row.type;
+          this.dialogRecordEntryVisible = true;
+        },
+        openReportPreview(row) {
+          this.currentReport = row;
+          this.currentRecordType = row.type; // 借用这个变量来控制模板显示
+          this.activeMenu = 'report-preview';
+        }
+      }
+    })
+  </script>
+</body>
+</html>
