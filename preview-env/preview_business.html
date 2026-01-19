@@ -483,6 +483,13 @@
                 </el-form-item>
               </el-col>
             </el-row>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item label="使用单位地址">
+                  <el-input v-model="form.useCompanyAddress" placeholder="同单位地址可不填"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
             <el-row v-if="currentDevice && currentDevice.value === 'gas'" :gutter="20">
               <el-col :span="12">
                 <el-form-item label="制造单位" required><el-input v-model="form.manufacturer"></el-input></el-form-item>
@@ -966,6 +973,7 @@
           contact: '',
           phone: '',
           address: '',
+          useCompanyAddress: '',
           manufacturer: '',
           designCompany: '',
           installCompany: '',
