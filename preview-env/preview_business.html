@@ -243,7 +243,15 @@
                   </template>
                 </el-table-column>
                 <el-table-column label="状态" width="100" align="center">
-                  <template slot-scope="scope"><el-tag size="small">{{ scope.row.status }}</el-tag></template>
+                  <template slot-scope="scope">
+                    <el-tag
+                      size="small"
+                      style="cursor: pointer;"
+                      @click="openTrack(scope.row)"
+                    >
+                      {{ scope.row.status }}
+                    </el-tag>
+                  </template>
                 </el-table-column>
                 <el-table-column label="受理人" prop="acceptor" width="100" align="center"></el-table-column>
                 <el-table-column label="委托日期" prop="entrustDate" width="120" align="center"></el-table-column>
@@ -1625,6 +1633,9 @@
           if (map[index]) {
             window.location.href = map[index];
           }
+        },
+        openTrack(row) {
+          this.trackVisible = true
         },
         getPageTitle() {
           const map = {

@@ -234,13 +234,13 @@
             ></el-tab-pane>
           </el-tabs>
 
-          <el-table
-            ref="recordEntrustTable"
-            :data="filteredRecordEntrustList"
-            border
-            style="width: 100%"
-            size="small"
-          >
+            <el-table
+              ref="recordEntrustTable"
+              :data="filteredRecordEntrustList"
+              border
+              style="width: 100%"
+              size="small"
+            >
             <el-table-column type="expand">
               <template slot-scope="props">
                   <el-table :data="getPagedDevices(props.row)" size="small" border>
@@ -311,9 +311,19 @@
             </el-table-column>
             <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
             <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
+            <el-table-column label="气瓶使用单位" width="180" align="center">
+              <template slot-scope="scope">
+                <span>{{ scope.row.useCompany || '-' }}</span>
+              </template>
+            </el-table-column>
             <el-table-column label="报告出具截止日" prop="expectedReportDate" width="160" align="center">
               <template slot-scope="scope">
                 <span>{{ scope.row.expectedReportDate || '-' }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="要求完成期限" width="160" align="center">
+              <template slot-scope="scope">
+                <span>{{ scope.row.expectedReportDate || scope.row.reportDeadline || '-' }}</span>
               </template>
             </el-table-column>
             <el-table-column label="设备总数" width="100" align="center">
@@ -384,114 +394,530 @@
               </div>
             </div>
           
-          <div style="display: flex; flex: 1; overflow: hidden; gap: 20px;">
+            <div style="display: flex; flex: 1; overflow: hidden; gap: 20px;">
             <!-- 左侧：录入表单区 -->
             <div style="flex: 2; overflow-y: auto; padding-right: 10px;">
-               <!-- 公共：环境条件 -->
+               <!-- 原始记录基本信息（对应 XZY-JL104 头部字段） -->
                <el-card shadow="never" class="mb8">
-                 <div slot="header" class="clearfix"><span>环境条件</span></div>
-                 <el-form :inline="true" size="small" :model="recordForm">
-                   <el-form-item label="环境温度(℃)"><el-input v-model="recordForm.envTemperature" style="width: 80px;"></el-input></el-form-item>
-                   <el-form-item label="相对湿度(%)"><el-input v-model="recordForm.envHumidity" style="width: 80px;"></el-input></el-form-item>
-                   <el-form-item label="大气压力(kPa)"><el-input v-model="recordForm.envPressure" style="width: 80px;"></el-input></el-form-item>
+                 <div slot="header" class="clearfix"><span>原始记录基本信息</span></div>
+                 <el-form label-width="120px" size="small" :model="recordForm.header">
+                   <el-row :gutter="20">
+                     <el-col :span="12">
+                       <el-form-item label="报告编号">
+                         <el-input v-model="recordForm.header.reportNo"></el-input>
+                       </el-form-item>
+                     </el-col>
+                     <el-col :span="12">
+                       <el-form-item label="气瓶使用单位">
+                         <el-input v-model="recordForm.header.usingUnit"></el-input>
+                       </el-form-item>
+                     </el-col>
+                   </el-row>
+                   <el-row :gutter="20">
+                     <el-col :span="12">
+                       <el-form-item label="邮政编码">
+                         <el-input v-model="recordForm.header.postCode"></el-input>
+                       </el-form-item>
+                     </el-col>
+                     <el-col :span="12">
+                       <el-form-item label="联系电话">
+                         <el-input v-model="recordForm.header.phone"></el-input>
+                       </el-form-item>
+                     </el-col>
+                   </el-row>
+                   <el-form-item label="地址">
+                     <el-input v-model="recordForm.header.address"></el-input>
+                   </el-form-item>
+                   <el-row :gutter="20">
+                     <el-col :span="12">
+                       <el-form-item label="气瓶水容积(L)">
+                         <el-input v-model="recordForm.header.waterVolume"></el-input>
+                       </el-form-item>
+                     </el-col>
+                     <el-col :span="12">
+                       <el-form-item label="气瓶颜色">
+                         <el-input v-model="recordForm.header.color"></el-input>
+                       </el-form-item>
+                     </el-col>
+                   </el-row>
+                   <el-row :gutter="20">
+                     <el-col :span="12">
+                       <el-form-item label="气瓶编号">
+                         <el-input v-model="recordForm.header.bottleNo"></el-input>
+                       </el-form-item>
+                     </el-col>
+                     <el-col :span="12">
+                       <el-form-item label="上次检验日期">
+                         <el-date-picker v-model="recordForm.header.lastInspectionDate" type="date" style="width: 100%;"></el-date-picker>
+                       </el-form-item>
+                     </el-col>
+                   </el-row>
+                   <el-row :gutter="20">
+                     <el-col :span="12">
+                       <el-form-item label="公称工作压力(MPa)">
+                         <el-input v-model="recordForm.header.nominalPressure"></el-input>
+                       </el-form-item>
+                     </el-col>
+                     <el-col :span="12">
+                       <el-form-item label="制造日期">
+                         <el-date-picker v-model="recordForm.header.manufactureDate" type="date" style="width: 100%;"></el-date-picker>
+                       </el-form-item>
+                     </el-col>
+                   </el-row>
+                   <el-row :gutter="20">
+                     <el-col :span="8">
+                       <el-form-item label="有无气体">
+                         <el-radio-group v-model="recordForm.header.hasGas">
+                           <el-radio label="有">有</el-radio>
+                           <el-radio label="无">无</el-radio>
+                         </el-radio-group>
+                       </el-form-item>
+                     </el-col>
+                     <el-col :span="8">
+                       <el-form-item label="有无瓶阀">
+                         <el-radio-group v-model="recordForm.header.hasValve">
+                           <el-radio label="有">有</el-radio>
+                           <el-radio label="无">无</el-radio>
+                         </el-radio-group>
+                       </el-form-item>
+                     </el-col>
+                     <el-col :span="8">
+                       <el-form-item label="是否修理过">
+                         <el-radio-group v-model="recordForm.header.repaired">
+                           <el-radio label="是">是</el-radio>
+                           <el-radio label="否">否</el-radio>
+                         </el-radio-group>
+                       </el-form-item>
+                     </el-col>
+                   </el-row>
+                   <el-row :gutter="20">
+                     <el-col :span="12">
+                       <el-form-item label="水压试验日期">
+                         <el-date-picker v-model="recordForm.header.waterTestDate" type="date" style="width: 100%;"></el-date-picker>
+                       </el-form-item>
+                     </el-col>
+                   </el-row>
                  </el-form>
                </el-card>
-               
+
                <!-- 模板A：气瓶检测记录 (Tabs 布局) -->
                <div v-if="currentRecordType === 'gas'">
                  <el-tabs v-model="activeRecordTab" type="border-card">
-                   <!-- 表1：外观检查评估 -->
-                   <el-tab-pane label="外观检查评估" name="appearance">
-                      <el-table :data="recordForm.gas.appearance.items" border size="small">
-                        <el-table-column prop="content" label="检查项目"></el-table-column>
-                        <el-table-column label="结果" width="180">
-                          <template slot-scope="scope">
-                            <el-radio-group v-model="scope.row.result" size="mini">
-                              <el-radio label="合格">合格</el-radio>
-                              <el-radio label="不合格">不合格</el-radio>
-                            </el-radio-group>
-                          </template>
-                        </el-table-column>
-                        <el-table-column label="备注">
-                          <template slot-scope="scope">
-                            <el-input v-model="scope.row.remark" size="mini" placeholder="异常情况描述"></el-input>
-                          </template>
-                        </el-table-column>
-                      </el-table>
-                      <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                        <span style="font-weight: bold; margin-right: 15px;">外观检查结论：</span>
-                        <el-radio-group v-model="recordForm.gas.appearance.conclusion">
-                          <el-radio label="合格">合格</el-radio>
-                          <el-radio label="不合格">不合格</el-radio>
-                        </el-radio-group>
-                      </div>
+                   <!-- 表1：外观/内部/瓶口/瓶阀综合检查（对应 XZY-JL104-2026 （一）） -->
+                   <el-tab-pane label="外观/内部/瓶口/瓶阀" name="appearance">
+                     <el-card shadow="never" class="mb8">
+                       <div slot="header" class="clearfix"><span>外观检查</span></div>
+                       <el-form label-width="140px" size="small" style="margin-bottom: 10px;">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.appearance" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                       </el-form>
+                       <el-table :data="recordForm.gas.appearance.items" border size="small">
+                          <el-table-column prop="content" label="检查项目"></el-table-column>
+                          <el-table-column label="结果" width="220">
+                            <template slot-scope="scope">
+                              <el-radio-group v-model="scope.row.result" size="mini">
+                                <el-radio label="合格">合格</el-radio>
+                                <el-radio label="修复">修复</el-radio>
+                                <el-radio label="判废">判废</el-radio>
+                              </el-radio-group>
+                            </template>
+                          </el-table-column>
+                          <el-table-column label="备注">
+                            <template slot-scope="scope">
+                              <el-input v-model="scope.row.remark" size="mini" placeholder="异常情况描述"></el-input>
+                            </template>
+                          </el-table-column>
+                        </el-table>
+                        <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                          <span style="font-weight: bold; margin-right: 15px;">外观检查结论：</span>
+                          <el-radio-group v-model="recordForm.gas.appearance.conclusion">
+                            <el-radio label="合格">合格</el-radio>
+                            <el-radio label="修复">修复</el-radio>
+                            <el-radio label="判废">判废</el-radio>
+                          </el-radio-group>
+                        </div>
+                     </el-card>
+
+                     <el-card shadow="never" class="mb8">
+                       <div slot="header" class="clearfix"><span>内部检查</span></div>
+                       <el-form label-width="160px" size="small">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.internal.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.internal" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="有无气味">
+                               <el-input v-model="recordForm.gas.appearance.internal.smell"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="杂物种类和数量">
+                               <el-input v-model="recordForm.gas.appearance.internal.debris"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-form-item label="内表面状况描述">
+                           <el-input v-model="recordForm.gas.appearance.internal.innerSurface" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="缺陷位置描述">
+                           <el-input v-model="recordForm.gas.appearance.internal.defectPosition" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="其他">
+                           <el-input v-model="recordForm.gas.appearance.internal.other" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="内部检查结论">
+                           <el-radio-group v-model="recordForm.gas.appearance.internal.result">
+                             <el-radio label="合格">合格</el-radio>
+                             <el-radio label="修复">修复</el-radio>
+                             <el-radio label="判废">判废</el-radio>
+                           </el-radio-group>
+                         </el-form-item>
+                       </el-form>
+                     </el-card>
+
+                     <el-card shadow="never" class="mb8">
+                       <div slot="header" class="clearfix"><span>瓶口检查</span></div>
+                       <el-form label-width="160px" size="small">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.mouth.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.mouth" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                         <el-form-item label="螺纹规格">
+                           <el-input v-model="recordForm.gas.appearance.mouth.threadSpec"></el-input>
+                         </el-form-item>
+                         <el-form-item label="瓶口端面描述">
+                           <el-input v-model="recordForm.gas.appearance.mouth.endFace" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="密封圈环槽描述">
+                           <el-input v-model="recordForm.gas.appearance.mouth.sealGroove" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="瓶口螺纹状况描述">
+                           <el-input v-model="recordForm.gas.appearance.mouth.threadStatus" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="螺纹状况评估">
+                           <el-input v-model="recordForm.gas.appearance.mouth.threadEvaluation"></el-input>
+                         </el-form-item>
+                         <el-form-item label="其他">
+                           <el-input v-model="recordForm.gas.appearance.mouth.other" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                        <el-form-item label="瓶口检查结论">
+                          <el-radio-group v-model="recordForm.gas.appearance.mouth.result">
+                            <el-radio label="合格">合格</el-radio>
+                            <el-radio label="修复">修复</el-radio>
+                            <el-radio label="判废">判废</el-radio>
+                          </el-radio-group>
+                        </el-form-item>
+                       </el-form>
+                     </el-card>
+
+                     <el-card shadow="never" class="mb8">
+                       <div slot="header" class="clearfix"><span>瓶阀检验</span></div>
+                       <el-form label-width="180px" size="small">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.valve.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.valve" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="气瓶阀编号">
+                               <el-input v-model="recordForm.gas.appearance.valve.valveNo"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="瓶阀制造日期">
+                               <el-date-picker v-model="recordForm.gas.appearance.valve.manufactureDate" type="date" style="width: 100%;"></el-date-picker>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-form-item label="瓶阀螺纹完整性状况描述">
+                           <el-input v-model="recordForm.gas.appearance.valve.threadIntegrity" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="气瓶阀阀体有无变形">
+                           <el-input v-model="recordForm.gas.appearance.valve.bodyDeformation"></el-input>
+                         </el-form-item>
+                         <el-form-item label="气密状况描述">
+                           <el-input v-model="recordForm.gas.appearance.valve.leakStatus" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="爆破片是否更换">
+                           <el-input v-model="recordForm.gas.appearance.valve.burstDiscReplaced"></el-input>
+                         </el-form-item>
+                         <el-form-item label="瓶阀检验结论">
+                           <el-radio-group v-model="recordForm.gas.appearance.valve.result">
+                             <el-radio label="合格">合格</el-radio>
+                             <el-radio label="修复">修复</el-radio>
+                             <el-radio label="判废">判废</el-radio>
+                           </el-radio-group>
+                         </el-form-item>
+                       </el-form>
+                     </el-card>
+
+                     <el-card shadow="never">
+                       <div slot="header" class="clearfix"><span>复合气瓶状况与签字</span></div>
+                       <el-form label-width="150px" size="small">
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="合格气瓶">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.qualified"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="粘贴标签">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.labelPasted"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="修复气瓶">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.repaired"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="清洗">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.cleaned"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="水压">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.hydro"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="丢弃">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.discarded"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="其他建议">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.otherSuggestion"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="报废气瓶">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.scrapped"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+
+                         <el-row :gutter="20" style="margin-top: 10px;">
+                           <el-col :span="12">
+                             <el-form-item label="检验员">
+                               <el-input v-model="recordForm.gas.appearance.sign.inspector"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="检验员资格证号">
+                               <el-input v-model="recordForm.gas.appearance.sign.inspectorCertNo"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="检验日期">
+                               <el-date-picker v-model="recordForm.gas.appearance.sign.inspectDate" type="date" style="width: 100%;"></el-date-picker>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="校核员">
+                               <el-input v-model="recordForm.gas.appearance.sign.checker"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="校核员资格证号">
+                               <el-input v-model="recordForm.gas.appearance.sign.checkerCertNo"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="校核日期">
+                               <el-date-picker v-model="recordForm.gas.appearance.sign.checkDate" type="date" style="width: 100%;"></el-date-picker>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                       </el-form>
+                     </el-card>
                    </el-tab-pane>
 
                    <!-- 表2：装置校验 -->
                    <el-tab-pane label="装置校验" name="calibration">
-                      <el-form label-width="120px" size="small" style="margin-top: 10px;">
-                        <el-form-item label="标准表编号"><el-input v-model="recordForm.gas.calibration.stdDeviceNo"></el-input></el-form-item>
-                        <el-row>
-                          <el-col :span="12"><el-form-item label="量程"><el-input v-model="recordForm.gas.calibration.range"></el-input></el-form-item></el-col>
-                          <el-col :span="12"><el-form-item label="精度等级"><el-input v-model="recordForm.gas.calibration.accuracy"></el-input></el-form-item></el-col>
+                      <div style="font-size: 12px; color: #909399; margin-bottom: 15px;">气瓶外测法水压试验装置校验</div>
+                      
+                      <!-- 头部公共字段 -->
+                      <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                        <el-form label-width="110px" size="small">
+                          <el-row :gutter="20">
+                            <el-col :span="12"><el-form-item label="使用设备名称"><el-input v-model="recordForm.gas.calibration.deviceName" disabled></el-input></el-form-item></el-col>
+                            <el-col :span="12"><el-form-item label="标准瓶号"><el-input v-model="recordForm.gas.calibration.stdBottleNo"></el-input></el-form-item></el-col>
+                          </el-row>
+                          <el-form-item label="设备编号">
+                            <el-select v-model="recordForm.gas.calibration.deviceNo" multiple filterable placeholder="请选择设备/工位" style="width: 100%;">
+                               <el-option label="HD2025032901" value="HD2025032901"></el-option>
+                               <el-option label="工位：1#" value="工位：1#"></el-option>
+                               <el-option label="工位：2#" value="工位：2#"></el-option>
+                            </el-select>
+                          </el-form-item>
+                          <el-row :gutter="20">
+                             <el-col :span="12"><el-form-item label="环境温度(℃)"><el-input v-model="recordForm.gas.calibration.envTemp"></el-input></el-form-item></el-col>
+                             <el-col :span="12"><el-form-item label="水温(℃)"><el-input v-model="recordForm.gas.calibration.waterTemp"></el-input></el-form-item></el-col>
+                          </el-row>
+                        </el-form>
+                      </div>
+
+                      <!-- 列表字段 -->
+                      <el-form label-width="180px" size="small">
+                        <el-row :gutter="10">
+                          <el-col :span="12"><el-form-item label="校验日期"><el-date-picker v-model="recordForm.gas.calibration.date" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
+                          <el-col :span="12"><el-form-item label="校验时间"><el-time-picker v-model="recordForm.gas.calibration.time" style="width: 100%;"></el-time-picker></el-form-item></el-col>
                         </el-row>
-                        <el-row>
-                          <el-col :span="12"><el-form-item label="标准值(MPa)"><el-input v-model="recordForm.gas.calibration.stdValue"></el-input></el-form-item></el-col>
-                          <el-col :span="12"><el-form-item label="实测值(MPa)"><el-input v-model="recordForm.gas.calibration.measuredValue"></el-input></el-form-item></el-col>
-                        </el-row>
-                        <el-row>
-                          <el-col :span="12"><el-form-item label="误差"><el-input v-model="recordForm.gas.calibration.error"></el-input></el-form-item></el-col>
-                          <el-col :span="12">
-                             <el-form-item label="校验结果">
-                               <el-radio-group v-model="recordForm.gas.calibration.result">
-                                 <el-radio label="合格">合格</el-radio>
-                                 <el-radio label="不合格">不合格</el-radio>
-                               </el-radio-group>
-                             </el-form-item>
-                          </el-col>
+                        <el-form-item label="检验压力(MPa)"><el-input v-model="recordForm.gas.calibration.testPressure"></el-input></el-form-item>
+                        <el-form-item label="标准容积全变形值△VB(mL)"><el-input v-model="recordForm.gas.calibration.stdVolDeformation"></el-input></el-form-item>
+                        <el-form-item label="实测容积全变形值△V(mL)"><el-input v-model="recordForm.gas.calibration.measuredVolDeformation"></el-input></el-form-item>
+                        <el-form-item label="容积残余变形值(mL)"><el-input v-model="recordForm.gas.calibration.residualDeformation"></el-input></el-form-item>
+                        <el-form-item label="总相对偏差(δ≤1%)"><el-input v-model="recordForm.gas.calibration.totalRelativeDeviation"></el-input></el-form-item>
+                        <el-row :gutter="10">
+                          <el-col :span="12"><el-form-item label="校验者"><el-input v-model="recordForm.gas.calibration.tester"></el-input></el-form-item></el-col>
+                          <el-col :span="12"><el-form-item label="备注"><el-input v-model="recordForm.gas.calibration.remark"></el-input></el-form-item></el-col>
                         </el-row>
                       </el-form>
                    </el-tab-pane>
 
                    <!-- 表3：水压试验 -->
                    <el-tab-pane label="水压试验" name="hydrostatic">
-                      <el-form label-width="140px" size="small" style="margin-top: 10px;">
+                      <div style="font-size: 12px; color: #909399; margin-bottom: 15px;">复合气瓶水压试验数据</div>
+                      
+                      <!-- 头部公共字段 -->
+                      <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                        <el-form label-width="110px" size="small">
+                          <el-row :gutter="20">
+                            <el-col :span="12"><el-form-item label="设备名称"><el-input v-model="recordForm.gas.hydrostatic.deviceName" disabled></el-input></el-form-item></el-col>
+                            <el-col :span="12">
+                                <el-form-item label="设备编号">
+                                    <el-select v-model="recordForm.gas.hydrostatic.deviceNo" multiple filterable placeholder="请选择设备/工位" style="width: 100%;">
+                                        <el-option label="HD2025032901" value="HD2025032901"></el-option>
+                                        <el-option label="工位：1#" value="工位：1#"></el-option>
+                                        <el-option label="工位：2#" value="工位：2#"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                          </el-row>
+                          <el-row :gutter="20">
+                            <el-col :span="12"><el-form-item label="设备型号"><el-input v-model="recordForm.gas.hydrostatic.deviceModel"></el-input></el-form-item></el-col>
+                            <el-col :span="12"><el-form-item label="标准瓶号"><el-input v-model="recordForm.gas.hydrostatic.stdBottleNo"></el-input></el-form-item></el-col>
+                          </el-row>
+                          <el-row :gutter="20">
+                             <el-col :span="8"><el-form-item label="试验方法"><el-input v-model="recordForm.gas.hydrostatic.testMethod"></el-input></el-form-item></el-col>
+                             <el-col :span="8"><el-form-item label="试验温度(℃)"><el-input v-model="recordForm.gas.hydrostatic.testTemp"></el-input></el-form-item></el-col>
+                             <el-col :span="8"><el-form-item label="水温(℃)"><el-input v-model="recordForm.gas.hydrostatic.waterTemp"></el-input></el-form-item></el-col>
+                          </el-row>
+                           <el-row :gutter="20">
+                             <el-col :span="8"><el-form-item label="制造国别"><el-input v-model="recordForm.gas.hydrostatic.country"></el-input></el-form-item></el-col>
+                             <el-col :span="8"><el-form-item label="制造单位"><el-input v-model="recordForm.gas.hydrostatic.manufacturer"></el-input></el-form-item></el-col>
+                             <el-col :span="8"><el-form-item label="产权单位"><el-input v-model="recordForm.gas.hydrostatic.propertyUnit"></el-input></el-form-item></el-col>
+                          </el-row>
+                           <el-row :gutter="20">
+                             <el-col :span="8"><el-form-item label="气瓶型号"><el-input v-model="recordForm.gas.hydrostatic.cylinderModel"></el-input></el-form-item></el-col>
+                             <el-col :span="8"><el-form-item label="气瓶水容积(L)"><el-input v-model="recordForm.gas.hydrostatic.waterVolume"></el-input></el-form-item></el-col>
+                             <el-col :span="8"><el-form-item label="公称工作压力"><el-input v-model="recordForm.gas.hydrostatic.nominalPressure"></el-input></el-form-item></el-col>
+                          </el-row>
+                          <el-form-item label="试验日期"><el-date-picker v-model="recordForm.gas.hydrostatic.testDate" type="date" style="width: 100%;"></el-date-picker></el-form-item>
+                        </el-form>
+                      </div>
+
+                      <!-- 列表字段 (单条记录) -->
+                      <el-form label-width="180px" size="small">
+                         <el-form-item label="气瓶编号"><el-input v-model="recordForm.header.bottleNo" disabled></el-input></el-form-item>
+                         <el-form-item label="出厂日期"><el-date-picker v-model="recordForm.gas.hydrostatic.manufactureDate" type="date" style="width: 100%;"></el-date-picker></el-form-item>
                         <el-row>
-                          <el-col :span="12"><el-form-item label="试验压力(MPa)"><el-input v-model="recordForm.gas.hydrostatic.testPressure"></el-input></el-form-item></el-col>
+                          <el-col :span="12"><el-form-item label="水压试验压力(MPa)"><el-input v-model="recordForm.gas.hydrostatic.testPressure"></el-input></el-form-item></el-col>
                           <el-col :span="12"><el-form-item label="保压时间(s)"><el-input v-model="recordForm.gas.hydrostatic.holdTime"></el-input></el-form-item></el-col>
                         </el-row>
                         <el-row>
-                          <el-col :span="12"><el-form-item label="全变形(mL)"><el-input v-model="recordForm.gas.hydrostatic.totalExpansion"></el-input></el-form-item></el-col>
-                          <el-col :span="12"><el-form-item label="残余变形(mL)"><el-input v-model="recordForm.gas.hydrostatic.residualExpansion"></el-input></el-form-item></el-col>
+                          <el-col :span="12"><el-form-item label="容积全变形值(mL)"><el-input v-model="recordForm.gas.hydrostatic.totalExpansion"></el-input></el-form-item></el-col>
+                          <el-col :span="12"><el-form-item label="容积残余变形值(mL)"><el-input v-model="recordForm.gas.hydrostatic.residualExpansion"></el-input></el-form-item></el-col>
                         </el-row>
-                         <el-row>
-                          <el-col :span="12"><el-form-item label="残余变形率(%)"><el-input v-model="recordForm.gas.hydrostatic.deformationRate"></el-input></el-form-item></el-col>
-                          <el-col :span="12"><el-form-item label="水温(℃)"><el-input v-model="recordForm.gas.hydrostatic.temp"></el-input></el-form-item></el-col>
+                        <el-form-item label="容积残余变形率(%)"><el-input v-model="recordForm.gas.hydrostatic.deformationRate"></el-input></el-form-item>
+                        <el-form-item label="发生过何种瓶体异常现象"><el-input v-model="recordForm.gas.hydrostatic.abnormal"></el-input></el-form-item>
+                        <el-row>
+                            <el-col :span="12">
+                                <el-form-item label="试验结果">
+                                  <el-radio-group v-model="recordForm.gas.hydrostatic.result">
+                                    <el-radio label="合格">合格</el-radio>
+                                    <el-radio label="不合格">不合格</el-radio>
+                                  </el-radio-group>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12"><el-form-item label="试验者"><el-input v-model="recordForm.gas.hydrostatic.tester"></el-input></el-form-item></el-col>
                         </el-row>
-                        <el-form-item label="试验结果">
-                          <el-radio-group v-model="recordForm.gas.hydrostatic.result">
-                            <el-radio label="合格">合格</el-radio>
-                            <el-radio label="不合格">不合格</el-radio>
-                          </el-radio-group>
-                        </el-form-item>
                       </el-form>
                    </el-tab-pane>
 
                    <!-- 表4：气密性试验 -->
                    <el-tab-pane label="气密性试验" name="airtightness">
-                      <el-form label-width="120px" size="small" style="margin-top: 10px;">
-                        <el-form-item label="试验介质"><el-input v-model="recordForm.gas.airtightness.medium"></el-input></el-form-item>
+                      <div style="font-size: 12px; color: #909399; margin-bottom: 15px;">复合气瓶气密性试验数据</div>
+                      
+                      <!-- 头部公共字段 -->
+                      <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                        <el-form label-width="110px" size="small">
+                          <el-row :gutter="20">
+                            <el-col :span="12"><el-form-item label="使用设备名称"><el-input v-model="recordForm.gas.airtightness.deviceName" disabled></el-input></el-form-item></el-col>
+                            <el-col :span="12">
+                                <el-form-item label="设备编号">
+                                    <el-select v-model="recordForm.gas.airtightness.deviceNo" multiple filterable placeholder="请选择设备/工位" style="width: 100%;">
+                                        <el-option label="HD2025032901" value="HD2025032901"></el-option>
+                                        <el-option label="工位：1#" value="工位：1#"></el-option>
+                                        <el-option label="工位：2#" value="工位：2#"></el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </el-col>
+                          </el-row>
+                          <el-row :gutter="20">
+                             <el-col :span="12"><el-form-item label="试验日期"><el-date-picker v-model="recordForm.gas.airtightness.testDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
+                             <el-col :span="12"><el-form-item label="试验环境温度"><el-input v-model="recordForm.gas.airtightness.envTemp"><template slot="append">℃</template></el-input></el-form-item></el-col>
+                          </el-row>
+                          <el-row :gutter="20">
+                             <el-col :span="12"><el-form-item label="试验方法"><el-input v-model="recordForm.gas.airtightness.testMethod" disabled></el-input></el-form-item></el-col>
+                             <el-col :span="12"><el-form-item label="试验介质"><el-input v-model="recordForm.gas.airtightness.medium"></el-input></el-form-item></el-col>
+                          </el-row>
+                        </el-form>
+                      </div>
+
+                      <!-- 列表字段 (单条记录) -->
+                      <el-form label-width="180px" size="small">
+                         <el-form-item label="试验气瓶瓶号"><el-input v-model="recordForm.header.bottleNo" disabled></el-input></el-form-item>
+                         <el-row>
+                           <el-col :span="12"><el-form-item label="阀门型号"><el-input v-model="recordForm.gas.airtightness.valveModel"></el-input></el-form-item></el-col>
+                           <el-col :span="12"><el-form-item label="试验压力(MPa)"><el-input v-model="recordForm.gas.airtightness.pressure"></el-input></el-form-item></el-col>
+                         </el-row>
+                         <el-row>
+                           <el-col :span="12"><el-form-item label="保压浸水时间(min)"><el-input v-model="recordForm.gas.airtightness.holdTime"></el-input></el-form-item></el-col>
+                           <el-col :span="12"><el-form-item label="离水面距离(cm)"><el-input v-model="recordForm.gas.airtightness.distToWater" placeholder="受试气瓶最高处离水面距离"></el-input></el-form-item></el-col>
+                         </el-row>
+                        <el-form-item label="试验气瓶有无异常现象"><el-input v-model="recordForm.gas.airtightness.abnormal"></el-input></el-form-item>
                         <el-row>
-                          <el-col :span="12"><el-form-item label="试验压力(MPa)"><el-input v-model="recordForm.gas.airtightness.pressure"></el-input></el-form-item></el-col>
-                          <el-col :span="12"><el-form-item label="保压时间(s)"><el-input v-model="recordForm.gas.airtightness.holdTime"></el-input></el-form-item></el-col>
+                            <el-col :span="12">
+                                <el-form-item label="试验结果">
+                                  <el-radio-group v-model="recordForm.gas.airtightness.result">
+                                    <el-radio label="合格">合格</el-radio>
+                                    <el-radio label="不合格">不合格</el-radio>
+                                  </el-radio-group>
+                                </el-form-item>
+                            </el-col>
+                            <el-col :span="12"><el-form-item label="试验者"><el-input v-model="recordForm.gas.airtightness.tester"></el-input></el-form-item></el-col>
                         </el-row>
-                        <el-form-item label="泄漏情况"><el-input v-model="recordForm.gas.airtightness.leakage"></el-input></el-form-item>
-                        <el-form-item label="试验结果">
-                          <el-radio-group v-model="recordForm.gas.airtightness.result">
-                            <el-radio label="合格">合格</el-radio>
-                            <el-radio label="不合格">不合格</el-radio>
-                          </el-radio-group>
-                        </el-form-item>
                       </el-form>
                    </el-tab-pane>
                  </el-tabs>
@@ -711,26 +1137,108 @@
         dialogRecordEntryVisible: false,
         activeRecordTab: 'appearance', // 气瓶记录当前 Tab
         currentRecordType: 'gas', // gas | valve
+        instrumentOptions: {
+          appearance: ['放大镜','深度表/QF25112601797','钢直尺/XZY-LL-027','数显卡尺/17108434'],
+          internal: ['内窥镜/GM00598'],
+          mouth: ['放大镜','螺纹塞规/XZY-JC-103','丝锥'],
+          valve: ['放大镜','螺纹环规/XZY-JC-101','瓶阀校验台/HD2025121501']
+        },
         recordForm: {
+          // 原始记录头部信息（对应 XZY-JL104 部分字段）
+          header: {
+            reportNo: '',
+            usingUnit: '',
+            postCode: '',
+            address: '',
+            phone: '',
+            waterVolume: '',
+            color: '',
+            bottleNo: '',
+            lastInspectionDate: '',
+            nominalPressure: '',
+            manufactureDate: '',
+            hasGas: '',
+            hasValve: '',
+            repaired: '',
+            waterTestDate: ''
+          },
+
           // 公共：环境条件
           envTemperature: '23.5',
           envHumidity: '55',
           envPressure: '101.3',
           
-          // 气瓶专用 - 四表结构
-              gas: {
-             // 表1：外观检查评估
-             appearance: {
-               items: [
-                 { id: 1, content: '1. 瓶体表面（划伤、腐蚀、热损伤等）', result: '合格', remark: '' },
-                 { id: 2, content: '2. 缠绕层（磨损、松脱、断裂等）', result: '合格', remark: '' },
-                 { id: 3, content: '3. 瓶口螺纹（滑牙、裂纹、变形）', result: '合格', remark: '' },
-                 { id: 4, content: '4. 瓶阀及安全泄压装置', result: '合格', remark: '' },
-                 { id: 5, content: '5. 内部检查（异物、腐蚀）', result: '合格', remark: '' }
-               ],
-               conclusion: '合格',
-               photoList: []
-             },
+          // 气瓶专用 - 原始记录多表结构
+          gas: {
+            // 表1：复合气瓶外观/内部/瓶口/瓶阀检查（XZY-JL104-2026 （一））
+            appearance: {
+              instrument: ['放大镜','深度表/QF25112601797','钢直尺/XZY-LL-027','数显卡尺/17108434'],
+              items: [
+                { id: 1, content: '热损伤迹象', result: '合格', remark: '' },
+                { id: 2, content: '有无划伤', result: '合格', remark: '' },
+                { id: 3, content: '有无磨损', result: '合格', remark: '' },
+                { id: 4, content: '有无分层', result: '合格', remark: '' },
+                { id: 5, content: '有无异常变形', result: '合格', remark: '' },
+                { id: 6, content: '撞击/结构损伤', result: '合格', remark: '' },
+                { id: 7, content: '外表面描述', result: '合格', remark: '' },
+                { id: 8, content: '缺陷位置描述', result: '合格', remark: '' },
+                { id: 9, content: '其他', result: '合格', remark: '' }
+              ],
+              conclusion: '合格',
+              photoList: [],
+              // 内部检查
+              internal: {
+                instrument: ['内窥镜/GM00598'],
+                smell: '',
+                debris: '',
+                innerSurface: '',
+                defectPosition: '',
+                other: '',
+                result: '合格'
+              },
+              // 瓶口检查
+              mouth: {
+                instrument: ['放大镜','螺纹塞规/XZY-JC-103','丝锥'],
+                threadSpec: '',
+                endFace: '',
+                sealGroove: '',
+                threadStatus: '',
+                threadEvaluation: '',
+                other: '',
+                result: '合格'
+              },
+              // 瓶阀检验
+              valve: {
+                instrument: ['放大镜','螺纹环规/XZY-JC-101','瓶阀校验台/HD2025121501'],
+                valveNo: '',
+                manufactureDate: '',
+                threadIntegrity: '',
+                bodyDeformation: '',
+                leakStatus: '',
+                burstDiscReplaced: '',
+                result: '合格'
+              },
+              // 复合气瓶状况
+              cylinderStatus: {
+                qualified: '',
+                labelPasted: '',
+                repaired: '',
+                cleaned: '',
+                hydro: '',
+                discarded: '',
+                otherSuggestion: '',
+                scrapped: ''
+              },
+              // 签字信息
+              sign: {
+                inspector: '',
+                inspectorCertNo: '',
+                inspectDate: '',
+                checker: '',
+                checkerCertNo: '',
+                checkDate: ''
+              }
+            },
              // 表2：水压试验装置校验 (一行记录)
              calibration: {
                stdDeviceNo: 'STD-2024-001', // 标准表编号
@@ -753,14 +1261,21 @@
                result: '合格'
              },
              // 表4：气密性试验数据
-            airtightness: {
-              medium: '氮气',
-              pressure: '20.0', // 试验压力
-              holdTime: '60', // 保压时间
-              temp: '21.0',
-              leakage: '无泄漏',
-              result: '合格'
-            },
+             airtightness: {
+               deviceName: '气密性试验装置',
+               deviceNo: [],
+               testDate: '',
+               envTemp: '',
+               testMethod: '浸水法',
+               medium: '氮气',
+               pressure: '20.0', // 试验压力
+               holdTime: '60', // 保压时间(min)
+               valveModel: '',
+               distToWater: '',
+               abnormal: '无异常',
+               result: '合格',
+               tester: ''
+             },
 
             result: '合格'
           },
@@ -796,6 +1311,7 @@
           {
             no: '20240115-GC-001',
             company: '上海气体工厂',
+            useCompany: '上海气体工厂使用部',
             type: 'gas',
             entrustDate: '2024-01-12',
             acceptor: '张三',
@@ -813,6 +1329,7 @@
           {
             no: '20240114-SV-002',
             company: '江苏化工厂',
+            useCompany: '江苏化工厂运行部',
             type: 'valve',
             entrustDate: '2024-01-11',
             acceptor: '李四',
@@ -820,7 +1337,9 @@
             pagination: { currentPage: 1, pageSize: 5 },
             devices: [
               { no: 'SV-002-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '' },
-              { no: 'SV-002-002', model: 'A48Y-16C', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '' }
+              { no: 'SV-002-002', model: 'A48Y-16C', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '' },
+              { no: 'SV-002-003', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
+              { no: 'SV-002-004', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已录入', hasRecord: true, remark: '阀杆润滑已完成' }
             ]
           }
         ],
@@ -1238,6 +1757,11 @@
           if (device.status === '未录入') {
             device.status = '已录入'
             device.hasRecord = true
+          }
+          // 录入弹窗自动带出委托单信息
+          if (this.currentRecordType === 'gas') {
+            this.recordForm.header.usingUnit = entrust.useCompany || entrust.company || ''
+            this.recordForm.header.bottleNo = device.no || ''
           }
           this.dialogRecordEntryVisible = true
         },
