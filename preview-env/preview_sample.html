@@ -24,6 +24,10 @@
     
     .mb8 { margin-bottom: 8px; }
     .mt20 { margin-top: 20px; }
+
+    .assign-expand-container { padding: 10px 10px 0; background: #fafafa; }
+    .device-no-link { font-weight: 600; color: #409EFF; cursor: pointer; }
+    .device-no-link:hover { text-decoration: underline; }
     
     [v-cloak] { display: none; }
   </style>
@@ -130,36 +134,91 @@
                <el-empty description="原有业务功能（暂不设计）"></el-empty>
             </el-tab-pane>
             <el-tab-pane label="特种设备" name="special">
-              <el-table :data="tableData" border stripe size="small" style="width: 100%">
-                <el-table-column prop="entrustNo" label="委托单号" width="180"></el-table-column>
-                <el-table-column prop="company" label="委托单位" min-width="180"></el-table-column>
-                <el-table-column prop="type" label="样品类型" width="120"></el-table-column>
-                <el-table-column prop="count" label="样品数量" width="100" align="center"></el-table-column>
-                <el-table-column prop="createTime" label="委托时间" width="160"></el-table-column>
-                <el-table-column prop="status" label="状态" width="100" align="center">
+              <el-table :data="filteredEntrustList" border stripe size="small" style="width: 100%">
+                <el-table-column type="expand">
+                  <template slot-scope="props">
+                    <div class="assign-expand-container">
+                      <el-table :data="props.row.devices" border size="small" style="width: 100%">
+                        <el-table-column label="设备编号" prop="no" width="140">
+                          <template slot-scope="scope">
+                            <span class="device-no-link" @click="openDeviceInfo(props.row, scope.row)">{{ scope.row.no }}</span>
+                          </template>
+                        </el-table-column>
+                        <el-table-column label="设备型号" prop="model" min-width="160" show-overflow-tooltip></el-table-column>
+                        <el-table-column label="备注" min-width="180">
+                          <template slot-scope="scope">
+                            <el-input v-model="scope.row.remark" size="mini" placeholder="请输入备注"></el-input>
+                          </template>
+                        </el-table-column>
+                        <el-table-column label="状态" width="100" align="center">
+                          <template slot-scope="scope">
+                            <el-tag :type="scope.row.status === '已签收' ? 'success' : 'warning'" size="small">{{ scope.row.status }}</el-tag>
+                          </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="220" align="center" fixed="right">
+                          <template slot-scope="scope">
+                            <el-button
+                              size="mini"
+                              type="primary"
+                              :disabled="scope.row.status === '已签收'"
+                              @click="handleReceive(props.row, scope.row)"
+                            >
+                              签收
+                            </el-button>
+                            <el-button
+                              size="mini"
+                              type="success"
+                              plain
+                              @click="handlePrintLabel(props.row, scope.row)"
+                            >
+                              打印标签
+                            </el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                    </div>
+                  </template>
+                </el-table-column>
+
+                <el-table-column prop="entrustNo" label="委托单号" width="180" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="company" label="委托单位" min-width="180" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="type" label="业务类型" width="120" align="center">
                   <template slot-scope="scope">
-                    <el-tag :type="scope.row.status === '已签收' ? 'success' : 'warning'" size="small">
-                      {{ scope.row.status }}
+                    <el-tag v-if="scope.row.type === 'gas'" type="info" size="small">气瓶检测</el-tag>
+                    <el-tag v-else type="warning" size="small">安全阀校验</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="已签收/应收样品数量" width="160" align="center">
+                  <template slot-scope="scope">
+                    <span>{{ getReceivedCount(scope.row) }}/{{ scope.row.devices.length }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="createTime" label="委托时间" width="160"></el-table-column>
+                <el-table-column label="状态" width="120" align="center">
+                  <template slot-scope="scope">
+                    <el-tag :type="isEntrustFullyReceived(scope.row) ? 'success' : 'warning'" size="small">
+                      {{ isEntrustFullyReceived(scope.row) ? '已完成' : '待签收' }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="200" align="center" fixed="right">
+                <el-table-column label="操作" width="220" align="center" fixed="right">
                   <template slot-scope="scope">
                     <el-button
-                      v-if="scope.row.status === '待签收'"
                       size="mini"
                       type="primary"
-                      @click="handleReceive(scope.row)"
+                      :disabled="isEntrustFullyReceived(scope.row)"
+                      @click="handleBatchReceive(scope.row)"
                     >
-                      签收
+                      批量签收
                     </el-button>
                     <el-button
                       size="mini"
                       type="success"
                       plain
-                      @click="handlePrintLabel(scope.row)"
+                      icon="el-icon-printer"
+                      @click="handleBatchPrintLabel(scope.row)"
                     >
-                      打印标签
+                      批量打印
                     </el-button>
                   </template>
                 </el-table-column>
@@ -169,7 +228,7 @@
                 <el-pagination
                   background
                   layout="total, prev, pager, next"
-                  :total="100"
+                  :total="filteredEntrustList.length"
                 ></el-pagination>
               </div>
             </el-tab-pane>
@@ -181,8 +240,8 @@
               <el-form-item label="委托单号">
                 <span>{{ receiveForm.entrustNo }}</span>
               </el-form-item>
-              <el-form-item label="样品数量">
-                <span>{{ receiveForm.count }}</span>
+              <el-form-item label="设备编号">
+                <span>{{ receiveForm.deviceNo }}</span>
               </el-form-item>
               <el-form-item label="存放位置">
                 <el-select v-model="receiveForm.location" style="width: 100%;">
@@ -201,20 +260,81 @@
             </div>
           </el-dialog>
 
+          <el-dialog title="批量签收确认" :visible.sync="batchReceiveVisible" width="520px">
+            <el-form :model="batchReceiveForm" label-width="120px" size="small">
+              <el-form-item label="委托单号">
+                <span>{{ batchReceiveForm.entrustNo }}</span>
+              </el-form-item>
+              <el-form-item label="待签收数量">
+                <span>{{ batchReceiveForm.pendingCount }}</span>
+              </el-form-item>
+              <el-form-item label="存放位置">
+                <el-select v-model="batchReceiveForm.location" style="width: 100%;">
+                  <el-option label="A区-气瓶架01" value="A-01"></el-option>
+                  <el-option label="A区-气瓶架02" value="A-02"></el-option>
+                  <el-option label="B区-暂存柜" value="B-01"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="签收备注">
+                <el-input type="textarea" v-model="batchReceiveForm.remark"></el-input>
+              </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+              <el-button @click="batchReceiveVisible = false" size="small">取 消</el-button>
+              <el-button type="primary" @click="confirmBatchReceive" size="small">确 认</el-button>
+            </div>
+          </el-dialog>
+
           <!-- 标签打印弹窗 -->
           <el-dialog title="标签打印预览" :visible.sync="labelDialogVisible" width="400px">
              <div style="text-align: center;">
-               <div v-for="i in 3" :key="i" style="border: 1px dashed #ccc; padding: 10px; margin-bottom: 10px; text-align: left;">
-                 <div style="font-weight: bold; font-size: 14px;">委托单号: {{ currentPrintRow.entrustNo }}</div>
-                 <div style="font-size: 12px;">样品名称: {{ currentPrintRow.type }} #{{i}}</div>
-                 <div style="font-size: 12px;">接收日期: {{ new Date().toLocaleDateString() }}</div>
-                 <div style="margin-top: 5px; text-align: center; background: #eee; height: 50px; line-height: 50px; font-size: 10px; color: #999;">[条形码/二维码区域]</div>
-               </div>
+               <template v-if="labelPrintMode === 'batch'">
+                 <div
+                   v-for="d in currentPrintDevices"
+                   :key="d.no"
+                   style="border: 1px dashed #ccc; padding: 10px; margin-bottom: 10px; text-align: left;"
+                 >
+                   <div style="font-weight: bold; font-size: 14px;">委托单号: {{ currentPrintEntrust.entrustNo }}</div>
+                   <div style="font-size: 12px;">设备编号: {{ d.no }}</div>
+                   <div style="font-size: 12px;">设备型号: {{ d.model }}</div>
+                   <div style="font-size: 12px;">接收日期: {{ new Date().toLocaleDateString() }}</div>
+                   <div style="margin-top: 5px; text-align: center; background: #eee; height: 50px; line-height: 50px; font-size: 10px; color: #999;">[条形码/二维码区域]</div>
+                 </div>
+               </template>
+               <template v-else>
+                 <div style="border: 1px dashed #ccc; padding: 10px; margin-bottom: 10px; text-align: left;">
+                   <div style="font-weight: bold; font-size: 14px;">委托单号: {{ currentPrintEntrust.entrustNo }}</div>
+                   <div style="font-size: 12px;">设备编号: {{ currentPrintDevice.no }}</div>
+                   <div style="font-size: 12px;">设备型号: {{ currentPrintDevice.model }}</div>
+                   <div style="font-size: 12px;">接收日期: {{ new Date().toLocaleDateString() }}</div>
+                   <div style="margin-top: 5px; text-align: center; background: #eee; height: 50px; line-height: 50px; font-size: 10px; color: #999;">[条形码/二维码区域]</div>
+                 </div>
+               </template>
              </div>
              <div slot="footer" class="dialog-footer">
                <el-button @click="labelDialogVisible = false" size="small">关 闭</el-button>
                <el-button type="primary" @click="executePrint" size="small">打 印</el-button>
              </div>
+          </el-dialog>
+
+          <el-dialog title="设备信息" :visible.sync="deviceInfoVisible" width="560px">
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="委托单号">{{ currentInfoEntrust.entrustNo }}</el-descriptions-item>
+              <el-descriptions-item label="委托单位">{{ currentInfoEntrust.company }}</el-descriptions-item>
+              <el-descriptions-item label="业务类型">
+                <span v-if="currentInfoEntrust.type === 'gas'">气瓶检测</span>
+                <span v-else>安全阀校验</span>
+              </el-descriptions-item>
+              <el-descriptions-item label="委托时间">{{ currentInfoEntrust.createTime }}</el-descriptions-item>
+              <el-descriptions-item label="设备编号">{{ currentInfoDevice.no }}</el-descriptions-item>
+              <el-descriptions-item label="设备型号">{{ currentInfoDevice.model }}</el-descriptions-item>
+              <el-descriptions-item label="存放位置">{{ currentInfoDevice.location || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="状态">{{ currentInfoDevice.status }}</el-descriptions-item>
+              <el-descriptions-item label="备注" :span="2">{{ currentInfoDevice.remark || '-' }}</el-descriptions-item>
+            </el-descriptions>
+            <div slot="footer" class="dialog-footer">
+              <el-button type="primary" size="small" @click="deviceInfoVisible = false">关 闭</el-button>
+            </div>
           </el-dialog>
 
         </div>
@@ -239,20 +359,79 @@
             status: ''
           },
           activeTab: 'special',
-          tableData: [
-            { entrustNo: 'WT20231001001', company: '陕西化建工程有限公司', count: 5, type: '气瓶', status: '待签收', createTime: '2023-10-01' },
-            { entrustNo: 'WT20231001002', company: '长庆油田分公司', count: 2, type: '安全阀', status: '待签收', createTime: '2023-10-02' },
-            { entrustNo: 'WT20230928005', company: '西安热工研究院', count: 10, type: '气瓶', status: '已签收', createTime: '2023-09-28' }
+          entrustList: [
+            {
+              entrustNo: 'WT20231001001',
+              company: '陕西化建工程有限公司',
+              type: 'gas',
+              createTime: '2023-10-01',
+              devices: [
+                { no: 'EQ-001', model: 'CG-50L-30MPa', remark: '', status: '待签收', location: '' },
+                { no: 'EQ-002', model: 'CG-40L-20MPa', remark: '', status: '待签收', location: '' },
+                { no: 'EQ-003', model: 'CG-50L-30MPa', remark: '', status: '待签收', location: '' }
+              ]
+            },
+            {
+              entrustNo: 'WT20231001002',
+              company: '长庆油田分公司',
+              type: 'valve',
+              createTime: '2023-10-02',
+              devices: [
+                { no: 'SV-101', model: 'A48Y-16C', remark: '', status: '待签收', location: '' },
+                { no: 'SV-102', model: 'A42Y-25C', remark: '', status: '待签收', location: '' }
+              ]
+            },
+            {
+              entrustNo: 'WT20230928005',
+              company: '西安热工研究院',
+              type: 'gas',
+              createTime: '2023-09-28',
+              devices: [
+                { no: 'EQ-201', model: 'CG-30L-20MPa', remark: '外观有轻微划痕', status: '已签收', location: 'A-01' },
+                { no: 'EQ-202', model: 'CG-30L-20MPa', remark: '', status: '已签收', location: 'A-01' },
+                { no: 'EQ-203', model: 'CG-40L-20MPa', remark: '', status: '已签收', location: 'A-02' },
+                { no: 'EQ-204', model: 'CG-50L-30MPa', remark: '', status: '已签收', location: 'A-02' }
+              ]
+            }
           ],
           dialogVisible: false,
           receiveForm: {
             entrustNo: '',
-            count: 0,
+            deviceNo: '',
+            location: '',
+            remark: ''
+          },
+          batchReceiveVisible: false,
+          batchReceiveForm: {
+            entrustNo: '',
+            pendingCount: 0,
             location: '',
             remark: ''
           },
           labelDialogVisible: false,
-          currentPrintRow: {}
+          currentPrintEntrust: {},
+          currentPrintDevice: {},
+          currentPrintDevices: [],
+          labelPrintMode: 'single',
+          currentReceiveEntrust: null,
+          currentReceiveDevice: null,
+          currentBatchReceiveEntrust: null,
+          deviceInfoVisible: false,
+          currentInfoEntrust: {},
+          currentInfoDevice: {}
+        }
+      },
+      computed: {
+        filteredEntrustList() {
+          const noKeyword = (this.searchForm.entrustNo || '').trim()
+          const companyKeyword = (this.searchForm.company || '').trim()
+          const statusKeyword = (this.searchForm.status || '').trim()
+          return (this.entrustList || []).filter(e => {
+            const matchNo = !noKeyword || (e.entrustNo || '').indexOf(noKeyword) !== -1
+            const matchCompany = !companyKeyword || (e.company || '').indexOf(companyKeyword) !== -1
+            const matchStatus = !statusKeyword || (this.isEntrustFullyReceived(e) ? '已签收' : '待签收') === statusKeyword
+            return matchNo && matchCompany && matchStatus
+          })
         }
       },
       created() {
@@ -283,33 +462,110 @@
         resetSearch() {
           this.searchForm = { entrustNo: '', company: '', status: '' };
         },
-        handleReceive(row) {
+        getReceivedCount(entrust) {
+          const devices = (entrust && entrust.devices) || []
+          return devices.filter(d => d.status === '已签收').length
+        },
+        isEntrustFullyReceived(entrust) {
+          const devices = (entrust && entrust.devices) || []
+          if (!devices.length) {
+            return false
+          }
+          return devices.every(d => d.status === '已签收')
+        },
+        handleReceive(entrust, device) {
+          if (!device || device.status === '已签收') {
+            return
+          }
+          this.currentReceiveEntrust = entrust
+          this.currentReceiveDevice = device
           this.receiveForm = {
-            entrustNo: row.entrustNo,
-            count: row.count,
+            entrustNo: entrust.entrustNo,
+            deviceNo: device.no,
+            location: device.location || '',
+            remark: device.remark || ''
+          }
+          this.dialogVisible = true
+        },
+        handleBatchReceive(entrust) {
+          if (!entrust || this.isEntrustFullyReceived(entrust)) {
+            return
+          }
+          const pendingCount = ((entrust.devices || []).filter(d => d.status !== '已签收')).length
+          this.currentBatchReceiveEntrust = entrust
+          this.batchReceiveForm = {
+            entrustNo: entrust.entrustNo,
+            pendingCount,
             location: '',
             remark: ''
-          };
-          this.dialogVisible = true;
+          }
+          this.batchReceiveVisible = true
         },
         confirmReceive() {
           if (!this.receiveForm.location) {
             this.$message.warning('请选择存放位置');
             return;
           }
+          if (this.currentReceiveDevice) {
+            this.currentReceiveDevice.status = '已签收'
+            this.currentReceiveDevice.location = this.receiveForm.location
+            this.currentReceiveDevice.remark = this.receiveForm.remark
+          }
           this.$message.success('签收成功');
-          // Update status in local data
-          const item = this.tableData.find(d => d.entrustNo === this.receiveForm.entrustNo);
-          if (item) item.status = '已签收';
           this.dialogVisible = false;
+          this.currentReceiveEntrust = null
+          this.currentReceiveDevice = null
         },
-        handlePrintLabel(row) {
-          this.currentPrintRow = row;
-          this.labelDialogVisible = true;
+        confirmBatchReceive() {
+          if (!this.batchReceiveForm.location) {
+            this.$message.warning('请选择存放位置')
+            return
+          }
+          const entrust = this.currentBatchReceiveEntrust
+          if (!entrust) {
+            this.batchReceiveVisible = false
+            return
+          }
+          const devices = entrust.devices || []
+          let changed = 0
+          devices.forEach(d => {
+            if (d.status !== '已签收') {
+              d.status = '已签收'
+              d.location = this.batchReceiveForm.location
+              d.remark = this.batchReceiveForm.remark
+              changed += 1
+            }
+          })
+          this.$message.success('批量签收成功（' + changed + '个）')
+          this.batchReceiveVisible = false
+          this.currentBatchReceiveEntrust = null
+        },
+        openDeviceInfo(entrust, device) {
+          this.currentInfoEntrust = entrust || {}
+          this.currentInfoDevice = device || {}
+          this.deviceInfoVisible = true
+        },
+        handleBatchPrintLabel(entrust) {
+          this.currentPrintEntrust = entrust || {}
+          this.currentPrintDevices = ((entrust && entrust.devices) || []).slice()
+          this.currentPrintDevice = {}
+          this.labelPrintMode = 'batch'
+          this.labelDialogVisible = true
+        },
+        handlePrintLabel(entrust, device) {
+          this.currentPrintEntrust = entrust || {}
+          this.currentPrintDevice = device || {}
+          this.currentPrintDevices = []
+          this.labelPrintMode = 'single'
+          this.labelDialogVisible = true
         },
         executePrint() {
-          this.$message.success('打印指令已发送');
-          this.labelDialogVisible = false;
+          if (this.labelPrintMode === 'batch') {
+            this.$message.success('批量打印指令已发送（' + this.currentPrintDevices.length + '个）')
+          } else {
+            this.$message.success('打印指令已发送')
+          }
+          this.labelDialogVisible = false
         }
       }
     })
