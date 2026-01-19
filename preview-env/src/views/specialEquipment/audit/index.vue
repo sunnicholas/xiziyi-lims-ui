@@ -229,16 +229,10 @@ export default {
 </script>
 
 <style scoped lang="scss">
-@mixin text-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .flex-container {
   display: flex;
-  height: calc(100vh - 84px);
-  padding: 0 !important;
+  height: calc(100vh - 84px); /* 减去 RuoYi 顶栏高度 */
+  padding: 0 !important; /* 去除默认 padding 填满 */
 }
 
 .left-panel {
@@ -283,7 +277,7 @@ export default {
         font-size: 13px;
         color: #666;
         margin-bottom: 5px;
-        @include text-ellipsis;
+        @include text-ellipsis; /* 假设有 mixin */
       }
       
       .task-meta {
