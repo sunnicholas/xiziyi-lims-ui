@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>西自仪 LIMS - 样品管理</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <style>
+    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f0f2f5; }
+    #app { display: flex; height: 100vh; overflow: hidden; }
+    
+    /* 侧边栏 */
+    .sidebar-container { width: 220px; background-color: #304156; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+    .logo { height: 50px; line-height: 50px; text-align: center; font-size: 16px; font-weight: 600; background-color: #2b2f3a; color: #fff; border-bottom: 1px solid #1f2d3d; }
+    .el-menu { border-right: none; }
+    
+    /* 主体区域 */
+    .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
+    .navbar { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10; }
+    .navbar .update-time { margin-left: 8px; font-size: 12px; color: #909399; }
+    .app-main { flex: 1; padding: 20px; overflow-y: auto; }
+    .app-container { background: #fff; padding: 20px; border-radius: 4px; min-height: calc(100vh - 90px); box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
+    
+    .mb8 { margin-bottom: 8px; }
+    .mt20 { margin-top: 20px; }
+    
+    [v-cloak] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <!-- 侧边栏 -->
+    <div class="sidebar-container">
+      <div class="logo">西自仪 LIMS</div>
+      <el-menu
+        :default-active="activeMenu"
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409EFF"
+        @select="handleMenuSelect"
+      >
+        <el-menu-item index="business">
+          <i class="el-icon-s-order"></i>
+          <span slot="title">业务受理</span>
+        </el-menu-item>
+        <el-submenu index="sample">
+          <template slot="title">
+            <i class="el-icon-box"></i>
+            <span>样品管理</span>
+          </template>
+          <el-menu-item index="sample-reg">样品登记</el-menu-item>
+        </el-submenu>
+        <el-menu-item index="assign">
+          <i class="el-icon-s-custom"></i>
+          <span slot="title">任务分配</span>
+        </el-menu-item>
+        <el-submenu index="record">
+          <template slot="title">
+            <i class="el-icon-edit-outline"></i>
+            <span>原始记录</span>
+          </template>
+          <el-menu-item index="record-list">记录列表</el-menu-item>
+          <el-menu-item index="record-entry" style="display:none">录入详情</el-menu-item>
+        </el-submenu>
+        <el-menu-item index="audit">
+          <i class="el-icon-s-check"></i>
+          <span slot="title">审核管理</span>
+        </el-menu-item>
+        <el-submenu index="report">
+          <template slot="title">
+            <i class="el-icon-document"></i>
+            <span>报告管理</span>
+          </template>
+          <el-menu-item index="report-list">报告列表</el-menu-item>
+          <el-menu-item index="report-preview" style="display:none">报告预览</el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+      <div class="navbar">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item>首页</el-breadcrumb-item>
+          <el-breadcrumb-item>
+            样品管理
+            <span class="update-time">（更新时间：{{ lastUpdated }}）</span>
+          </el-breadcrumb-item>
+        </el-breadcrumb>
+        <el-dropdown>
+          <span class="el-dropdown-link" style="cursor: pointer;">
+            <i class="el-icon-user-solid"></i> 管理员 <i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>个人中心</el-dropdown-item>
+            <el-dropdown-item divided>退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+
+      <div class="app-main">
+        <div class="app-container">
+          <!-- 搜索区 -->
+          <div style="margin-bottom: 20px;">
+            <el-form :inline="true" size="small">
+              <el-form-item label="委托单号">
+                <el-input v-model="searchForm.entrustNo" placeholder="请输入委托单号"></el-input>
+              </el-form-item>
+              <el-form-item label="委托单位">
+                <el-input v-model="searchForm.company" placeholder="请输入单位名称"></el-input>
+              </el-form-item>
+              <el-form-item label="状态">
+                <el-select v-model="searchForm.status" placeholder="全部">
+                  <el-option label="全部" value=""></el-option>
+                  <el-option label="待签收" value="待签收"></el-option>
+                  <el-option label="已签收" value="已签收"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" icon="el-icon-search" @click="handleSearch">查询</el-button>
+                <el-button icon="el-icon-refresh" @click="resetSearch">重置</el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+
+          <!-- 标签页 -->
+          <el-tabs v-model="activeTab" type="card">
+            <el-tab-pane label="现场委托" name="onsite">
+               <el-empty description="原有业务功能（暂不设计）"></el-empty>
+            </el-tab-pane>
+            <el-tab-pane label="特种设备" name="special">
+              <el-table :data="tableData" border stripe size="small" style="width: 100%">
+                <el-table-column prop="entrustNo" label="委托单号" width="180"></el-table-column>
+                <el-table-column prop="company" label="委托单位" min-width="180"></el-table-column>
+                <el-table-column prop="type" label="样品类型" width="120"></el-table-column>
+                <el-table-column prop="count" label="样品数量" width="100" align="center"></el-table-column>
+                <el-table-column prop="createTime" label="委托时间" width="160"></el-table-column>
+                <el-table-column prop="status" label="状态" width="100" align="center">
+                  <template slot-scope="scope">
+                    <el-tag :type="scope.row.status === '已签收' ? 'success' : 'warning'" size="small">
+                      {{ scope.row.status }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="200" align="center" fixed="right">
+                  <template slot-scope="scope">
+                    <el-button
+                      v-if="scope.row.status === '待签收'"
+                      size="mini"
+                      type="primary"
+                      @click="handleReceive(scope.row)"
+                    >
+                      签收
+                    </el-button>
+                    <el-button
+                      size="mini"
+                      type="success"
+                      plain
+                      @click="handlePrintLabel(scope.row)"
+                    >
+                      打印标签
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <div style="margin-top: 20px; text-align: right;">
+                <el-pagination
+                  background
+                  layout="total, prev, pager, next"
+                  :total="100"
+                ></el-pagination>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+
+          <!-- 签收确认弹窗 -->
+          <el-dialog title="样品签收确认" :visible.sync="dialogVisible" width="500px">
+            <el-form :model="receiveForm" label-width="100px" size="small">
+              <el-form-item label="委托单号">
+                <span>{{ receiveForm.entrustNo }}</span>
+              </el-form-item>
+              <el-form-item label="样品数量">
+                <span>{{ receiveForm.count }}</span>
+              </el-form-item>
+              <el-form-item label="存放位置">
+                <el-select v-model="receiveForm.location" style="width: 100%;">
+                  <el-option label="A区-气瓶架01" value="A-01"></el-option>
+                  <el-option label="A区-气瓶架02" value="A-02"></el-option>
+                  <el-option label="B区-暂存柜" value="B-01"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="签收备注">
+                <el-input type="textarea" v-model="receiveForm.remark"></el-input>
+              </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+              <el-button @click="dialogVisible = false" size="small">取 消</el-button>
+              <el-button type="primary" @click="confirmReceive" size="small">确 认</el-button>
+            </div>
+          </el-dialog>
+
+          <!-- 标签打印弹窗 -->
+          <el-dialog title="标签打印预览" :visible.sync="labelDialogVisible" width="400px">
+             <div style="text-align: center;">
+               <div v-for="i in 3" :key="i" style="border: 1px dashed #ccc; padding: 10px; margin-bottom: 10px; text-align: left;">
+                 <div style="font-weight: bold; font-size: 14px;">委托单号: {{ currentPrintRow.entrustNo }}</div>
+                 <div style="font-size: 12px;">样品名称: {{ currentPrintRow.type }} #{{i}}</div>
+                 <div style="font-size: 12px;">接收日期: {{ new Date().toLocaleDateString() }}</div>
+                 <div style="margin-top: 5px; text-align: center; background: #eee; height: 50px; line-height: 50px; font-size: 10px; color: #999;">[条形码/二维码区域]</div>
+               </div>
+             </div>
+             <div slot="footer" class="dialog-footer">
+               <el-button @click="labelDialogVisible = false" size="small">关 闭</el-button>
+               <el-button type="primary" @click="executePrint" size="small">打 印</el-button>
+             </div>
+          </el-dialog>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 引入 Vue 和 Element UI -->
+  <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  
+  <script>
+    new Vue({
+      el: '#app',
+      data() {
+        return {
+          activeMenu: 'sample-reg',
+          lastUpdated: '',
+          searchForm: {
+            entrustNo: '',
+            company: '',
+            status: ''
+          },
+          activeTab: 'special',
+          tableData: [
+            { entrustNo: 'WT20231001001', company: '陕西化建工程有限公司', count: 5, type: '气瓶', status: '待签收', createTime: '2023-10-01' },
+            { entrustNo: 'WT20231001002', company: '长庆油田分公司', count: 2, type: '安全阀', status: '待签收', createTime: '2023-10-02' },
+            { entrustNo: 'WT20230928005', company: '西安热工研究院', count: 10, type: '气瓶', status: '已签收', createTime: '2023-09-28' }
+          ],
+          dialogVisible: false,
+          receiveForm: {
+            entrustNo: '',
+            count: 0,
+            location: '',
+            remark: ''
+          },
+          labelDialogVisible: false,
+          currentPrintRow: {}
+        }
+      },
+      created() {
+        this.updateTime();
+      },
+      methods: {
+        updateTime() {
+          const now = new Date();
+          const format = (n) => n < 10 ? '0' + n : n;
+          this.lastUpdated = now.getFullYear() + '-' + 
+                            format(now.getMonth() + 1) + '-' + 
+                            format(now.getDate()) + ' ' + 
+                            format(now.getHours()) + ':' + 
+                            format(now.getMinutes()) + ':' + 
+                            format(now.getSeconds());
+        },
+        handleMenuSelect(index) {
+          if (index === 'business') window.location.href = 'preview_business.html';
+          if (index === 'sample-reg') window.location.href = 'preview_sample.html';
+          if (index === 'assign') window.location.href = 'preview_assign.html';
+          if (index === 'record-list') window.location.href = 'preview_record.html';
+          if (index === 'audit') window.location.href = 'preview_audit.html';
+          if (index === 'report-list') window.location.href = 'preview_report.html';
+        },
+        handleSearch() {
+          this.$message.info('查询功能已触发');
+        },
+        resetSearch() {
+          this.searchForm = { entrustNo: '', company: '', status: '' };
+        },
+        handleReceive(row) {
+          this.receiveForm = {
+            entrustNo: row.entrustNo,
+            count: row.count,
+            location: '',
+            remark: ''
+          };
+          this.dialogVisible = true;
+        },
+        confirmReceive() {
+          if (!this.receiveForm.location) {
+            this.$message.warning('请选择存放位置');
+            return;
+          }
+          this.$message.success('签收成功');
+          // Update status in local data
+          const item = this.tableData.find(d => d.entrustNo === this.receiveForm.entrustNo);
+          if (item) item.status = '已签收';
+          this.dialogVisible = false;
+        },
+        handlePrintLabel(row) {
+          this.currentPrintRow = row;
+          this.labelDialogVisible = true;
+        },
+        executePrint() {
+          this.$message.success('打印指令已发送');
+          this.labelDialogVisible = false;
+        }
+      }
+    })
+  </script>
+</body>
+</html>

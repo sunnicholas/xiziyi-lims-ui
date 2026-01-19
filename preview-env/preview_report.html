@@ -152,6 +152,10 @@
           <i class="el-icon-s-order"></i>
           <span slot="title">业务受理</span>
         </el-menu-item>
+        <el-menu-item index="sample">
+          <i class="el-icon-box"></i>
+          <span slot="title">样品管理</span>
+        </el-menu-item>
         <el-menu-item index="assign">
           <i class="el-icon-s-custom"></i>
           <span slot="title">任务分配</span>
@@ -1116,6 +1120,7 @@
         handleMenuSelect(index) {
           const map = {
             'business': 'preview_business.html',
+            'sample': 'preview_sample.html',
             'assign': 'preview_assign.html',
             'record-list': 'preview_record.html',
             'audit': 'preview_audit.html',

@@ -152,6 +152,10 @@
           <i class="el-icon-s-order"></i>
           <span slot="title">业务受理</span>
         </el-menu-item>
+        <el-menu-item index="sample">
+          <i class="el-icon-box"></i>
+          <span slot="title">样品管理</span>
+        </el-menu-item>
         <el-menu-item index="assign">
           <i class="el-icon-s-custom"></i>
           <span slot="title">任务分配</span>
@@ -2608,6 +2612,10 @@
           }
         },
         handleMenuSelect(index) {
+          if (index === 'sample') {
+             window.location.href = 'preview_sample.html';
+             return;
+          }
           if (index.indexOf('record') === -1 && index.indexOf('report') === -1) {
              this.activeMenu = index;
           } else if (index === 'record-list' || index === 'report-list') {
