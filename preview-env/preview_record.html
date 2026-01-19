@@ -98,7 +98,15 @@
     .device-type-code {
       font-size: 12px;
       color: #909399;
-      margin-bottom: 4px;
+    }
+    .subheader {
+      background: #f5f7fa;
+      padding: 8px 12px;
+      margin: 15px 0 10px;
+      border-left: 4px solid #409EFF;
+      font-weight: bold;
+      font-size: 14px;
+      color: #303133;
     }
     .device-type-desc {
       font-size: 12px;
@@ -190,7 +198,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             {{ getPageTitle() }}
-            <span class="update-time">（更新时间：2026-01-19 17:05:00）</span>
+            <span class="update-time">（更新时间：2026-01-19 17:15:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -529,7 +537,8 @@
              <!-- 模板A：气瓶检测记录 (Tabs 布局) -->
              <div v-if="currentRecordType === 'gas'">
                <el-tabs v-model="activeRecordTab" type="border-card">
-                 <el-tab-pane label="外观/内部/瓶口/瓶阀" name="appearance">
+                 <!-- 拆分后的 Tab 1: 外观检查 -->
+                 <el-tab-pane label="外观检查" name="visual">
                      <el-card shadow="never" class="mb8">
                        <div slot="header" class="clearfix"><span>检测设备绑定与环境条件</span></div>
                       <el-form label-width="110px" size="small">
@@ -552,240 +561,41 @@
                          </el-row>
                        </el-form>
                      </el-card>
-                     <el-tabs v-model="activeAppearanceSubTab" type="card" style="margin-top: 15px;">
-                       <el-tab-pane label="外观检查" name="visual">
-                         <el-card shadow="never" class="mb8" style="border-top: none;">
-                           <el-form label-width="140px" size="small" style="margin-bottom: 10px;">
-                             <el-form-item label="使用仪器/设备">
-                               <el-select v-model="recordForm.gas.appearance.instrument" multiple filterable placeholder="选择/输入仪器设备">
-                                 <el-option v-for="opt in instrumentOptions.appearance" :key="opt" :label="opt" :value="opt"></el-option>
-                               </el-select>
-                             </el-form-item>
-                           </el-form>
-                           <el-table :data="recordForm.gas.appearance.items" border size="small">
-                              <el-table-column prop="content" label="检查项目"></el-table-column>
-                              <el-table-column label="结果" width="220">
-                                <template slot-scope="scope">
-                                  <el-radio-group v-model="scope.row.result" size="mini">
-                                    <el-radio label="合格">合格</el-radio>
-                                    <el-radio label="修复">修复</el-radio>
-                                    <el-radio label="判废">判废</el-radio>
-                                  </el-radio-group>
-                                </template>
-                              </el-table-column>
-                              <el-table-column label="备注">
-                                <template slot-scope="scope">
-                                  <el-input v-model="scope.row.remark" size="mini" placeholder="异常情况描述"></el-input>
-                                </template>
-                              </el-table-column>
-                            </el-table>
-                            <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                              <span style="font-weight: bold; margin-right: 15px;">外观检查结论：</span>
-                              <el-radio-group v-model="recordForm.gas.appearance.conclusion">
+                     
+                     <el-card shadow="never" class="mb8" style="border-top: none;">
+                       <el-form label-width="140px" size="small" style="margin-bottom: 10px;">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.appearance" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                       </el-form>
+                       <el-table :data="recordForm.gas.appearance.items" border size="small">
+                          <el-table-column prop="content" label="检查项目"></el-table-column>
+                          <el-table-column label="结果" width="220">
+                            <template slot-scope="scope">
+                              <el-radio-group v-model="scope.row.result" size="mini">
                                 <el-radio label="合格">合格</el-radio>
                                 <el-radio label="修复">修复</el-radio>
                                 <el-radio label="判废">判废</el-radio>
                               </el-radio-group>
-                            </div>
-                         </el-card>
-                       </el-tab-pane>
-                       
-                       <el-tab-pane label="内部检查" name="internal">
-                         <el-card shadow="never" class="mb8" style="border-top: none;">
-                           <el-form label-width="160px" size="small">
-                             <el-form-item label="使用仪器/设备">
-                               <el-select v-model="recordForm.gas.appearance.internal.instrument" multiple filterable placeholder="选择/输入仪器设备">
-                                 <el-option v-for="opt in instrumentOptions.internal" :key="opt" :label="opt" :value="opt"></el-option>
-                               </el-select>
-                             </el-form-item>
-                             <el-row :gutter="20">
-                               <el-col :span="12">
-                                 <el-form-item label="有无气味">
-                                   <el-input v-model="recordForm.gas.appearance.internal.smell"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                               <el-col :span="12">
-                                 <el-form-item label="杂物种类和数量">
-                                   <el-input v-model="recordForm.gas.appearance.internal.debris"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                             </el-row>
-                             <el-form-item label="内表面状况描述">
-                               <el-input v-model="recordForm.gas.appearance.internal.innerSurface" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="缺陷位置描述">
-                               <el-input v-model="recordForm.gas.appearance.internal.defectPosition" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="其他">
-                               <el-input v-model="recordForm.gas.appearance.internal.other" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="内部检查结论">
-                               <el-radio-group v-model="recordForm.gas.appearance.internal.result">
-                                 <el-radio label="合格">合格</el-radio>
-                                 <el-radio label="修复">修复</el-radio>
-                                 <el-radio label="判废">判废</el-radio>
-                               </el-radio-group>
-                             </el-form-item>
-                           </el-form>
-                         </el-card>
-                       </el-tab-pane>
-
-                       <el-tab-pane label="瓶口检查" name="mouth">
-                         <el-card shadow="never" class="mb8" style="border-top: none;">
-                           <el-form label-width="160px" size="small">
-                             <el-form-item label="使用仪器/设备">
-                               <el-select v-model="recordForm.gas.appearance.mouth.instrument" multiple filterable placeholder="选择/输入仪器设备">
-                                 <el-option v-for="opt in instrumentOptions.mouth" :key="opt" :label="opt" :value="opt"></el-option>
-                               </el-select>
-                             </el-form-item>
-                             <el-form-item label="螺纹规格">
-                               <el-input v-model="recordForm.gas.appearance.mouth.threadSpec"></el-input>
-                             </el-form-item>
-                             <el-form-item label="瓶口端面描述">
-                               <el-input v-model="recordForm.gas.appearance.mouth.endFace" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="密封圈环槽描述">
-                               <el-input v-model="recordForm.gas.appearance.mouth.sealGroove" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="瓶口螺纹状况描述">
-                               <el-input v-model="recordForm.gas.appearance.mouth.threadStatus" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="螺纹状况评估">
-                               <el-input v-model="recordForm.gas.appearance.mouth.threadEvaluation"></el-input>
-                             </el-form-item>
-                             <el-form-item label="其他">
-                               <el-input v-model="recordForm.gas.appearance.mouth.other" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                            <el-form-item label="瓶口检查结论">
-                              <el-radio-group v-model="recordForm.gas.appearance.mouth.result">
-                                <el-radio label="合格">合格</el-radio>
-                                <el-radio label="修复">修复</el-radio>
-                                <el-radio label="判废">判废</el-radio>
-                              </el-radio-group>
-                            </el-form-item>
-                           </el-form>
-                         </el-card>
-                       </el-tab-pane>
-
-                       <el-tab-pane label="瓶阀检验" name="valve">
-                         <el-card shadow="never" class="mb8" style="border-top: none;">
-                           <el-form label-width="180px" size="small">
-                             <el-form-item label="使用仪器/设备">
-                               <el-select v-model="recordForm.gas.appearance.valve.instrument" multiple filterable placeholder="选择/输入仪器设备">
-                                 <el-option v-for="opt in instrumentOptions.valve" :key="opt" :label="opt" :value="opt"></el-option>
-                               </el-select>
-                             </el-form-item>
-                             <el-row :gutter="20">
-                               <el-col :span="12">
-                                 <el-form-item label="气瓶阀编号">
-                                   <el-input v-model="recordForm.gas.appearance.valve.valveNo"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                               <el-col :span="12">
-                                 <el-form-item label="瓶阀制造日期">
-                                   <el-date-picker v-model="recordForm.gas.appearance.valve.manufactureDate" type="date" style="width: 100%;"></el-date-picker>
-                                 </el-form-item>
-                               </el-col>
-                             </el-row>
-                             <el-form-item label="瓶阀螺纹完整性状况描述">
-                               <el-input v-model="recordForm.gas.appearance.valve.threadIntegrity" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="气瓶阀阀体有无变形">
-                               <el-input v-model="recordForm.gas.appearance.valve.bodyDeformation"></el-input>
-                             </el-form-item>
-                             <el-form-item label="气密状况描述">
-                               <el-input v-model="recordForm.gas.appearance.valve.leakStatus" type="textarea" :rows="2"></el-input>
-                             </el-form-item>
-                             <el-form-item label="爆破片是否更换">
-                               <el-input v-model="recordForm.gas.appearance.valve.burstDiscReplaced"></el-input>
-                             </el-form-item>
-                             <el-form-item label="瓶阀检验结论">
-                               <el-radio-group v-model="recordForm.gas.appearance.valve.result">
-                                 <el-radio label="合格">合格</el-radio>
-                                 <el-radio label="修复">修复</el-radio>
-                                 <el-radio label="判废">判废</el-radio>
-                               </el-radio-group>
-                             </el-form-item>
-                           </el-form>
-                         </el-card>
-                       </el-tab-pane>
-
-                       <el-tab-pane label="复合气瓶状况与签字" name="status">
-                        <el-card shadow="never" style="border-top: none;">
-                          <el-form label-width="150px" size="small">
-                             <el-row :gutter="20">
-                               <el-col :span="12">
-                                 <el-form-item label="合格气瓶">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.qualified"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                               <el-col :span="12">
-                                 <el-form-item label="粘贴标签">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.labelPasted"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                             </el-row>
-                             <el-row :gutter="20">
-                               <el-col :span="12">
-                                 <el-form-item label="修复气瓶">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.repaired"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                               <el-col :span="12">
-                                 <el-form-item label="清洗">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.cleaned"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                             </el-row>
-                             <el-row :gutter="20">
-                               <el-col :span="12">
-                                 <el-form-item label="水压">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.hydro"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                               <el-col :span="12">
-                                 <el-form-item label="丢弃">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.discarded"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                             </el-row>
-                             <el-row :gutter="20">
-                               <el-col :span="12">
-                                 <el-form-item label="其他建议">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.otherSuggestion"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                               <el-col :span="12">
-                                 <el-form-item label="报废气瓶">
-                                   <el-input v-model="recordForm.gas.appearance.cylinderStatus.scrapped"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                             </el-row>
-
-                             <el-row :gutter="20" style="margin-top: 10px;">
-                               <el-col :span="12">
-                                 <el-form-item label="检验员">
-                                   <el-input v-model="recordForm.gas.appearance.sign.inspector"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                               <el-col :span="12">
-                                 <el-form-item label="检验员资格证号">
-                                   <el-input v-model="recordForm.gas.appearance.sign.inspectorCertNo"></el-input>
-                                 </el-form-item>
-                               </el-col>
-                             </el-row>
-                            <el-row :gutter="20">
-                              <el-col :span="12">
-                                <el-form-item label="检验日期">
-                                  <el-date-picker v-model="recordForm.gas.appearance.sign.inspectDate" type="date" style="width: 100%;"></el-date-picker>
-                                </el-form-item>
-                              </el-col>
-                            </el-row>
-                          </el-form>
-                        </el-card>
-                       </el-tab-pane>
-                     </el-tabs>
-
+                            </template>
+                          </el-table-column>
+                          <el-table-column label="备注">
+                            <template slot-scope="scope">
+                              <el-input v-model="scope.row.remark" size="mini" placeholder="异常情况描述"></el-input>
+                            </template>
+                          </el-table-column>
+                        </el-table>
+                        <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                          <span style="font-weight: bold; margin-right: 15px;">外观检查结论：</span>
+                          <el-radio-group v-model="recordForm.gas.appearance.conclusion">
+                            <el-radio label="合格">合格</el-radio>
+                            <el-radio label="修复">修复</el-radio>
+                            <el-radio label="判废">判废</el-radio>
+                          </el-radio-group>
+                        </div>
+                     </el-card>
 
                     <el-card shadow="never" class="mb8">
                       <div slot="header" class="clearfix"><span>原始凭证/现场记录</span></div>
@@ -795,8 +605,8 @@
                           list-type="picture-card"
                           :auto-upload="false"
                           :file-list="recordForm.gas.appearance.fileList"
-                          :on-change="(file, fileList) => handleGasRecordFileChange('appearance', file, fileList)"
-                          :on-remove="(file, fileList) => handleGasRecordFileChange('appearance', file, fileList)"
+                          :on-change="(file, fileList) => recordForm.gas.appearance.fileList = fileList"
+                          :on-remove="(file, fileList) => recordForm.gas.appearance.fileList = fileList"
                         >
                           <i slot="default" class="el-icon-plus"></i>
                           <div slot="file" slot-scope="{file}">
@@ -807,13 +617,277 @@
                             </span>
                           </div>
                         </el-upload>
-                        <div style="margin-top: 20px; color: #909399; font-size: 12px; line-height: 1.5;">
-                <p>提示：</p>
-                <p v-for="tip in uploadTips" :key="tip">{{ tip }}</p>
-              </div>
                       </div>
                     </el-card>
-                   </el-tab-pane>
+                 </el-tab-pane>
+
+                 <!-- 拆分后的 Tab 2: 内部检查 -->
+                 <el-tab-pane label="内部检查" name="internal">
+                     <el-card shadow="never" class="mb8" style="border-top: none;">
+                       <el-form label-width="160px" size="small">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.internal.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.internal" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="有无气味">
+                               <el-input v-model="recordForm.gas.appearance.internal.smell"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="杂物种类和数量">
+                               <el-input v-model="recordForm.gas.appearance.internal.debris"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-form-item label="内表面状况描述">
+                           <el-input v-model="recordForm.gas.appearance.internal.innerSurface" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="缺陷位置描述">
+                           <el-input v-model="recordForm.gas.appearance.internal.defectPosition" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="其他">
+                           <el-input v-model="recordForm.gas.appearance.internal.other" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="内部检查结论">
+                           <el-radio-group v-model="recordForm.gas.appearance.internal.result">
+                             <el-radio label="合格">合格</el-radio>
+                             <el-radio label="修复">修复</el-radio>
+                             <el-radio label="判废">判废</el-radio>
+                           </el-radio-group>
+                         </el-form-item>
+                       </el-form>
+                     </el-card>
+
+                    <el-card shadow="never" class="mb8">
+                      <div slot="header" class="clearfix"><span>原始凭证/现场记录</span></div>
+                      <div>
+                        <el-upload
+                          action="#"
+                          list-type="picture-card"
+                          :auto-upload="false"
+                          :file-list="recordForm.gas.appearance.internal.fileList"
+                          :on-change="(file, fileList) => recordForm.gas.appearance.internal.fileList = fileList"
+                          :on-remove="(file, fileList) => recordForm.gas.appearance.internal.fileList = fileList"
+                        >
+                          <i slot="default" class="el-icon-plus"></i>
+                          <div slot="file" slot-scope="{file}">
+                            <img class="el-upload-list__item-thumbnail" :src="file.url" alt="">
+                            <span class="el-upload-list__item-actions">
+                              <span class="el-upload-list__item-preview" @click="$message.info('预览大图')"><i class="el-icon-zoom-in"></i></span>
+                              <span class="el-upload-list__item-delete"><i class="el-icon-delete"></i></span>
+                            </span>
+                          </div>
+                        </el-upload>
+                      </div>
+                    </el-card>
+                 </el-tab-pane>
+
+                 <!-- 拆分后的 Tab 3: 瓶口检查 -->
+                 <el-tab-pane label="瓶口检查" name="mouth">
+                     <el-card shadow="never" class="mb8" style="border-top: none;">
+                       <el-form label-width="160px" size="small">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.mouth.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.mouth" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                         <el-form-item label="螺纹规格">
+                           <el-input v-model="recordForm.gas.appearance.mouth.threadSpec"></el-input>
+                         </el-form-item>
+                         <el-form-item label="瓶口端面描述">
+                           <el-input v-model="recordForm.gas.appearance.mouth.endFace" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="密封圈环槽描述">
+                           <el-input v-model="recordForm.gas.appearance.mouth.sealGroove" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="瓶口螺纹状况描述">
+                           <el-input v-model="recordForm.gas.appearance.mouth.threadStatus" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="螺纹状况评估">
+                           <el-input v-model="recordForm.gas.appearance.mouth.threadEvaluation"></el-input>
+                         </el-form-item>
+                         <el-form-item label="其他">
+                           <el-input v-model="recordForm.gas.appearance.mouth.other" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                        <el-form-item label="瓶口检查结论">
+                          <el-radio-group v-model="recordForm.gas.appearance.mouth.result">
+                            <el-radio label="合格">合格</el-radio>
+                            <el-radio label="修复">修复</el-radio>
+                            <el-radio label="判废">判废</el-radio>
+                          </el-radio-group>
+                        </el-form-item>
+                       </el-form>
+                     </el-card>
+
+                    <el-card shadow="never" class="mb8">
+                      <div slot="header" class="clearfix"><span>原始凭证/现场记录</span></div>
+                      <div>
+                        <el-upload
+                          action="#"
+                          list-type="picture-card"
+                          :auto-upload="false"
+                          :file-list="recordForm.gas.appearance.mouth.fileList"
+                          :on-change="(file, fileList) => recordForm.gas.appearance.mouth.fileList = fileList"
+                          :on-remove="(file, fileList) => recordForm.gas.appearance.mouth.fileList = fileList"
+                        >
+                          <i slot="default" class="el-icon-plus"></i>
+                          <div slot="file" slot-scope="{file}">
+                            <img class="el-upload-list__item-thumbnail" :src="file.url" alt="">
+                            <span class="el-upload-list__item-actions">
+                              <span class="el-upload-list__item-preview" @click="$message.info('预览大图')"><i class="el-icon-zoom-in"></i></span>
+                              <span class="el-upload-list__item-delete"><i class="el-icon-delete"></i></span>
+                            </span>
+                          </div>
+                        </el-upload>
+                      </div>
+                    </el-card>
+                 </el-tab-pane>
+
+                 <!-- 拆分后的 Tab 4: 瓶阀检验 -->
+                 <el-tab-pane label="瓶阀检验" name="valve">
+                     <el-card shadow="never" class="mb8" style="border-top: none;">
+                       <el-form label-width="180px" size="small">
+                         <el-form-item label="使用仪器/设备">
+                           <el-select v-model="recordForm.gas.appearance.valve.instrument" multiple filterable placeholder="选择/输入仪器设备">
+                             <el-option v-for="opt in instrumentOptions.valve" :key="opt" :label="opt" :value="opt"></el-option>
+                           </el-select>
+                         </el-form-item>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="气瓶阀编号">
+                               <el-input v-model="recordForm.gas.appearance.valve.valveNo"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="瓶阀制造日期">
+                               <el-date-picker v-model="recordForm.gas.appearance.valve.manufactureDate" type="date" style="width: 100%;"></el-date-picker>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-form-item label="瓶阀螺纹完整性状况描述">
+                           <el-input v-model="recordForm.gas.appearance.valve.threadIntegrity" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="气瓶阀阀体有无变形">
+                           <el-input v-model="recordForm.gas.appearance.valve.bodyDeformation"></el-input>
+                         </el-form-item>
+                         <el-form-item label="气密状况描述">
+                           <el-input v-model="recordForm.gas.appearance.valve.leakStatus" type="textarea" :rows="2"></el-input>
+                         </el-form-item>
+                         <el-form-item label="爆破片是否更换">
+                           <el-input v-model="recordForm.gas.appearance.valve.burstDiscReplaced"></el-input>
+                         </el-form-item>
+                         <el-form-item label="瓶阀检验结论">
+                           <el-radio-group v-model="recordForm.gas.appearance.valve.result">
+                             <el-radio label="合格">合格</el-radio>
+                             <el-radio label="修复">修复</el-radio>
+                             <el-radio label="判废">判废</el-radio>
+                           </el-radio-group>
+                         </el-form-item>
+                       </el-form>
+                     </el-card>
+
+                    <el-card shadow="never" class="mb8">
+                      <div slot="header" class="clearfix"><span>原始凭证/现场记录</span></div>
+                      <div>
+                        <el-upload
+                          action="#"
+                          list-type="picture-card"
+                          :auto-upload="false"
+                          :file-list="recordForm.gas.appearance.valve.fileList"
+                          :on-change="(file, fileList) => recordForm.gas.appearance.valve.fileList = fileList"
+                          :on-remove="(file, fileList) => recordForm.gas.appearance.valve.fileList = fileList"
+                        >
+                          <i slot="default" class="el-icon-plus"></i>
+                          <div slot="file" slot-scope="{file}">
+                            <img class="el-upload-list__item-thumbnail" :src="file.url" alt="">
+                            <span class="el-upload-list__item-actions">
+                              <span class="el-upload-list__item-preview" @click="$message.info('预览大图')"><i class="el-icon-zoom-in"></i></span>
+                              <span class="el-upload-list__item-delete"><i class="el-icon-delete"></i></span>
+                            </span>
+                          </div>
+                        </el-upload>
+                      </div>
+                    </el-card>
+                 </el-tab-pane>
+
+                 <!-- 拆分后的 Tab 5: 复合气瓶状况与签字 -->
+                 <el-tab-pane label="复合气瓶状况与签字" name="status">
+                    <el-card shadow="never" style="border-top: none;">
+                      <el-form label-width="150px" size="small">
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="合格气瓶">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.qualified"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="粘贴标签">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.labelPasted"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="修复气瓶">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.repaired"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="清洗">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.cleaned"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="水压">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.hydro"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="丢弃">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.discarded"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                         <el-row :gutter="20">
+                           <el-col :span="12">
+                             <el-form-item label="其他建议">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.otherSuggestion"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="报废气瓶">
+                               <el-input v-model="recordForm.gas.appearance.cylinderStatus.scrapped"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+
+                         <el-row :gutter="20" style="margin-top: 10px;">
+                           <el-col :span="12">
+                             <el-form-item label="检验员">
+                               <el-input v-model="recordForm.gas.appearance.sign.inspector"></el-input>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="检验员资格证号">
+                               <el-input v-model="recordForm.gas.appearance.sign.inspectorCertNo"></el-input>
+                             </el-form-item>
+                           </el-col>
+                         </el-row>
+                        <el-row :gutter="20">
+                          <el-col :span="12">
+                            <el-form-item label="检验日期">
+                              <el-date-picker v-model="recordForm.gas.appearance.sign.inspectDate" type="date" style="width: 100%;"></el-date-picker>
+                            </el-form-item>
+                          </el-col>
+                        </el-row>
+                      </el-form>
+                    </el-card>
+                 </el-tab-pane>
 
                    <!-- 表2：装置校验 -->
                    <el-tab-pane label="装置校验" name="calibration">
@@ -1087,19 +1161,220 @@
                <!-- 模板B：安全阀校验记录 -->
                <div v-else-if="currentRecordType === 'valve'">
                  <el-card shadow="never" class="mb8">
-                   <div slot="header"><span>校验数据</span></div>
-                   <el-form size="small" label-width="140px">
-                     <el-form-item label="校验介质"><el-input v-model="recordForm.valve.media"></el-input></el-form-item>
-                     <el-row>
-                       <el-col :span="12"><el-form-item label="开启压力1 (MPa)"><el-input v-model="recordForm.valve.openPressure1"></el-input></el-form-item></el-col>
-                       <el-col :span="12"><el-form-item label="开启压力2 (MPa)"><el-input v-model="recordForm.valve.openPressure2"></el-input></el-form-item></el-col>
-                     </el-row>
-                     <el-row>
-                       <el-col :span="12"><el-form-item label="开启压力3 (MPa)"><el-input v-model="recordForm.valve.openPressure3"></el-input></el-form-item></el-col>
-                       <el-col :span="12"><el-form-item label="回座压力 (MPa)"><el-input v-model="recordForm.valve.returnPressure"></el-input></el-form-item></el-col>
-                     </el-row>
-                     <el-form-item label="密封试验压力 (MPa)"><el-input v-model="recordForm.valve.sealTestPressure"></el-input></el-form-item>
-                   </el-form>
+                   <div slot="header" class="clearfix">
+                     <span>安全阀校验记录</span>
+                     <el-tag :type="recordForm.valveType === 'online' ? 'success' : 'warning'" size="small" style="margin-left: 10px;">
+                       {{ recordForm.valveType === 'online' ? '在线校验' : '离线校验' }}
+                     </el-tag>
+                     <div style="float: right;">
+                       <el-radio-group v-model="recordForm.valveType" size="small">
+                         <el-radio-button label="online">在线校验</el-radio-button>
+                         <el-radio-button label="offline">离线校验</el-radio-button>
+                       </el-radio-group>
+                     </div>
+                   </div>
+
+                   <!-- 在线校验表单 -->
+                   <div v-if="recordForm.valveType === 'online'">
+                      <div class="subheader">1. 基本信息</div>
+                      <el-form size="small" label-width="120px">
+                        <el-row>
+                          <el-col :span="8"><el-form-item label="型号"><el-input v-model="recordForm.valveOnline.basic.model"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="类型"><el-input v-model="recordForm.valveOnline.basic.type"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="公称压力"><el-input v-model="recordForm.valveOnline.basic.nominalPressure"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                          <el-col :span="8"><el-form-item label="公称通径"><el-input v-model="recordForm.valveOnline.basic.dn"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="压力级"><el-input v-model="recordForm.valveOnline.basic.pressureLevel"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="流道直径"><el-input v-model="recordForm.valveOnline.basic.channelDiameter"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                          <el-col :span="8"><el-form-item label="工作压力"><el-input v-model="recordForm.valveOnline.basic.workPressure"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="密封面直径"><el-input v-model="recordForm.valveOnline.basic.sealDiameter"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="制造单位"><el-input v-model="recordForm.valveOnline.basic.manufacturer"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                          <el-col :span="8"><el-form-item label="所在设备名称"><el-input v-model="recordForm.valveOnline.basic.deviceName"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="设备类型"><el-input v-model="recordForm.valveOnline.basic.deviceType"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="安装位置"><el-input v-model="recordForm.valveOnline.basic.installPos"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                          <el-col :span="8"><el-form-item label="设备位号"><el-input v-model="recordForm.valveOnline.basic.deviceCode"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="要求整定压力"><el-input v-model="recordForm.valveOnline.basic.reqSetPressure"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="工作介质"><el-input v-model="recordForm.valveOnline.basic.medium"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+
+                      <div class="subheader">2. 现场条件确认</div>
+                      <el-form size="small" label-width="140px">
+                        <el-row>
+                           <el-col :span="12">
+                              <el-form-item label="上次校验方式">
+                                <el-checkbox-group v-model="recordForm.valveOnline.site.lastCheckMode">
+                                  <el-checkbox label="离线"></el-checkbox>
+                                  <el-checkbox label="在线"></el-checkbox>
+                                </el-checkbox-group>
+                              </el-form-item>
+                           </el-col>
+                           <el-col :span="12"><el-form-item label="攀登是否方便"><el-input v-model="recordForm.valveOnline.site.climb"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="是否有毒有害"><el-input v-model="recordForm.valveOnline.site.toxic"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="防护措施"><el-input v-model="recordForm.valveOnline.site.protection"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="是否高温高压"><el-input v-model="recordForm.valveOnline.site.highTemp"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="8"><el-form-item label="仪表是否有效"><el-input v-model="recordForm.valveOnline.site.meterValid"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="易燃易爆"><el-input v-model="recordForm.valveOnline.site.flammable"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="是否需防爆检测"><el-input v-model="recordForm.valveOnline.site.explosiveTest"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12"><el-form-item label="是否需搭脚手架"><el-input v-model="recordForm.valveOnline.site.scaffold"></el-input></el-form-item></el-col>
+                           <el-col :span="12"><el-form-item label="泄放口是否通畅"><el-input v-model="recordForm.valveOnline.site.discharge"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+
+                      <div class="subheader">3. 宏观检查</div>
+                      <el-form size="small" label-width="140px">
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="安装是否垂直"><el-input v-model="recordForm.valveOnline.appearance.install"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="资料是否齐全"><el-input v-model="recordForm.valveOnline.appearance.docs"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="铅封是否完好"><el-input v-model="recordForm.valveOnline.appearance.seal"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="8"><el-form-item label="影响校验因素"><el-input v-model="recordForm.valveOnline.appearance.factor"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="外漏"><el-input v-model="recordForm.valveOnline.appearance.leak"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="锈蚀"><el-input v-model="recordForm.valveOnline.appearance.corrosion"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="8"><el-form-item label="波纹管"><el-input v-model="recordForm.valveOnline.appearance.bellows"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="波纹管开裂"><el-input v-model="recordForm.valveOnline.appearance.bellowsOpen"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="提升扳手"><el-input v-model="recordForm.valveOnline.appearance.wrench"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="8"><el-form-item label="扳手动作"><el-input v-model="recordForm.valveOnline.appearance.wrenchAction"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="扳手位置"><el-input v-model="recordForm.valveOnline.appearance.wrenchPos"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="截断阀"><el-input v-model="recordForm.valveOnline.appearance.cutoffValve"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="8"><el-form-item label="截断阀位置"><el-input v-model="recordForm.valveOnline.appearance.cutoffPos"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="截断阀铅封"><el-input v-model="recordForm.valveOnline.appearance.cutoffSeal"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="相关附件"><el-input v-model="recordForm.valveOnline.appearance.accessories"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+
+                      <div class="subheader">4. 校验数据</div>
+                      <el-form size="small" label-width="120px">
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="实测整定压力"><el-input v-model="recordForm.valveOnline.calibration.actSetPressure"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="系统工作压力"><el-input v-model="recordForm.valveOnline.calibration.sysPressure"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="介质"><el-input v-model="recordForm.valveOnline.calibration.medium"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12"><el-form-item label="使用仪器编号"><el-input v-model="recordForm.valveOnline.calibration.deviceNo"></el-input></el-form-item></el-col>
+                           <el-col :span="12"><el-form-item label="校验依据"><el-input v-model="recordForm.valveOnline.calibration.standard"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+                   </div>
+
+                   <!-- 离线校验表单 -->
+                   <div v-else>
+                      <div class="subheader">1. 基本信息</div>
+                      <el-form size="small" label-width="120px">
+                        <el-row>
+                          <el-col :span="8"><el-form-item label="安全阀编号"><el-input v-model="recordForm.valveOffline.basic.no"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="使用单位"><el-input v-model="recordForm.valveOffline.basic.useUnit"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="设备位号"><el-input v-model="recordForm.valveOffline.basic.deviceCode"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                          <el-col :span="8"><el-form-item label="介质"><el-input v-model="recordForm.valveOffline.basic.medium"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="安装位置"><el-input v-model="recordForm.valveOffline.basic.installPos"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="公称通径"><el-input v-model="recordForm.valveOffline.basic.dn"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                          <el-col :span="8"><el-form-item label="制造单位"><el-input v-model="recordForm.valveOffline.basic.manufacturer"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="制造许可证"><el-input v-model="recordForm.valveOffline.basic.licenseNo"></el-input></el-form-item></el-col>
+                          <el-col :span="8">
+                            <el-form-item label="型号/类型">
+                               <el-checkbox-group v-model="recordForm.valveOffline.basic.type">
+                                  <el-checkbox label="弹簧式"></el-checkbox>
+                                  <el-checkbox label="先导式"></el-checkbox>
+                                </el-checkbox-group>
+                            </el-form-item>
+                          </el-col>
+                        </el-row>
+                        <el-row>
+                          <el-col :span="8"><el-form-item label="出厂编号"><el-input v-model="recordForm.valveOffline.basic.factoryNo"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="出厂日期"><el-input v-model="recordForm.valveOffline.basic.factoryDate"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="要求整定压力"><el-input v-model="recordForm.valveOffline.basic.reqSetPressure"></el-input></el-form-item></el-col>
+                        </el-row>
+                         <el-row>
+                          <el-col :span="8"><el-form-item label="型号"><el-input v-model="recordForm.valveOffline.basic.model"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="工作压力"><el-input v-model="recordForm.valveOffline.basic.workPressure"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="流道直径"><el-input v-model="recordForm.valveOffline.basic.channelDiameter"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                           <el-col :span="12"><el-form-item label="压力级范围"><el-input v-model="recordForm.valveOffline.basic.pressureRange"></el-input></el-form-item></el-col>
+                           <el-col :span="12"><el-form-item label="设备类型"><el-input v-model="recordForm.valveOffline.basic.deviceType"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+
+                      <div class="subheader">2. 校验参数</div>
+                      <el-form size="small" label-width="120px">
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="校验方式"><el-input v-model="recordForm.valveOffline.calibration.checkMode" disabled></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="校验设备编号"><el-input v-model="recordForm.valveOffline.calibration.deviceNo"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="校验介质"><el-input v-model="recordForm.valveOffline.calibration.medium"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="介质温度"><el-input v-model="recordForm.valveOffline.calibration.mediumTemp"></el-input></el-form-item></el-col>
+                           <el-col :span="16"><el-form-item label="校验标准"><el-input v-model="recordForm.valveOffline.calibration.standard"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+
+                      <div class="subheader">3. 外观检查</div>
+                      <el-form size="small" label-width="120px">
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="标牌"><el-input v-model="recordForm.valveOffline.appearance.tag"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="铭牌"><el-input v-model="recordForm.valveOffline.appearance.nameplate"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="锈蚀"><el-input v-model="recordForm.valveOffline.appearance.rust"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="附件"><el-input v-model="recordForm.valveOffline.appearance.accessories"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="提升扳手"><el-input v-model="recordForm.valveOffline.appearance.wrench"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="扳手位置"><el-input v-model="recordForm.valveOffline.appearance.wrenchPos"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+
+                      <div class="subheader">4. 解体检查</div>
+                      <el-form size="small" label-width="120px">
+                        <el-row>
+                           <el-col :span="8"><el-form-item label="内部锈蚀"><el-input v-model="recordForm.valveOffline.disassembly.internalRust"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="机械损伤"><el-input v-model="recordForm.valveOffline.disassembly.damage"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="处理动作"><el-input v-model="recordForm.valveOffline.disassembly.action"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+                      
+                      <div class="subheader">5. 校验数据 (整定压力)</div>
+                      <el-form size="small" label-width="120px">
+                         <el-row>
+                            <el-col :span="24">
+                              <el-form-item label="校验次数">
+                                <el-checkbox-group v-model="recordForm.valveOffline.test.times">
+                                  <el-checkbox label="第1次"></el-checkbox>
+                                  <el-checkbox label="第2次"></el-checkbox>
+                                  <el-checkbox label="第3次"></el-checkbox>
+                                </el-checkbox-group>
+                              </el-form-item>
+                            </el-col>
+                         </el-row>
+                         <el-row>
+                           <el-col :span="8"><el-form-item label="实测整定压力"><el-input v-model="recordForm.valveOffline.test.actSetPressure"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="密封试验压力"><el-input v-model="recordForm.valveOffline.test.sealPressure"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="下次校验日期"><el-input v-model="recordForm.valveOffline.test.validDate"></el-input></el-form-item></el-col>
+                        </el-row>
+                      </el-form>
+                   </div>
                  </el-card>
                </div>
                
@@ -1278,6 +1553,7 @@
         ],
         recordForm: {
           // 原始记录头部信息（对应 XZY-JL104 部分字段）
+          valveType: 'online', // 'online' | 'offline'
           header: {
             reportNo: '',
             usingUnit: '',
@@ -1332,7 +1608,8 @@
                 innerSurface: '',
                 defectPosition: '',
                 other: '',
-                result: '合格'
+                result: '合格',
+                fileList: []
               },
               // 瓶口检查
               mouth: {
@@ -1343,7 +1620,8 @@
                 threadStatus: '',
                 threadEvaluation: '',
                 other: '',
-                result: '合格'
+                result: '合格',
+                fileList: []
               },
               // 瓶阀检验
               valve: {
@@ -1354,7 +1632,8 @@
                 bodyDeformation: '',
                 leakStatus: '',
                 burstDiscReplaced: '',
-                result: '合格'
+                result: '合格',
+                fileList: []
               },
               // 复合气瓶状况
               cylinderStatus: {
@@ -1450,18 +1729,60 @@
             result: '合格'
           },
           
-          // 安全阀专用 (保持原有简化结构，也可按需扩展)
-            valve: {
-              inspector: '',
-             appearance: '完好',
-             media: '空气',
-             openPressure1: '',
-             openPressure2: '',
-             openPressure3: '',
-             returnPressure: '',
-             sealTestPressure: '',
-               result: '合格',
-               fileList: []
+          // 安全阀在线检测 (XZY-JL100-112)
+          valveOnline: {
+             basic: {
+               model: 'A48Y-16C', type: '弹簧式', nominalPressure: '1.6', dn: '50', pressureLevel: '1.6', 
+               channelDiameter: '40', workPressure: '1.2', sealDiameter: '42', manufacturer: '上海阀门厂',
+               deviceName: '蒸汽锅炉', deviceType: '锅炉', installPos: '锅炉顶部', deviceCode: 'GL-2024-001', 
+               reqSetPressure: '1.45', medium: '饱和蒸汽'
+             },
+             site: {
+               lastCheckMode: ['离线'],
+               climb: '良好', toxic: '无', protection: '完好', highTemp: '否', meterValid: '是',
+               flammable: '否', explosiveTest: '合格', scaffold: '不需要', discharge: '通畅'
+             },
+             appearance: {
+               install: '垂直', docs: '齐全', seal: '完好', factor: '无影响', leak: '无', corrosion: '无',
+               bellows: '无', bellowsOpen: '正常', wrench: '有', wrenchAction: '灵活', wrenchPos: '垂直',
+               cutoffValve: '有', cutoffPos: '全开', cutoffSeal: '完好', accessories: '齐全'
+             },
+             calibration: {
+               actSetPressure: '1.46', checkMode: '在线', sysPressure: '1.2', medium: '饱和蒸汽',
+               deviceNo: 'EQ-001', standard: 'TSG ZF001-2006《安全阀安全技术监察规程》、TSG 31-2025《工业管道安全技术规范》',
+               result: '合格'
+             },
+             sign: {
+               inspector: '张强', checkDate: '2024-01-18', auditor: '李部长', auditDate: '2024-01-18', user: '王工', userDate: '2024-01-18'
+             },
+             fileList: []
+          },
+          // 安全阀离线校验 (XZY-JL111-2025)
+          valveOffline: {
+             basic: {
+               no: 'SV-2024-002', useUnit: '江苏化工厂', deviceCode: 'R-101', medium: '氮气', installPos: '储罐顶部', dn: '80',
+               manufacturer: '苏州阀门厂', licenseNo: 'TS2710001-2025', type: ['弹簧式'],
+               factoryNo: 'FC-2020-098', factoryDate: '2020-05-01', reqSetPressure: '2.5', model: 'A42Y-25',
+               workPressure: '2.0', channelDiameter: '65', pressureRange: '1.6-2.5', deviceType: '压力容器'
+             },
+             calibration: {
+               checkMode: '离线', deviceNo: 'HD2025121501', medium: '空气', mediumTemp: '25',
+               standard: 'TSG ZF001-2006《安全阀安全技术监察规程》、TSG 31-2025《工业管道安全技术规范》'
+             },
+             appearance: {
+               tag: '有', nameplate: '清晰', rust: '无', accessories: '齐全', wrench: '无', wrenchPos: '/'
+             },
+             disassembly: {
+               internalRust: '轻微', damage: '无', action: '清洗研磨'
+             },
+             test: {
+               times: ['第1次', '第2次', '第3次'],
+               actSetPressure: '2.51', sealPressure: '2.25', result: '合格', validDate: '2025-01-18'
+             },
+             sign: {
+               inspector: '李敏', checkDate: '2024-01-18', checker: '王五', checkDate2: '2024-01-18'
+             },
+             fileList: []
           },
           
           // 附件/图片 (通用)
@@ -1500,26 +1821,41 @@
             ]
           },
           {
-            no: '20240114-SV-002',
-            company: '江苏化工厂',
-            useCompany: '江苏化工厂运行部',
+            no: '20240114-SV-Online-001',
+            company: '在线热电厂',
+            useCompany: '在线热电厂运行部',
             type: 'valve',
-            entrustDate: '2024-01-11',
+            valveMode: 'online',
+            entrustDate: '2024-01-15',
             acceptor: '李四',
-            expectedReportDate: '2024-01-18',
+            expectedReportDate: '2024-01-22',
             pagination: { currentPage: 1, pageSize: 5 },
             devices: [
-              { no: 'SV-002-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '' },
-              { no: 'SV-002-002', model: 'A48Y-16C', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '' },
-              { no: 'SV-002-003', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
-              { no: 'SV-002-004', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已录入', hasRecord: true, remark: '阀杆润滑已完成' }
+              { no: 'SV-OL-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '在线校验场景' },
+              { no: 'SV-OL-002', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '未录入', hasRecord: false, remark: '需登高作业' }
+            ]
+          },
+          {
+            no: '20240114-SV-Offline-002',
+            company: '离线化工厂',
+            useCompany: '离线化工厂检修部',
+            type: 'valve',
+            valveMode: 'offline',
+            entrustDate: '2024-01-16',
+            acceptor: '王五',
+            expectedReportDate: '2024-01-23',
+            pagination: { currentPage: 1, pageSize: 5 },
+            devices: [
+              { no: 'SV-OF-001', model: 'A42Y-25', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '离线校验场景' },
+              { no: 'SV-OF-002', model: 'A42Y-25', deviceType: 'valve', executor: '李敏', status: '未录入', hasRecord: false, remark: '需解体' }
             ]
           }
         ],
 
         specialList: [
           { no: '20240115-GC-001', company: '上海气体工厂', subType: 'gas', days: -2, status: '待流转', acceptor: '张三', entrustDate: '2024-01-12', auditStatus: '待审核' },
-          { no: '20240115-SV-005', company: '江苏化工厂', subType: 'valve', days: 5, status: '待流转', acceptor: '李四', entrustDate: '2024-01-13', auditStatus: '已通过' },
+          { no: '20240114-SV-Online-001', company: '在线热电厂', subType: 'valve', days: 5, status: '待流转', acceptor: '李四', entrustDate: '2024-01-15', auditStatus: '已通过' },
+          { no: '20240114-SV-Offline-002', company: '离线化工厂', subType: 'valve', days: 5, status: '待流转', acceptor: '王五', entrustDate: '2024-01-16', auditStatus: '已通过' },
         ],
         // 任务分配页面数据
         assignTab: 'inspection',
@@ -1550,7 +1886,8 @@
         ],
         assignSpecialList: [
           { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', executor: '', date: '2024-01-12', reportDeadline: '2024-01-20' },
-          { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', executor: '王五', date: '2024-01-13', reportDeadline: '2024-01-19' }
+          { no: '20240114-SV-Online-001', type: 'valve', status: '已分配', acceptor: '李四', executor: '张强', date: '2024-01-15', reportDeadline: '2024-01-22' },
+          { no: '20240114-SV-Offline-002', type: 'valve', status: '已分配', acceptor: '王五', executor: '李敏', date: '2024-01-16', reportDeadline: '2024-01-23' }
         ],
         dialogAssignVisible: false,
         currentAssignRow: null,
@@ -1585,7 +1922,8 @@
         // 报告相关
         reportList: [
           { no: '20240115-GC-001', name: '上海气体工厂-气瓶定期检验报告', author: '张三', status: '待审批', type: 'gas' },
-          { no: '20240115-SV-005', name: '江苏化工厂-安全阀校验报告', author: '李四', status: '已批准', type: 'valve' }
+          { no: '20240114-SV-Online-001', name: '在线热电厂-安全阀在线校验报告', author: '李四', status: '已批准', type: 'valve' },
+          { no: '20240114-SV-Offline-002', name: '离线化工厂-安全阀离线校验报告', author: '王五', status: '已批准', type: 'valve' }
         ],
         currentReport: null
       },
@@ -2041,6 +2379,8 @@
           if (this.currentRecordType === 'gas') {
             this.recordForm.header.usingUnit = entrust.useCompany || entrust.company || ''
             this.recordForm.header.bottleNo = device.no || ''
+          } else if (this.currentRecordType === 'valve') {
+            this.recordForm.valveType = entrust.valveMode || 'offline'
           }
           this.applyRecordInspectorDefaults()
           this.dialogRecordEntryVisible = true
