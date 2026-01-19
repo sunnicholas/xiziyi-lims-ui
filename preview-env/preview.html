@@ -18,6 +18,7 @@
     /* 主体区域样式 */
     .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
     .navbar { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: flex-end; padding: 0 20px; z-index: 10; }
+    .navbar .update-time { margin-right: 16px; font-size: 12px; color: #909399; }
     .app-main { flex: 1; padding: 20px; overflow-y: auto; position: relative; }
     
     /* 通用容器 */
@@ -70,6 +71,7 @@
     <!-- 主体内容 -->
     <div class="main-container">
       <div class="navbar">
+        <span class="update-time">更新时间：{{ lastUpdated }}</span>
         <el-dropdown>
           <span class="el-dropdown-link" style="cursor: pointer;">
             <i class="el-icon-user-solid"></i> 管理员 <i class="el-icon-arrow-down el-icon--right"></i>
@@ -284,15 +286,18 @@
 
   <!-- 引入 Vue 和 Element UI -->
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
-  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
-  <script>
-    new Vue({
-      el: '#app',
-      data: {
-        activeMenu: 'entrust',
-        // 委托管理数据
-        entrustQuery: { no: '', type: '' },
-        entrustList: [
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+      new Vue({
+        el: '#app',
+        data: {
+          activeMenu: 'entrust',
+          
+          lastUpdated: '',
+          
+          // 委托管理数据
+          entrustQuery: { no: '', type: '' },
+          entrustList: [
           { no: '20240114-GC-001', company: '上海某某气体公司', type: '气瓶', days: -1, status: '待流转' },
           { no: '20240114-SV-002', company: '江苏化工集团', type: '安全阀', days: 3, status: '待分配' },
           { no: '20240114-GC-003', company: '浙北石化', type: '气瓶', days: 10, status: '进行中' }
@@ -327,7 +332,19 @@
         rejectVisible: false,
         rejectReason: ''
       },
+      created() {
+        this.lastUpdated = this.formatUpdateTime(new Date())
+      },
       methods: {
+        formatUpdateTime(date) {
+          const y = date.getFullYear()
+          const m = (date.getMonth() + 1).toString().padStart(2, '0')
+          const d = date.getDate().toString().padStart(2, '0')
+          const hh = date.getHours().toString().padStart(2, '0')
+          const mm = date.getMinutes().toString().padStart(2, '0')
+          const ss = date.getSeconds().toString().padStart(2, '0')
+          return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
+        },
         handleMenuSelect(index) {
           this.activeMenu = index;
         },

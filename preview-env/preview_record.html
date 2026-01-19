@@ -18,6 +18,7 @@
     /* 主体区域 */
     .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
     .navbar { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10; }
+    .navbar .update-time { margin-left: 8px; font-size: 12px; color: #909399; }
     .app-main { flex: 1; padding: 20px; overflow-y: auto; }
     .app-container { background: #fff; padding: 20px; border-radius: 4px; min-height: calc(100vh - 90px); box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
     
@@ -183,7 +184,10 @@
       <div class="navbar">
         <el-breadcrumb separator="/">
           <el-breadcrumb-item>首页</el-breadcrumb-item>
-          <el-breadcrumb-item>{{ getPageTitle() }}</el-breadcrumb-item>
+          <el-breadcrumb-item>
+            {{ getPageTitle() }}
+            <span class="update-time">（更新时间：{{ lastUpdated }}）</span>
+          </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
           <span class="el-dropdown-link" style="cursor: pointer;">
@@ -245,7 +249,7 @@
               <template slot-scope="props">
                   <el-table :data="getPagedDevices(props.row)" size="small" border>
                     <el-table-column label="气瓶编号" prop="no" width="140"></el-table-column>
-                    <el-table-column label="气瓶型号" prop="model" width="140" show-overflow-tooltip></el-table-column>
+                    <el-table-column label="样品型号" prop="model" width="140" show-overflow-tooltip></el-table-column>
                     <el-table-column label="备注" prop="remark" show-overflow-tooltip></el-table-column>
                     <el-table-column label="设备类型" prop="deviceType" width="100">
                       <template slot-scope="scope">
@@ -353,7 +357,7 @@
                 <span v-else style="color: #909399;">仅查看</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="220" align="center">
+            <el-table-column label="操作" width="260" align="center">
               <template slot-scope="scope">
                 <el-button
                   v-if="!isCurrentUserLeader"
@@ -363,7 +367,16 @@
                   :disabled="isBatchSubmitDisabled(scope.row)"
                   @click="batchSubmitMyRecords(scope.row)"
                 >
-                  批量提交我的记录
+                  批量提交记录
+                </el-button>
+                <el-button
+                  v-if="!isCurrentUserLeader"
+                  size="mini"
+                  type="primary"
+                  plain
+                  @click="startSequentialEdit(scope.row)"
+                >
+                  按顺序编辑
                 </el-button>
                 <el-button
                   size="mini"
@@ -371,7 +384,7 @@
                   icon="el-icon-view"
                   @click="$refs.recordEntrustTable.toggleRowExpansion(scope.row)"
                 >
-                  展开/收起设备
+                  展开/收起
                 </el-button>
               </template>
             </el-table-column>
@@ -385,12 +398,22 @@
             <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
               <div>
                  <el-tag size="small" style="margin-right: 10px;">{{ currentRecordType === 'gas' ? '气瓶检测' : '安全阀校验' }}</el-tag>
+                 <el-tag v-if="isSequentialEdit" type="warning" size="small" effect="dark" style="margin-right: 10px;">
+                   <i class="el-icon-video-play"></i> 顺序编辑模式 {{ getSequentialProgressText() }}
+                 </el-tag>
                  <span style="color: #909399; font-size: 13px; margin-right: 10px;">单号：{{ currentRecordEntrust ? currentRecordEntrust.no : '-' }}</span>
                  <span style="color: #909399; font-size: 13px;">设备：{{ currentRecordDevice ? (currentRecordDevice.no + ' ' + currentRecordDevice.model) : '-' }}</span>
               </div>
               <div>
-                 <el-button size="small" @click="dialogRecordEntryVisible = false">取消</el-button>
-                 <el-button type="primary" size="small" icon="el-icon-check" @click="dialogRecordEntryVisible = false; $message.success('保存成功')">保存</el-button>
+                 <el-button size="small" @click="handleRecordEntryCancel">取消</el-button>
+                 <el-button
+                   type="primary"
+                   size="small"
+                   icon="el-icon-check"
+                   @click="handleRecordEntrySave"
+                 >
+                   {{ isSequentialEdit ? '保存/下一原记录' : '保存' }}
+                 </el-button>
               </div>
             </div>
           
@@ -443,7 +466,7 @@
                    <el-row :gutter="20">
                      <el-col :span="12">
                        <el-form-item label="气瓶编号">
-                         <el-input v-model="recordForm.header.bottleNo"></el-input>
+                         <el-input v-model="recordForm.header.bottleNo" disabled placeholder="系统自动生成"></el-input>
                        </el-form-item>
                      </el-col>
                      <el-col :span="12">
@@ -1019,6 +1042,8 @@
         activeMenu: 'record-list',
         activeTab: 'special',
         
+        lastUpdated: '',
+        
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
         dialogFormVisible: false,
@@ -1038,9 +1063,9 @@
             hot: true,
             sampleTitle: '气瓶',
             sampleFields: [
-              { prop: 'bottleName', label: '气瓶名称', required: true },
-              { prop: 'model', label: '气瓶型号', required: true },
-              { prop: 'number', label: '气瓶编号', required: true },
+              { prop: 'bottleName', label: '样品名称', required: true },
+              { prop: 'model', label: '样品型号', required: true },
+              { prop: 'number', label: '气瓶编号', required: true, disabled: true, placeholder: '系统自动生成' },
               { prop: 'waterVolume', label: '气瓶水容积(L)', required: true },
               { prop: 'nominalPressure', label: '公称工作压力(MPa)', required: true },
               { prop: 'repaired', label: '是否修理过', required: true, type: 'radio', options: ['是','否'] },
@@ -1307,6 +1332,7 @@
         recordSearchKeyword: '',
         currentRecordEntrust: null,
         currentRecordDevice: null,
+        isSequentialEdit: false,
         recordEntrustList: [
           {
             no: '20240115-GC-001',
@@ -1415,6 +1441,9 @@
           { no: '20240115-SV-005', name: '江苏化工厂-安全阀校验报告', author: '李四', status: '已批准', type: 'valve' }
         ],
         currentReport: null
+      },
+      created() {
+        this.lastUpdated = this.formatUpdateTime(new Date())
       },
       computed: {
         currentUser() {
@@ -1575,6 +1604,62 @@
         }
       },
       methods: {
+        formatUpdateTime(date) {
+          const y = date.getFullYear()
+          const m = (date.getMonth() + 1).toString().padStart(2, '0')
+          const d = date.getDate().toString().padStart(2, '0')
+          const hh = date.getHours().toString().padStart(2, '0')
+          const mm = date.getMinutes().toString().padStart(2, '0')
+          const ss = date.getSeconds().toString().padStart(2, '0')
+          return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
+        },
+        getSequentialProgressText() {
+          if (!this.currentRecordEntrust || !this.currentRecordDevice) return ''
+          const entrust = this.currentRecordEntrust
+          const editableDevices = (entrust.devices || []).filter(d => this.canEditDevice(d))
+          const total = editableDevices.length
+          const currentIndex = editableDevices.findIndex(d => d.no === this.currentRecordDevice.no)
+          if (currentIndex === -1) return ''
+          return (currentIndex + 1) + '/' + total
+        },
+        handleRecordEntryCancel() {
+          this.dialogRecordEntryVisible = false
+          this.isSequentialEdit = false
+        },
+        handleRecordEntrySave() {
+          this.$message.success('保存成功')
+          if (this.isSequentialEdit) {
+            const entrust = this.currentRecordEntrust
+            const currentDevice = this.currentRecordDevice
+            if (!entrust || !currentDevice) {
+              this.isSequentialEdit = false
+              this.dialogRecordEntryVisible = false
+              return
+            }
+            const editableDevices = (entrust.devices || []).filter(d => this.canEditDevice(d))
+            if (!editableDevices.length) {
+              this.isSequentialEdit = false
+              this.dialogRecordEntryVisible = false
+              return
+            }
+            const currentIndex = editableDevices.findIndex(d => d.no === currentDevice.no)
+            let nextDevice = null
+            for (let i = currentIndex + 1; i < editableDevices.length; i++) {
+              nextDevice = editableDevices[i]
+              break
+            }
+            if (nextDevice) {
+              this.openRecordEntryFromDevice(entrust, nextDevice)
+              this.$message.info('已为您打开下一条原始记录')
+            } else {
+              this.isSequentialEdit = false
+              this.dialogRecordEntryVisible = false
+              this.$message.success('已完成该委托下所有可编辑原始记录')
+            }
+          } else {
+            this.dialogRecordEntryVisible = false
+          }
+        },
         closeAllDialogs() {
           this.dialogTypeSelectVisible = false
           this.dialogSubTypeVisible = false
@@ -1745,6 +1830,18 @@
             return false
           }
           return ['已录入', '驳回'].indexOf(device.status) !== -1
+        },
+        startSequentialEdit(entrust) {
+          if (this.isCurrentUserLeader) {
+            return
+          }
+          const editableDevices = (entrust.devices || []).filter(d => this.canEditDevice(d))
+          if (!editableDevices.length) {
+            this.$message.info('当前委托暂无可编辑原始记录')
+            return
+          }
+          this.isSequentialEdit = true
+          this.openRecordEntryFromDevice(entrust, editableDevices[0])
         },
         openRecordEntryFromDevice(entrust, device) {
           if (!this.canOperateDevice(device)) {

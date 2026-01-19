@@ -543,6 +543,8 @@
                     v-if="!field.type || field.type === 'text'"
                     v-model="scope.row[field.prop]"
                     size="mini"
+                    :disabled="field.disabled"
+                    :placeholder="field.placeholder"
                   ></el-input>
                   <el-radio-group
                     v-else-if="field.type === 'radio'"
@@ -925,9 +927,9 @@
             hot: true,
             sampleTitle: '气瓶',
             sampleFields: [
-              { prop: 'bottleName', label: '气瓶名称', required: true },
-              { prop: 'model', label: '气瓶型号', required: true },
-              { prop: 'number', label: '气瓶编号', required: true },
+              { prop: 'bottleName', label: '样品名称', required: true },
+              { prop: 'model', label: '样品型号', required: true },
+              { prop: 'number', label: '气瓶编号', required: true, disabled: true, placeholder: '系统自动生成' },
               { prop: 'waterVolume', label: '气瓶水容积L', required: true },
               { prop: 'nominalPressure', label: '公称工作压力MPa', required: true },
               { prop: 'repaired', label: '是否修理过', required: true, type: 'radio', options: ['是','否'] },
@@ -1385,7 +1387,8 @@
           const d = date.getDate().toString().padStart(2, '0')
           const hh = date.getHours().toString().padStart(2, '0')
           const mm = date.getMinutes().toString().padStart(2, '0')
-          return y + '-' + m + '-' + d + ' ' + hh + ' 时 ' + mm + ' 分'
+          const ss = date.getSeconds().toString().padStart(2, '0')
+          return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
         },
         openTrackDialog() {
           this.trackVisible = true
