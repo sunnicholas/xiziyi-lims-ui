@@ -198,7 +198,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             {{ getPageTitle() }}
-            <span class="update-time">（更新时间：2026-01-19 17:15:00）</span>
+            <span class="update-time">（更新时间：2026-01-19 17:35:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -1177,102 +1177,288 @@
                    <!-- 在线校验表单 -->
                    <div v-if="recordForm.valveType === 'online'">
                       <div class="subheader">1. 基本信息</div>
-                      <el-form size="small" label-width="120px">
+                      <el-form size="small" label-width="140px">
                         <el-row>
                           <el-col :span="8"><el-form-item label="型号"><el-input v-model="recordForm.valveOnline.basic.model"></el-input></el-form-item></el-col>
                           <el-col :span="8"><el-form-item label="类型"><el-input v-model="recordForm.valveOnline.basic.type"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="公称压力"><el-input v-model="recordForm.valveOnline.basic.nominalPressure"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="公称压力(MPa)"><el-input v-model="recordForm.valveOnline.basic.nominalPressure"></el-input></el-form-item></el-col>
                         </el-row>
                         <el-row>
-                          <el-col :span="8"><el-form-item label="公称通径"><el-input v-model="recordForm.valveOnline.basic.dn"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="压力级"><el-input v-model="recordForm.valveOnline.basic.pressureLevel"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="流道直径"><el-input v-model="recordForm.valveOnline.basic.channelDiameter"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="公称通径(mm)"><el-input v-model="recordForm.valveOnline.basic.dn"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="压力等级"><el-input v-model="recordForm.valveOnline.basic.pressureLevel"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="流道直径(mm)"><el-input v-model="recordForm.valveOnline.basic.channelDiameter"></el-input></el-form-item></el-col>
                         </el-row>
                          <el-row>
-                          <el-col :span="8"><el-form-item label="工作压力"><el-input v-model="recordForm.valveOnline.basic.workPressure"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="密封面直径"><el-input v-model="recordForm.valveOnline.basic.sealDiameter"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="工作压力(MPa)"><el-input v-model="recordForm.valveOnline.basic.workPressure"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="密封直径(mm)"><el-input v-model="recordForm.valveOnline.basic.sealDiameter"></el-input></el-form-item></el-col>
                           <el-col :span="8"><el-form-item label="制造单位"><el-input v-model="recordForm.valveOnline.basic.manufacturer"></el-input></el-form-item></el-col>
                         </el-row>
                         <el-row>
-                          <el-col :span="8"><el-form-item label="所在设备名称"><el-input v-model="recordForm.valveOnline.basic.deviceName"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="设备类型"><el-input v-model="recordForm.valveOnline.basic.deviceType"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="设备名称"><el-input v-model="recordForm.valveOnline.basic.deviceName"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="使用设备类型"><el-input v-model="recordForm.valveOnline.basic.deviceType"></el-input></el-form-item></el-col>
                           <el-col :span="8"><el-form-item label="安装位置"><el-input v-model="recordForm.valveOnline.basic.installPos"></el-input></el-form-item></el-col>
                         </el-row>
                          <el-row>
-                          <el-col :span="8"><el-form-item label="设备位号"><el-input v-model="recordForm.valveOnline.basic.deviceCode"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="要求整定压力"><el-input v-model="recordForm.valveOnline.basic.reqSetPressure"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="设备代码"><el-input v-model="recordForm.valveOnline.basic.deviceCode"></el-input></el-form-item></el-col>
+                          <el-col :span="8"><el-form-item label="要求整定压力(MPa)"><el-input v-model="recordForm.valveOnline.basic.reqSetPressure"></el-input></el-form-item></el-col>
                           <el-col :span="8"><el-form-item label="工作介质"><el-input v-model="recordForm.valveOnline.basic.medium"></el-input></el-form-item></el-col>
                         </el-row>
                       </el-form>
 
-                      <div class="subheader">2. 现场条件确认</div>
-                      <el-form size="small" label-width="140px">
+                      <div class="subheader">2. 现场确认</div>
+                      <el-form size="small" label-width="180px">
                         <el-row>
                            <el-col :span="12">
-                              <el-form-item label="上次校验方式">
-                                <el-checkbox-group v-model="recordForm.valveOnline.site.lastCheckMode">
-                                  <el-checkbox label="离线"></el-checkbox>
-                                  <el-checkbox label="在线"></el-checkbox>
-                                </el-checkbox-group>
+                              <el-form-item label="上一次校验方式">
+                                <el-radio-group v-model="recordForm.valveOnline.site.lastCheckMode">
+                                  <el-radio label="离线">离线</el-radio>
+                                  <el-radio label="在线">在线</el-radio>
+                                </el-radio-group>
                               </el-form-item>
                            </el-col>
-                           <el-col :span="12"><el-form-item label="攀登是否方便"><el-input v-model="recordForm.valveOnline.site.climb"></el-input></el-form-item></el-col>
+                           <el-col :span="12">
+                             <el-form-item label="是否登高作业">
+                               <el-radio-group v-model="recordForm.valveOnline.site.climb">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
                         </el-row>
                         <el-row>
-                           <el-col :span="8"><el-form-item label="是否有毒有害"><el-input v-model="recordForm.valveOnline.site.toxic"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="防护措施"><el-input v-model="recordForm.valveOnline.site.protection"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="是否高温高压"><el-input v-model="recordForm.valveOnline.site.highTemp"></el-input></el-form-item></el-col>
+                           <el-col :span="12">
+                             <el-form-item label="是否有毒有害介质">
+                               <el-radio-group v-model="recordForm.valveOnline.site.toxic">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="防护用品是否合格">
+                               <el-radio-group v-model="recordForm.valveOnline.site.protection">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
                         </el-row>
                          <el-row>
-                           <el-col :span="8"><el-form-item label="仪表是否有效"><el-input v-model="recordForm.valveOnline.site.meterValid"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="易燃易爆"><el-input v-model="recordForm.valveOnline.site.flammable"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="是否需防爆检测"><el-input v-model="recordForm.valveOnline.site.explosiveTest"></el-input></el-form-item></el-col>
+                           <el-col :span="12">
+                             <el-form-item label="高温隔离措施">
+                               <el-radio-group v-model="recordForm.valveOnline.site.highTemp">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="系统压力显示仪表是否在校验期内">
+                               <el-radio-group v-model="recordForm.valveOnline.site.meterValid">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
                         </el-row>
                          <el-row>
-                           <el-col :span="12"><el-form-item label="是否需搭脚手架"><el-input v-model="recordForm.valveOnline.site.scaffold"></el-input></el-form-item></el-col>
-                           <el-col :span="12"><el-form-item label="泄放口是否通畅"><el-input v-model="recordForm.valveOnline.site.discharge"></el-input></el-form-item></el-col>
+                           <el-col :span="12">
+                             <el-form-item label="是否易燃易爆介质">
+                               <el-radio-group v-model="recordForm.valveOnline.site.flammable">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="现场是否测爆合格">
+                               <el-radio-group v-model="recordForm.valveOnline.site.explosiveTest">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="脚手架是否合格">
+                               <el-radio-group v-model="recordForm.valveOnline.site.scaffold">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="出口介质排放收集装置">
+                               <el-radio-group v-model="recordForm.valveOnline.site.discharge">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
                         </el-row>
                       </el-form>
 
-                      <div class="subheader">3. 宏观检查</div>
+                      <div class="subheader">3. 外观检查</div>
+                      <el-form size="small" label-width="180px">
+                        <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="安装是否正确">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.install">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="安全阀的资料是否齐全">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.docs">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                        <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="铅封是否完好">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.seal">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="有无影响安全阀正常功能的因素">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.factor">
+                                  <el-radio label="有">有</el-radio>
+                                  <el-radio label="无">无</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="安全阀是否泄漏">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.leak">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="外表有无腐蚀">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.corrosion">
+                                  <el-radio label="有">有</el-radio>
+                                  <el-radio label="无">无</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="有无波纹管">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.bellows">
+                                  <el-radio label="有">有</el-radio>
+                                  <el-radio label="无">无</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="波纹管出口是否敞开、清洁">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.bellowsOpen">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="有无提升扳手">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.wrench">
+                                  <el-radio label="有">有</el-radio>
+                                  <el-radio label="无">无</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="提升扳手动作是否有效">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.wrenchAction">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="提升扳手位置是否正确">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.wrenchPos">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="入口有无截止阀">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.cutoffValve">
+                                  <el-radio label="有">有</el-radio>
+                                  <el-radio label="无">无</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                         <el-row>
+                           <el-col :span="12">
+                             <el-form-item label="截止阀是否处于正常开启位置">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.cutoffPos">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                           <el-col :span="12">
+                             <el-form-item label="截止阀铅封是否完好">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.cutoffSeal">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                        <el-row>
+                           <el-col :span="24">
+                             <el-form-item label="安全阀外部相关附件完整无损并且正常">
+                               <el-radio-group v-model="recordForm.valveOnline.appearance.accessories">
+                                  <el-radio label="是">是</el-radio>
+                                  <el-radio label="否">否</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
+                        </el-row>
+                      </el-form>
+
+                      <div class="subheader">4. 校验信息</div>
                       <el-form size="small" label-width="140px">
                         <el-row>
-                           <el-col :span="8"><el-form-item label="安装是否垂直"><el-input v-model="recordForm.valveOnline.appearance.install"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="资料是否齐全"><el-input v-model="recordForm.valveOnline.appearance.docs"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="铅封是否完好"><el-input v-model="recordForm.valveOnline.appearance.seal"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="实际整定压力(MPa)"><el-input v-model="recordForm.valveOnline.calibration.actSetPressure"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="系统压力(MPa)"><el-input v-model="recordForm.valveOnline.calibration.sysPressure"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="校验介质"><el-input v-model="recordForm.valveOnline.calibration.medium"></el-input></el-form-item></el-col>
                         </el-row>
                          <el-row>
-                           <el-col :span="8"><el-form-item label="影响校验因素"><el-input v-model="recordForm.valveOnline.appearance.factor"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="外漏"><el-input v-model="recordForm.valveOnline.appearance.leak"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="锈蚀"><el-input v-model="recordForm.valveOnline.appearance.corrosion"></el-input></el-form-item></el-col>
+                           <el-col :span="12"><el-form-item label="校验设备编号"><el-input v-model="recordForm.valveOnline.calibration.deviceNo"></el-input></el-form-item></el-col>
+                           <el-col :span="12"><el-form-item label="执行标准"><el-input v-model="recordForm.valveOnline.calibration.standard"></el-input></el-form-item></el-col>
                         </el-row>
-                         <el-row>
-                           <el-col :span="8"><el-form-item label="波纹管"><el-input v-model="recordForm.valveOnline.appearance.bellows"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="波纹管开裂"><el-input v-model="recordForm.valveOnline.appearance.bellowsOpen"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="提升扳手"><el-input v-model="recordForm.valveOnline.appearance.wrench"></el-input></el-form-item></el-col>
-                        </el-row>
-                         <el-row>
-                           <el-col :span="8"><el-form-item label="扳手动作"><el-input v-model="recordForm.valveOnline.appearance.wrenchAction"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="扳手位置"><el-input v-model="recordForm.valveOnline.appearance.wrenchPos"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="截断阀"><el-input v-model="recordForm.valveOnline.appearance.cutoffValve"></el-input></el-form-item></el-col>
-                        </el-row>
-                         <el-row>
-                           <el-col :span="8"><el-form-item label="截断阀位置"><el-input v-model="recordForm.valveOnline.appearance.cutoffPos"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="截断阀铅封"><el-input v-model="recordForm.valveOnline.appearance.cutoffSeal"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="相关附件"><el-input v-model="recordForm.valveOnline.appearance.accessories"></el-input></el-form-item></el-col>
-                        </el-row>
-                      </el-form>
-
-                      <div class="subheader">4. 校验数据</div>
-                      <el-form size="small" label-width="120px">
                         <el-row>
-                           <el-col :span="8"><el-form-item label="实测整定压力"><el-input v-model="recordForm.valveOnline.calibration.actSetPressure"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="系统工作压力"><el-input v-model="recordForm.valveOnline.calibration.sysPressure"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="介质"><el-input v-model="recordForm.valveOnline.calibration.medium"></el-input></el-form-item></el-col>
-                        </el-row>
-                         <el-row>
-                           <el-col :span="12"><el-form-item label="使用仪器编号"><el-input v-model="recordForm.valveOnline.calibration.deviceNo"></el-input></el-form-item></el-col>
-                           <el-col :span="12"><el-form-item label="校验依据"><el-input v-model="recordForm.valveOnline.calibration.standard"></el-input></el-form-item></el-col>
+                           <el-col :span="12">
+                             <el-form-item label="校验结论">
+                               <el-radio-group v-model="recordForm.valveOnline.calibration.result">
+                                  <el-radio label="合格">合格</el-radio>
+                                  <el-radio label="不合格">不合格</el-radio>
+                               </el-radio-group>
+                             </el-form-item>
+                           </el-col>
                         </el-row>
                       </el-form>
                    </div>
@@ -1374,6 +1560,19 @@
                            <el-col :span="8"><el-form-item label="下次校验日期"><el-input v-model="recordForm.valveOffline.test.validDate"></el-input></el-form-item></el-col>
                         </el-row>
                       </el-form>
+
+                      <div class="subheader">6. 原始记录/附件</div>
+                      <div style="margin: 0 20px 20px 20px;">
+                        <el-upload
+                          action="#"
+                          list-type="picture-card"
+                          :auto-upload="false"
+                          :file-list="recordForm.valveOffline.fileList"
+                          :on-change="(file, fileList) => recordForm.valveOffline.fileList = fileList"
+                          :on-remove="(file, fileList) => recordForm.valveOffline.fileList = fileList">
+                          <i slot="default" class="el-icon-plus"></i>
+                        </el-upload>
+                      </div>
                    </div>
                  </el-card>
                </div>
@@ -1770,10 +1969,10 @@
                standard: 'TSG ZF001-2006《安全阀安全技术监察规程》、TSG 31-2025《工业管道安全技术规范》'
              },
              appearance: {
-               tag: '有', nameplate: '清晰', rust: '无', accessories: '齐全', wrench: '无', wrenchPos: '/'
+               tag: '是', nameplate: '是', rust: '否', accessories: '是', wrench: '否', wrenchPos: '是'
              },
              disassembly: {
-               internalRust: '轻微', damage: '无', action: '清洗研磨'
+               internalRust: '否', damage: '否', action: '是'
              },
              test: {
                times: ['第1次', '第2次', '第3次'],
