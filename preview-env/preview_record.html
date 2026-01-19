@@ -190,7 +190,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             {{ getPageTitle() }}
-            <span class="update-time">（更新时间：2026-01-19 16:55:00）</span>
+            <span class="update-time">（更新时间：2026-01-19 17:05:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -945,7 +945,6 @@
 
                       <!-- 列表字段 (单条记录) -->
                       <el-form label-width="180px" size="small">
-                         <el-form-item label="气瓶编号"><el-input v-model="recordForm.header.bottleNo" disabled></el-input></el-form-item>
                          <el-form-item label="出厂日期"><el-date-picker v-model="recordForm.gas.hydrostatic.manufactureDate" type="date" style="width: 100%;"></el-date-picker></el-form-item>
                         <el-row>
                           <el-col :span="12"><el-form-item label="水压试验压力(MPa)"><el-input v-model="recordForm.gas.hydrostatic.testPressure"></el-input></el-form-item></el-col>
@@ -1032,7 +1031,6 @@
 
                       <!-- 列表字段 (单条记录) -->
                       <el-form label-width="180px" size="small">
-                         <el-form-item label="试验气瓶瓶号"><el-input v-model="recordForm.header.bottleNo" disabled></el-input></el-form-item>
                          <el-row>
                            <el-col :span="12"><el-form-item label="阀门型号"><el-input v-model="recordForm.gas.airtightness.valveModel"></el-input></el-form-item></el-col>
                            <el-col :span="12"><el-form-item label="试验压力(MPa)"><el-input v-model="recordForm.gas.airtightness.pressure"></el-input></el-form-item></el-col>
