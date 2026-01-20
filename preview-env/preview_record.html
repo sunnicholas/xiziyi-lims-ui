@@ -226,7 +226,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             {{ getPageTitle() }}
-            <span class="update-time">（更新时间：2026-01-20 16:00:00）</span>
+            <span class="update-time">（更新时间：2026-01-20 17:00:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -439,13 +439,8 @@
           <div style="display: flex; flex-direction: column; height: 100%;">
             <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
               <div>
-                 <el-tag size="small" style="margin-right: 10px;" :type="currentRecordType === 'gas' ? '' : (recordForm.valveType === 'online' ? 'success' : 'warning')">
-                   {{ currentRecordType === 'gas' ? '气瓶检测' : (recordForm.valveType === 'online' ? '安全阀校验(在线)' : '安全阀校验(离线)') }}
-                 </el-tag>
-                 <el-tag v-if="isSequentialEdit" type="warning" size="small" effect="dark" style="margin-right: 10px;">
-                   <i class="el-icon-video-play"></i> 顺序编辑模式 {{ getSequentialProgressText() }}
-                 </el-tag>
-                 <span style="color: #909399; font-size: 13px; margin-right: 10px;">单号：{{ currentRecordEntrust ? currentRecordEntrust.no : '-' }}</span>
+                 <span style="color: rgb(144, 147, 153); font-size: 13px; margin-right: 20px;">委托单号：{{ (currentRecordEntrust && (currentRecordEntrust.entrustNo || currentRecordEntrust.no)) || 'E20240114001' }}</span>
+                 <span v-if="currentRecordType === 'valve'" style="color: rgb(144, 147, 153); font-size: 13px;">记录编号：{{ recordForm.valveType === 'online' ? recordForm.valveOnline.basic.recordNo : recordForm.valveOffline.basic.recordNo }}</span>
               </div>
               <div>
                  <el-button size="small" @click="handleRecordEntryCancel">取消</el-button>
@@ -463,6 +458,7 @@
             <div style="display: flex; flex: 1; overflow: hidden;">
             <!-- 左侧：录入表单区 -->
             <div style="flex: 1; overflow-y: auto; padding-right: 10px;">
+               <div v-if="currentRecordType === 'gas'">
                <!-- 原始记录基本信息（对应 XZY-JL104 头部字段） -->
                <el-card shadow="never" class="mb8">
                  <div slot="header" class="clearfix"><span>原始记录基本信息</span></div>
@@ -567,7 +563,6 @@
                </el-card>
              
              <!-- 模板A：气瓶检测记录 (Tabs 布局) -->
-             <div v-if="currentRecordType === 'gas'">
                <el-tabs v-model="activeRecordTab" type="border-card">
                  <!-- 拆分后的 Tab 1: 外观检查 -->
                  <el-tab-pane label="外观检查" name="visual">
@@ -1192,39 +1187,23 @@
                
                <!-- 模板B：安全阀校验记录 -->
                <div v-else-if="currentRecordType === 'valve'">
-                 <el-card shadow="never" class="mb8">
-                   <div slot="header" class="clearfix">
-                     <span>安全阀校验记录</span>
-                     <el-tag :type="recordForm.valveType === 'online' ? 'success' : 'warning'" size="small" style="margin-left: 10px;">
-                       {{ recordForm.valveType === 'online' ? '在线校验' : '离线校验' }}
-                     </el-tag>
-                     <div style="float: right;">
-                       <el-radio-group v-model="recordForm.valveType" size="small">
-                         <el-radio-button label="online">在线校验</el-radio-button>
-                         <el-radio-button label="offline">离线校验</el-radio-button>
-                       </el-radio-group>
-                     </div>
-                   </div>
+                 <div style="position: relative;">
+                    <div v-if="recordForm.valveType === 'online'" style="position: absolute; right: 20px; top: 0; height: 39px; display: flex; align-items: center; font-size: 12px; color: #606266; z-index: 1;">
+                        <span style="margin-right: 20px;">使用单位：{{ recordForm.valveOnline.basic.usingUnit }}</span>
+                        <span style="margin-right: 20px;">联系地址：{{ recordForm.valveOnline.basic.address }}</span>
+                        <span style="margin-right: 20px;">联系人：{{ recordForm.valveOnline.basic.contactPerson }}</span>
+                        <span>联系电话：{{ recordForm.valveOnline.basic.contactPhone }}</span>
+                    </div>
+
 
                    <!-- 在线校验表单 -->
                    <div v-if="recordForm.valveType === 'online'">
-                     <div class="mode-annotation online">
-                       当前模式：安全阀在线校验 (Online) —— 适用于现场无法拆卸或需实时监测的场景
-                     </div>
-                    <el-tabs v-model="valveActiveTab" type="card">
+                    <el-tabs v-model="valveRecordTab" type="border-card">
+                      <el-tab-pane label="原始记录单" name="sheet">
+                        <el-tabs v-model="valveActiveTab" type="card">
                       <el-tab-pane label="基本信息" name="basic">
-                        <div class="subheader">1. 基本信息</div>
+                        <div class="subheader">1. 安全阀基本信息</div>
                         <el-form size="small" label-width="150px">
-                          <el-row>
-                            <el-col :span="8"><el-form-item label="记录编号"><el-input v-model="recordForm.valveOnline.basic.recordNo"></el-input></el-form-item></el-col>
-                            <el-col :span="8"><el-form-item label="使用单位"><el-input v-model="recordForm.valveOnline.basic.usingUnit"></el-input></el-form-item></el-col>
-                            <el-col :span="8"><el-form-item label="联系地址"><el-input v-model="recordForm.valveOnline.basic.address"></el-input></el-form-item></el-col>
-                          </el-row>
-                          <el-row>
-                            <el-col :span="8"><el-form-item label="联系人"><el-input v-model="recordForm.valveOnline.basic.contactPerson"></el-input></el-form-item></el-col>
-                            <el-col :span="8"><el-form-item label="联系电话"><el-input v-model="recordForm.valveOnline.basic.contactPhone"></el-input></el-form-item></el-col>
-                          </el-row>
-                          <el-divider></el-divider>
                           <el-row>
                             <el-col :span="8"><el-form-item label="型号"><el-input v-model="recordForm.valveOnline.basic.model"></el-input></el-form-item></el-col>
                           <el-col :span="8"><el-form-item label="类型"><el-input v-model="recordForm.valveOnline.basic.type"></el-input></el-form-item></el-col>
@@ -1349,8 +1328,8 @@
                         </el-form>
                       </el-tab-pane>
 
-                      <el-tab-pane label="外观检查" name="appearance">
-                        <div class="subheader">3. 外观检查</div>
+                      <el-tab-pane label="外观检验" name="appearance">
+                        <div class="subheader">3. 外观检验</div>
                         <el-form size="small" label-width="240px">
                         <el-row>
                            <el-col :span="12">
@@ -1492,58 +1471,42 @@
                       </el-tab-pane>
 
                       <el-tab-pane label="校验信息" name="calibration">
-                        <div class="subheader">4. 校验参数</div>
-                        <el-form size="small" label-width="120px">
+                        <div class="subheader">4. 校验参数与数据</div>
+                        <el-form size="small" label-width="140px">
                         <el-row>
-                           <el-col :span="8"><el-form-item label="校验方式"><el-input v-model="recordForm.valveOnline.calibration.checkMode" disabled></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="实际整定压力(MPa)"><el-input v-model="recordForm.valveOnline.calibration.actSetPressure"></el-input></el-form-item></el-col>
                            <el-col :span="8"><el-form-item label="校验设备编号"><el-input v-model="recordForm.valveOnline.calibration.deviceNo"></el-input></el-form-item></el-col>
-                           <el-col :span="8"><el-form-item label="校验介质"><el-input v-model="recordForm.valveOnline.calibration.medium"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="校验方式"><el-input v-model="recordForm.valveOnline.calibration.checkMode" disabled></el-input></el-form-item></el-col>
                         </el-row>
                          <el-row>
-                           <el-col :span="8"><el-form-item label="介质温度(℃)"><el-input v-model="recordForm.valveOnline.calibration.mediumTemp"></el-input></el-form-item></el-col>
-                           <el-col :span="16"><el-form-item label="校验依据"><el-input v-model="recordForm.valveOnline.calibration.standard"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="系统压力(MPa)"><el-input v-model="recordForm.valveOnline.calibration.systemPressure"></el-input></el-form-item></el-col>
+                           <el-col :span="8"><el-form-item label="校验介质"><el-input v-model="recordForm.valveOnline.calibration.medium"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                           <el-col :span="24"><el-form-item label="执行标准"><el-input v-model="recordForm.valveOnline.calibration.standard" type="textarea" :rows="2"></el-input></el-form-item></el-col>
+                        </el-row>
+                        <el-row>
+                             <el-col :span="8">
+                               <el-form-item label="校验结论">
+                                  <el-radio-group v-model="recordForm.valveOnline.calibration.result">
+                                    <el-radio label="合格">合格</el-radio>
+                                    <el-radio label="不合格">不合格</el-radio>
+                                  </el-radio-group>
+                               </el-form-item>
+                             </el-col>
                         </el-row>
                         </el-form>
-                        
-                        <div class="subheader" style="margin-top: 10px;">5. 校验数据</div>
+
+                        <div class="subheader" style="margin-top: 20px;">5. 签字信息</div>
                         <el-form size="small" label-width="120px">
                            <el-row>
-                              <el-col :span="24">
-                                <el-form-item label="试验次数">
-                                  <el-checkbox-group v-model="recordForm.valveOnline.calibration.times">
-                                    <el-checkbox label="第1次"></el-checkbox>
-                                    <el-checkbox label="第2次"></el-checkbox>
-                                    <el-checkbox label="第3次"></el-checkbox>
-                                  </el-checkbox-group>
-                                </el-form-item>
-                              </el-col>
+                             <el-col :span="12"><el-form-item label="用户"><el-input v-model="recordForm.valveOnline.sign.user"></el-input></el-form-item></el-col>
+                             <el-col :span="12"><el-form-item label="用户确认日期"><el-date-picker v-model="recordForm.valveOnline.sign.userConfirmDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
                            </el-row>
                            <el-row>
-                             <el-col :span="8"><el-form-item label="实际整定压力(MPa)"><el-input v-model="recordForm.valveOnline.calibration.actSetPressure"></el-input></el-form-item></el-col>
-                             <el-col :span="8"><el-form-item label="密封试验压力(MPa)"><el-input v-model="recordForm.valveOnline.calibration.sealPressure"></el-input></el-form-item></el-col>
-                             <el-col :span="8"><el-form-item label="校验有效期"><el-input v-model="recordForm.valveOnline.calibration.validDate"></el-input></el-form-item></el-col>
-                          </el-row>
-                           <el-row>
-                             <el-col :span="8"><el-form-item label="校验结论"><el-input v-model="recordForm.valveOnline.calibration.result"></el-input></el-form-item></el-col>
-                             <el-col :span="16"><el-form-item label="备注"><el-input v-model="recordForm.valveOnline.calibration.remark"></el-input></el-form-item></el-col>
+                             <el-col :span="24"><el-form-item label="备注"><el-input v-model="recordForm.valveOnline.calibration.remark" placeholder="附系统导出安全阀在线检测原始记录"></el-input></el-form-item></el-col>
                            </el-row>
                         </el-form>
-
-                        <div class="subheader" style="margin-top: 20px;">6. 签字信息</div>
-            <el-form size="small" label-width="120px">
-               <el-row>
-                 <el-col :span="12"><el-form-item label="校验员"><el-input v-model="recordForm.valveOnline.sign.inspector"></el-input></el-form-item></el-col>
-                 <el-col :span="12"><el-form-item label="校验日期"><el-date-picker v-model="recordForm.valveOnline.sign.checkDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
-               </el-row>
-               <el-row>
-                 <el-col :span="12"><el-form-item label="校核员"><el-input v-model="recordForm.valveOnline.sign.auditor"></el-input></el-form-item></el-col>
-                 <el-col :span="12"><el-form-item label="校核日期"><el-date-picker v-model="recordForm.valveOnline.sign.auditDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
-               </el-row>
-               <el-row>
-                 <el-col :span="12"><el-form-item label="用户"><el-input v-model="recordForm.valveOnline.sign.user"></el-input></el-form-item></el-col>
-                 <el-col :span="12"><el-form-item label="用户确认日期"><el-date-picker v-model="recordForm.valveOnline.sign.userConfirmDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
-               </el-row>
-            </el-form>
                            
                            <el-card shadow="never" class="mb8" style="margin-top: 15px;">
                               <div slot="header" class="clearfix"><span>原始凭证/现场记录</span></div>
@@ -1572,10 +1535,68 @@
                               </div>
                            </el-card>
                       </el-tab-pane>
-                    </el-tabs>
-                   </div>
 
-                   <!-- 离线校验表单 -->
+                    </el-tabs>
+                  </el-tab-pane>
+                  <el-tab-pane label="校验报告" name="report">
+                      <div class="report-container" style="padding: 10px;">
+                          <div style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px;">安全阀校验报告</div>
+                          <div style="text-align: right; margin-bottom: 10px;">报告编号：{{ recordForm.valveReport.header.reportNo || '系统自动生成' }}</div>
+                          
+                          <el-form :model="recordForm.valveReport" label-width="140px" size="small" class="report-form" border>
+                             <el-row>
+                               <el-col :span="24"><el-form-item label="使用单位"><el-input v-model="recordForm.valveReport.basic.usingUnit" disabled></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="24"><el-form-item label="单位地址"><el-input v-model="recordForm.valveReport.basic.address" disabled></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="联系人"><el-input v-model="recordForm.valveReport.basic.contactPerson" disabled></el-input></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="联系电话"><el-input v-model="recordForm.valveReport.basic.contactPhone" disabled></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="设备代码"><el-input v-model="recordForm.valveReport.basic.deviceCode"></el-input></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="安装位置"><el-input v-model="recordForm.valveReport.basic.installPos"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="安全阀类型"><el-input v-model="recordForm.valveReport.basic.type"></el-input></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="安全阀型号"><el-input v-model="recordForm.valveReport.basic.model"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="工作压力(MPa)"><el-input v-model="recordForm.valveReport.basic.workPressure"></el-input></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="工作介质"><el-input v-model="recordForm.valveReport.basic.medium"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="要求整定压力(MPa)"><el-input v-model="recordForm.valveReport.basic.reqSetPressure"></el-input></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="执行标准"><el-input type="textarea" :rows="2" v-model="recordForm.valveReport.standard"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="校验方式"><el-input v-model="recordForm.valveReport.calibration.checkMode"></el-input></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="校验介质"><el-input v-model="recordForm.valveReport.calibration.medium"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="整定压力(MPa)"><el-input v-model="recordForm.valveReport.calibration.setPressure"></el-input></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="密封试验压力(MPa)"><el-input v-model="recordForm.valveReport.calibration.sealPressure"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="24"><el-form-item label="校验结论"><el-input v-model="recordForm.valveReport.calibration.result"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="24"><el-form-item label="维护检修情况说明"><el-input type="textarea" :rows="3" v-model="recordForm.valveReport.calibration.desc"></el-input></el-form-item></el-col>
+                             </el-row>
+                             <el-row>
+                               <el-col :span="12"><el-form-item label="校验日期"><el-date-picker v-model="recordForm.valveReport.dates.checkDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="下次校验日期"><el-date-picker v-model="recordForm.valveReport.dates.nextCheckDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
+                             </el-row>
+                             
+
+                          </el-form>
+                      </div>
+                  </el-tab-pane>
+                </el-tabs>
+              </div>
+
+                  <!-- 离线校验表单 -->
                    <div v-else>
                       <div class="mode-annotation offline">
                         当前模式：安全阀离线校验 (Offline) —— 适用于实验室或检修车间拆卸校验场景
@@ -1585,9 +1606,8 @@
                          <div class="subheader">1. 基本信息</div>
                          <el-form size="small" label-width="120px">
                         <el-row>
-                          <el-col :span="8"><el-form-item label="编号"><el-input v-model="recordForm.valveOffline.basic.recordNo"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="使用单位"><el-input v-model="recordForm.valveOffline.basic.usingUnit"></el-input></el-form-item></el-col>
-                          <el-col :span="8"><el-form-item label="设备代码"><el-input v-model="recordForm.valveOffline.basic.deviceCode"></el-input></el-form-item></el-col>
+                          <el-col :span="12"><el-form-item label="使用单位"><el-input v-model="recordForm.valveOffline.basic.usingUnit" disabled></el-input></el-form-item></el-col>
+                          <el-col :span="12"><el-form-item label="设备代码"><el-input v-model="recordForm.valveOffline.basic.deviceCode" disabled></el-input></el-form-item></el-col>
                         </el-row>
                         <el-row>
                           <el-col :span="8"><el-form-item label="工作介质"><el-input v-model="recordForm.valveOffline.basic.medium"></el-input></el-form-item></el-col>
@@ -1727,25 +1747,29 @@
                         
                         <div class="subheader" style="margin-top: 10px;">5. 校验数据</div>
                         <el-form size="small" label-width="120px">
+                           <el-table :data="recordForm.valveOffline.test.trials" border style="width: 100%; margin-bottom: 15px;">
+                              <el-table-column prop="name" label="试验次数" width="150"></el-table-column>
+                              <el-table-column label="第 1 次" align="center">
+                                <template slot-scope="scope">
+                                  <el-input v-model="scope.row.trial1" size="small"></el-input>
+                                </template>
+                              </el-table-column>
+                              <el-table-column label="第 2 次" align="center">
+                                <template slot-scope="scope">
+                                  <el-input v-model="scope.row.trial2" size="small"></el-input>
+                                </template>
+                              </el-table-column>
+                              <el-table-column label="第 3 次" align="center">
+                                <template slot-scope="scope">
+                                  <el-input v-model="scope.row.trial3" size="small"></el-input>
+                                </template>
+                              </el-table-column>
+                           </el-table>
+                           
                            <el-row>
-                              <el-col :span="24">
-                                <el-form-item label="试验次数">
-                                  <el-checkbox-group v-model="recordForm.valveOffline.test.times">
-                                    <el-checkbox label="第1次"></el-checkbox>
-                                    <el-checkbox label="第2次"></el-checkbox>
-                                    <el-checkbox label="第3次"></el-checkbox>
-                                  </el-checkbox-group>
-                                </el-form-item>
-                              </el-col>
-                           </el-row>
-                           <el-row>
-                             <el-col :span="8"><el-form-item label="实际整定压力(MPa)"><el-input v-model="recordForm.valveOffline.test.actSetPressure"></el-input></el-form-item></el-col>
-                             <el-col :span="8"><el-form-item label="密封试验压力(MPa)"><el-input v-model="recordForm.valveOffline.test.sealPressure"></el-input></el-form-item></el-col>
                              <el-col :span="8"><el-form-item label="校验有效期"><el-input v-model="recordForm.valveOffline.test.validDate"></el-input></el-form-item></el-col>
-                          </el-row>
-                           <el-row>
                              <el-col :span="8"><el-form-item label="校验结论"><el-input v-model="recordForm.valveOffline.test.result"></el-input></el-form-item></el-col>
-                             <el-col :span="16"><el-form-item label="备注"><el-input v-model="recordForm.valveOffline.test.remark"></el-input></el-form-item></el-col>
+                             <el-col :span="8"><el-form-item label="备注"><el-input v-model="recordForm.valveOffline.test.remark"></el-input></el-form-item></el-col>
                            </el-row>
                         </el-form>
                       </el-tab-pane>
@@ -1757,10 +1781,7 @@
                                <el-col :span="12"><el-form-item label="校验员"><el-input v-model="recordForm.valveOffline.sign.inspector"></el-input></el-form-item></el-col>
                                <el-col :span="12"><el-form-item label="校验日期"><el-date-picker v-model="recordForm.valveOffline.sign.checkDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
                              </el-row>
-                             <el-row>
-                               <el-col :span="12"><el-form-item label="校核员"><el-input v-model="recordForm.valveOffline.sign.auditor"></el-input></el-form-item></el-col>
-                               <el-col :span="12"><el-form-item label="校核日期"><el-date-picker v-model="recordForm.valveOffline.sign.auditDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
-                             </el-row>
+                             <!-- 校核员 removed for record stage -->
                          </el-form>
 
                          <div class="subheader" style="margin-top: 10px;">7. 原始记录/附件</div>
@@ -1820,6 +1841,10 @@
                </el-form>
              </el-card>
            </div>
+         </div>
+       </el-tab-pane>
+
+   </el-tabs>
 
       </div>
     </div>
@@ -1838,7 +1863,7 @@
         activeTab: 'special',
         activeAppearanceSubTab: 'visual',
         
-        lastUpdated: '',
+        lastUpdated: '2026-01-20 17:18:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -2197,7 +2222,7 @@
                actSetPressure: '1.46', sealPressure: '1.30', validDate: '2025-01-18', result: '合格', remark: ''
              },
              sign: {
-               inspector: '张强', checkDate: '2024-01-18', auditor: '李部长', auditDate: '2024-01-18',
+               inspector: '张强', checkDate: '2024-01-18',
                user: '张三', userConfirmDate: '2024-01-18'
              },
              fileList: []
@@ -2221,13 +2246,39 @@
                internalRust: '否', damage: '否', action: '是'
              },
              test: {
-               times: ['第1次', '第2次', '第3次'],
-               actSetPressure: '2.51', sealPressure: '2.25', result: '合格', validDate: '2025-01-18', remark: ''
+               trials: [
+                  { name: '实际整定压力(MPa)', trial1: '2.51', trial2: '2.52', trial3: '2.51' },
+                  { name: '密封试验压力(MPa)', trial1: '2.25', trial2: '2.25', trial3: '2.25' }
+               ],
+               result: '合格', validDate: '2025-01-18', remark: ''
              },
              sign: {
                inspector: '李敏', checkDate: '2024-01-18', auditor: '王五', auditDate: '2024-01-18'
              },
              fileList: []
+          },
+          // 安全阀校验报告 (XZY-JL112-2025)
+          valveReport: {
+             header: { reportNo: '' },
+             basic: {
+                usingUnit: '', address: '', contactPerson: '', contactPhone: '',
+                deviceCode: '', installPos: '', type: '', model: '',
+                workPressure: '', medium: '', reqSetPressure: ''
+             },
+             standard: 'TSG ZF001-2006《安全阀安全技术监察规程》、TSG 31-2025《工业管道安全技术规范》',
+             calibration: {
+                checkMode: '', medium: '', setPressure: '', sealPressure: '', result: '',
+                desc: '' 
+             },
+             dates: {
+                checkDate: '', nextCheckDate: ''
+             },
+             sign: {
+                inspector: '', checkDate: '',
+                auditor: '', auditDate: '',
+                approver: '', approveDate: '',
+                orgNo: '', stampDate: ''
+             }
           },
           
           // 附件/图片 (通用)
@@ -2247,6 +2298,8 @@
         currentRecordDevice: null,
         isSequentialEdit: false,
         valveActiveTab: 'basic',
+        valveRecordTab: 'sheet',
+        valveMainTab: 'record',
         recordEntrustList: [
           {
             no: '20240115-GC-001',
@@ -2532,12 +2585,78 @@
       watch: {
         selectedExecutor(val) {
           this.workInstructionReceiver = val
+        },
+        valveMainTab(val) {
+          if (val === 'report') {
+            this.syncValveReportData()
+          }
         }
       },
       methods: {
         handleGasRecordFileChange(tabName, file, fileList) {
           if (this.recordForm.gas[tabName]) {
             this.recordForm.gas[tabName].fileList = fileList;
+          }
+        },
+        syncValveReportData() {
+          const type = this.recordForm.valveType
+          const src = type === 'online' ? this.recordForm.valveOnline : this.recordForm.valveOffline
+          const target = this.recordForm.valveReport
+          
+          if (!src || !target) return
+
+          // Basic Info
+          target.basic.usingUnit = src.basic.usingUnit
+          target.basic.address = src.basic.address || ''
+          target.basic.contactPerson = src.basic.contactPerson || ''
+          target.basic.contactPhone = src.basic.contactPhone || ''
+          target.basic.deviceCode = src.basic.deviceCode
+          target.basic.installPos = src.basic.installPos
+          target.basic.type = src.basic.type
+          target.basic.model = src.basic.model
+          target.basic.workPressure = src.basic.workPressure
+          target.basic.medium = src.basic.medium || (src.calibration ? src.calibration.medium : '')
+          target.basic.reqSetPressure = src.basic.reqSetPressure
+
+          // Calibration Info
+          if (type === 'online') {
+             target.calibration.checkMode = '在线校验'
+             target.calibration.medium = src.calibration.medium
+             target.calibration.setPressure = src.calibration.actSetPressure
+             target.calibration.sealPressure = src.calibration.sealPressure
+             target.calibration.result = src.calibration.result
+             // dates
+             target.dates.checkDate = src.sign.checkDate
+             // sign
+             target.sign.inspector = src.sign.inspector
+             target.sign.checkDate = src.sign.checkDate
+             // Auditor is removed from original record, but Report might need it.
+             // We leave it empty for report or map if available.
+          } else {
+             target.calibration.checkMode = '离线校验'
+             target.calibration.medium = '空气/氮气'
+             
+             // Try to get pressure from trials
+             if (src.test.trials && src.test.trials.length > 0) {
+                 const trial1 = src.test.trials.find(t => t.name.includes('整定压力'))
+                 const trial2 = src.test.trials.find(t => t.name.includes('密封试验'))
+                 if (trial1) target.calibration.setPressure = trial1.trial1
+                 if (trial2) target.calibration.sealPressure = trial2.trial1
+             }
+
+             target.calibration.result = src.test.result
+             // dates
+             target.dates.checkDate = src.test.validDate
+             // sign
+             // We need to map offline inspector if available.
+             // Assuming offline form has sign section or we use current user.
+          }
+          
+          // Calculate Next Check Date (Default +1 year)
+          if (target.dates.checkDate) {
+              const d = new Date(target.dates.checkDate)
+              d.setFullYear(d.getFullYear() + 1)
+              target.dates.nextCheckDate = d
           }
         },
         formatUpdateTime(date) {
@@ -2811,6 +2930,70 @@
           this.isSequentialEdit = true
           this.openRecordEntryFromDevice(entrust, editableDevices[0])
         },
+        handleValveMainTabClick(tab) {
+           if (tab.name === 'report') {
+               this.syncValveReportData()
+           }
+        },
+        syncValveReportData() {
+            const type = this.recordForm.valveType
+            const src = type === 'online' ? this.recordForm.valveOnline : this.recordForm.valveOffline
+            const target = this.recordForm.valveReport
+            
+            if (!src || !target) return
+
+            // Basic Info
+            target.basic.usingUnit = src.basic.usingUnit
+            target.basic.address = src.basic.address || ''
+            target.basic.contactPerson = src.basic.contactPerson || ''
+            target.basic.contactPhone = src.basic.contactPhone || ''
+            target.basic.deviceCode = src.basic.deviceCode
+            target.basic.installPos = src.basic.installPos
+            target.basic.type = src.basic.type
+            target.basic.model = src.basic.model
+            target.basic.workPressure = src.basic.workPressure
+            target.basic.medium = src.basic.medium || (src.calibration ? src.calibration.medium : '')
+            target.basic.reqSetPressure = src.basic.reqSetPressure
+
+            // Calibration Info
+            if (type === 'online') {
+               target.calibration.checkMode = '在线校验'
+               target.calibration.medium = src.calibration.medium
+               target.calibration.setPressure = src.calibration.actSetPressure
+               target.calibration.sealPressure = src.calibration.sealPressure
+               target.calibration.result = src.calibration.result
+               // dates
+               target.dates.checkDate = src.sign.checkDate
+               // sign
+               target.sign.inspector = src.sign.inspector
+               target.sign.checkDate = src.sign.checkDate
+            } else {
+               target.calibration.checkMode = '离线校验'
+               target.calibration.medium = '空气/氮气'
+               
+               // Try to get pressure from trials
+               if (src.test.trials && src.test.trials.length > 0) {
+                   const trial1 = src.test.trials.find(t => t.name.includes('整定压力'))
+                   const trial2 = src.test.trials.find(t => t.name.includes('密封试验'))
+                   if (trial1) target.calibration.setPressure = trial1.trial1
+                   if (trial2) target.calibration.sealPressure = trial2.trial1
+               }
+
+               target.calibration.result = src.test.result
+               // dates
+               target.dates.checkDate = src.test.validDate
+               // sign
+               target.sign.inspector = src.sign.inspector
+               target.sign.checkDate = src.sign.checkDate
+            }
+            
+            // Calculate Next Check Date (Default +1 year)
+            if (target.dates.checkDate) {
+                const d = new Date(target.dates.checkDate)
+                d.setFullYear(d.getFullYear() + 1)
+                target.dates.nextCheckDate = d
+            }
+        },
         openRecordEntryFromDevice(entrust, device) {
           if (!this.canOperateDevice(device)) {
             return
@@ -2819,7 +3002,7 @@
           this.currentRecordType = device.deviceType === 'valve' ? 'valve' : 'gas'
           this.currentRecordEntrust = entrust
           this.currentRecordDevice = device
-          this.valveActiveTab = 'basic' // Reset tab
+          this.valveMainTab = 'record' // Reset main tab to Original Record
 
           if (device.status === '未录入') {
             device.status = '已录入'
@@ -2831,14 +3014,18 @@
             this.recordForm.header.bottleNo = device.no || ''
           } else if (this.currentRecordType === 'valve') {
             this.recordForm.valveType = entrust.valveMode || 'offline'
+            this.valveActiveTab = 'basic'
             
             // Initialize fields based on entrust/device data
             const targetForm = this.recordForm.valveType === 'online' ? this.recordForm.valveOnline : this.recordForm.valveOffline
             if (targetForm && targetForm.basic) {
                 targetForm.basic.usingUnit = entrust.useCompany || entrust.company || ''
-                // Map device no to deviceCode or recordNo depending on field availability
+                // Map device no to deviceCode
                 if (targetForm.basic.deviceCode !== undefined) targetForm.basic.deviceCode = device.no || ''
-                if (targetForm.basic.recordNo !== undefined && !targetForm.basic.recordNo) targetForm.basic.recordNo = 'REC-' + device.no
+                // Generate System Record No (Unique, Non-editable) if empty
+                if (targetForm.basic.recordNo !== undefined && !targetForm.basic.recordNo) {
+                    targetForm.basic.recordNo = 'REC-' + (device.no || 'Unknown') + '-' + new Date().getTime().toString().substr(-6)
+                }
                 if (targetForm.basic.model !== undefined) targetForm.basic.model = device.model || ''
             }
             // Set default dates and inspector
@@ -2846,6 +3033,9 @@
                  if (!targetForm.sign.checkDate) targetForm.sign.checkDate = new Date()
                  if (!targetForm.sign.inspector && this.currentUser) targetForm.sign.inspector = this.currentUser.name
             }
+            
+            // Initialize Report Data
+            this.syncValveReportData()
           }
           this.applyRecordInspectorDefaults()
           this.dialogRecordEntryVisible = true
@@ -3109,11 +3299,6 @@
           this.currentRecordType = row.type; // 借用这个变量来控制模板显示 只是为了更新
           this.activeMenu = 'report-preview';
         }
-      }
-    })
-  </script>
-</body>
-</html>
       }
     })
   </script>
