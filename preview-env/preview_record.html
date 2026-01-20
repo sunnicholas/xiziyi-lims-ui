@@ -142,6 +142,34 @@
     .assign-expand-container {
       padding-left: 100px;
     }
+
+    .mode-annotation {
+      padding: 10px 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+    .mode-annotation.online {
+      background-color: #f0f9eb;
+      color: #67c23a;
+      border: 1px solid #c2e7b0;
+    }
+    .mode-annotation.online::before {
+      content: "🟢";
+      margin-right: 8px;
+    }
+    .mode-annotation.offline {
+      background-color: #fdf6ec;
+      color: #e6a23c;
+      border: 1px solid #f5dab1;
+    }
+    .mode-annotation.offline::before {
+      content: "🟠";
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
@@ -198,7 +226,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             {{ getPageTitle() }}
-            <span class="update-time">（更新时间：2026-01-19 17:35:00）</span>
+            <span class="update-time">（更新时间：2026-01-20 10:30:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -263,12 +291,6 @@
                     <el-table-column label="气瓶编号" prop="no" width="140"></el-table-column>
                     <el-table-column label="样品型号" prop="model" width="140" show-overflow-tooltip></el-table-column>
                     <el-table-column label="备注" prop="remark" show-overflow-tooltip></el-table-column>
-                    <el-table-column label="设备类型" prop="deviceType" width="100">
-                      <template slot-scope="scope">
-                        <el-tag v-if="scope.row.deviceType === 'gas'" type="info">气瓶</el-tag>
-                        <el-tag v-else type="warning">安全阀</el-tag>
-                      </template>
-                    </el-table-column>
                     <el-table-column label="检测员" prop="executor" width="100"></el-table-column>
                   <el-table-column label="状态" prop="status" width="120">
                     <template slot-scope="scope">
@@ -326,6 +348,14 @@
               </template>
             </el-table-column>
             <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="设备类型" width="120" align="center">
+              <template slot-scope="scope">
+                <el-tag v-if="scope.row.type === 'gas'" type="info">气瓶</el-tag>
+                <el-tag v-else type="warning">
+                  {{ scope.row.valveMode === 'online' ? '安全阀(在线)' : (scope.row.valveMode === 'offline' ? '安全阀(离线)' : '安全阀') }}
+                </el-tag>
+              </template>
+            </el-table-column>
             <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
             <el-table-column label="气瓶使用单位" width="180" align="center">
               <template slot-scope="scope">
@@ -409,7 +439,9 @@
           <div style="display: flex; flex-direction: column; height: 100%;">
             <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
               <div>
-                 <el-tag size="small" style="margin-right: 10px;">{{ currentRecordType === 'gas' ? '气瓶检测' : '安全阀校验' }}</el-tag>
+                 <el-tag size="small" style="margin-right: 10px;" :type="currentRecordType === 'gas' ? '' : (recordForm.valveType === 'online' ? 'success' : 'warning')">
+                   {{ currentRecordType === 'gas' ? '气瓶检测' : (recordForm.valveType === 'online' ? '安全阀校验(在线)' : '安全阀校验(离线)') }}
+                 </el-tag>
                  <el-tag v-if="isSequentialEdit" type="warning" size="small" effect="dark" style="margin-right: 10px;">
                    <i class="el-icon-video-play"></i> 顺序编辑模式 {{ getSequentialProgressText() }}
                  </el-tag>
@@ -1176,6 +1208,9 @@
 
                    <!-- 在线校验表单 -->
                    <div v-if="recordForm.valveType === 'online'">
+                      <div class="mode-annotation online">
+                        当前模式：安全阀在线校验 (Online) —— 适用于现场无法拆卸或需实时监测的场景
+                      </div>
                       <div class="subheader">1. 基本信息</div>
                       <el-form size="small" label-width="140px">
                         <el-row>
@@ -1465,6 +1500,9 @@
 
                    <!-- 离线校验表单 -->
                    <div v-else>
+                      <div class="mode-annotation offline">
+                        当前模式：安全阀离线校验 (Offline) —— 适用于实验室或检修车间拆卸校验场景
+                      </div>
                       <div class="subheader">1. 基本信息</div>
                       <el-form size="small" label-width="120px">
                         <el-row>
@@ -2046,7 +2084,7 @@
             pagination: { currentPage: 1, pageSize: 5 },
             devices: [
               { no: 'SV-OF-001', model: 'A42Y-25', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '离线校验场景' },
-              { no: 'SV-OF-002', model: 'A42Y-25', deviceType: 'valve', executor: '李敏', status: '未录入', hasRecord: false, remark: '需解体' }
+              { no: 'SV-OF-002', model: 'A42Y-25', deviceType: 'valve', executor: '张强', status: '未录入', hasRecord: false, remark: '需解体' }
             ]
           }
         ],
@@ -2527,8 +2565,9 @@
           if (!user) {
             return false
           }
+          // 允许领导角色操作（演示需求）
           if (user.role === 'leader') {
-            return false
+            return true
           }
           return device.executor === user.name
         },
@@ -2536,7 +2575,8 @@
           if (!this.canOperateDevice(device)) {
             return false
           }
-          return ['未录入', '已录入', '驳回'].indexOf(device.status) !== -1
+          // 允许编辑所有状态（演示需求，方便查看弹窗内容）
+          return true
         },
         canPreviewDevice(device) {
           if (!device.hasRecord) {
@@ -2843,6 +2883,11 @@
           this.currentRecordType = row.type; // 借用这个变量来控制模板显示 只是为了更新
           this.activeMenu = 'report-preview';
         }
+      }
+    })
+  </script>
+</body>
+</html>
       }
     })
   </script>
