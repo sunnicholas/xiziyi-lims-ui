@@ -1,42 +1,39 @@
----
-name: frontend-design
-description: Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications (examples include websites, landing pages, dashboards, React components, HTML/CSS layouts, or when styling/beautifying any web UI). Generates creative, polished code and UI design that avoids generic AI aesthetics.
-license: Complete terms in LICENSE.txt
----
+# 名称：前端设计
+# 描述：打造风格鲜明、可投入生产的高水准前端界面。当用户需要开发网页组件、页面、可视化物料、海报或应用（例如网站、落地页、数据看板、React 组件、HTML/CSS 布局，或对各类网页界面进行美化样式设计）时，可启用本能力。生成兼具创意与精致质感的代码及界面设计，摒弃千篇一律的人工智能生成式美学风格。
+# 授权协议：完整条款详见《授权协议文件.txt》
 
-This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
+本能力旨在指导开发者打造风格鲜明、可投入生产的前端界面，彻底摆脱毫无特色的“人工智能流水线式设计”弊端。在代码实现过程中，需兼顾实际功能性与极致的美学细节打磨，融入巧思创意。
 
-The user provides frontend requirements: a component, page, application, or interface to build. They may include context about the purpose, audience, or technical constraints.
+用户需明确提出前端开发需求，例如需要构建的组件、页面、应用或界面类型，同时可补充说明需求的业务目的、目标受众及技术限制条件。
 
-## Design Thinking
+## 设计思路
+在编写代码之前，需先厘清需求背景，并确定一个**极具辨识度的美学方向**：
+1.  **核心目的**：该界面需要解决什么问题？目标用户群体是谁？
+2.  **风格基调**：选取一种极致化风格定位，例如：极简克制风、极繁混沌风、复古未来风、自然有机风、高端轻奢风、趣味童趣风、杂志排版风、粗野工业风、装饰艺术几何风、柔和马卡龙风、硬核工具风等。风格维度丰富多样，可参考上述方向，但最终需打造契合自身美学定位的独特设计。
+3.  **技术约束**：明确技术栈要求（如指定框架）、性能指标、无障碍设计规范等开发限制条件。
+4.  **差异化亮点**：设计的记忆点是什么？哪一个特质能让用户过目不忘？
 
-Before coding, understand the context and commit to a BOLD aesthetic direction:
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+**关键原则**：选定清晰的设计理念并精准落地执行。无论是大胆张扬的极繁设计，还是简约精致的极简设计，成败的核心在于**设计意图的明确性**，而非视觉元素的堆砌强度。
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
+基于上述思路，编写可投入生产的功能性代码（包括 HTML/CSS/JS、React、Vue 等技术栈），需满足以下要求：
+- 符合生产环境标准，功能完整可用
+- 视觉效果冲击力强，具有高辨识度
+- 整体风格协调统一，设计理念贯穿始终
+- 细节打磨精益求精，每一处元素都经得起推敲
 
-Then implement working code (HTML/CSS/JS, React, Vue, etc.) that is:
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+## 前端美学设计指南
+设计过程中需重点关注以下维度：
+1.  **字体设计**：选用美观独特、富有个性的字体。摒弃 Arial、Inter 等通用字体，优先选择辨识度高的字体提升前端设计质感；字体选择要出人意料且特色鲜明。建议将一款风格突出的标题字体与一款质感细腻的正文字体搭配使用。
+2.  **色彩与主题**：构建风格统一的视觉主题，通过 CSS 变量保障色彩一致性。采用“主色调+鲜明强调色”的搭配模式，效果远胜于色彩分布均匀、毫无重点的保守配色。
+3.  **动效设计**：将动画效果融入交互细节与微交互场景中。HTML 动效优先采用纯 CSS 实现方案；React 项目可结合 Motion 动画库开发。聚焦高价值动效场景：一次精心编排的页面加载渐显动画（利用 `animation-delay` 实现元素错落出现效果），远比零散堆砌的微交互更能提升用户体验。可加入滚动触发动画、令人眼前一亮的悬停交互效果。
+4.  **空间布局**：打破常规布局思维，尝试不对称构图、元素叠加、斜向视觉流、突破网格限制的自由排版。布局留白需张弛有度，可根据风格需求选择大面积留白，或打造富有秩序感的高密度信息布局。
+5.  **背景与视觉细节**：摒弃单调纯色背景，通过设计营造空间氛围与层次感。添加与整体风格匹配的场景化视觉效果与纹理细节，例如渐变网格、杂色纹理、几何图案、多层透明叠加、富有张力的阴影效果、装饰性边框、自定义鼠标样式、颗粒质感叠加层等创意形式。
 
-## Frontend Aesthetics Guidelines
+**绝对禁止**使用千篇一律的人工智能生成式美学套路，包括：过度滥用的字体家族（如 Inter、Roboto、Arial 等系统默认字体）、陈词滥调的配色方案（尤其是白底搭配紫色渐变的组合）、按部就班的布局与组件范式，以及脱离场景特色、毫无灵魂的模板化设计。
 
-Focus on:
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+突破常规思维进行创意设计，打造真正贴合需求场景的独特作品。拒绝设计同质化，在明暗主题、字体选择、风格定位上大胆创新，避免在不同项目中陷入重复使用固定风格（例如 Space Grotesk 字体）的误区。
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+**重要原则**：代码实现的复杂程度需与设计美学理念相匹配。极繁主义设计需要繁复的代码逻辑支撑，实现丰富的动画与视觉效果；极简或轻奢风格的设计则需克制的代码编写思路，注重间距把控、字体精度与细节质感的雕琢。设计的高级感，源于对设计理念的精准落地执行。
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+请记住：优秀的开发工具具备非凡的创意潜力。大胆突破、尽情发挥，展现出跳出思维定式、专注实现设计愿景时所能创造的极致作品。
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
-
-Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
