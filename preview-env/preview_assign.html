@@ -281,6 +281,7 @@
                   <template slot-scope="scope">
                     <el-button size="mini" type="text" icon="el-icon-view">详情</el-button>
                     <el-button size="mini" type="text" icon="el-icon-user">任务分配</el-button>
+                    <el-button size="mini" type="text" icon="el-icon-document" @click="openInstructionDialog(scope.row)">指令书制作</el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -507,6 +508,15 @@
                     </el-button>
                     <el-button
                       size="mini"
+                      type="primary"
+                      plain
+                      icon="el-icon-document"
+                      @click="openInstructionDialog(scope.row)"
+                    >
+                      指令书制作
+                    </el-button>
+                    <el-button
+                      size="mini"
                       type="text"
                       icon="el-icon-view"
                       @click="$refs.assignSpecialTable && $refs.assignSpecialTable.toggleRowExpansion(scope.row)"
@@ -587,48 +597,7 @@
           </el-row>
         </el-form>
 
-        <el-card shadow="never" style="margin-bottom: 12px;">
-          <div slot="header" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>工作指令书</span>
-            <el-tag type="danger" size="mini">必填</el-tag>
-          </div>
-          <el-form label-width="100px" size="small">
-            <el-form-item label="指令内容">
-              <el-input
-                type="textarea"
-                :rows="4"
-                v-model="workInstructionContent"
-                placeholder="请输入本次任务的具体工作要求、注意事项等"
-              ></el-input>
-            </el-form-item>
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="要求完成期限">
-                  <el-date-picker
-                    v-model="workInstructionDeadline"
-                    type="date"
-                    placeholder="请选择"
-                    style="width: 100%;"
-                    value-format="yyyy-MM-dd"
-                    clearable
-                  ></el-date-picker>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="指令下达人">
-                  <el-input v-model="workInstructionIssuer" disabled></el-input>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="指令接受人">
-                  <el-input v-model="workInstructionReceiver" disabled></el-input>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-form>
-        </el-card>
+
       </div>
 
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -670,8 +639,75 @@
         <el-button type="primary" :disabled="!selectedExecutor" @click="confirmAssignExecutor">确 定</el-button>
       </div>
     </el-dialog>
+
+    <!-- 指令书制作弹窗 -->
+    <el-dialog
+      :title="'工作指令书制作（指令下达人：' + currentInstructionIssuer + '）'"
+      :visible.sync="dialogInstructionVisible"
+      width="800px"
+      :close-on-click-modal="false"
+      append-to-body
+    >
+      <div v-if="instructionList.length === 0" class="text-center" style="padding: 40px; color: #909399;">
+        <i class="el-icon-warning-outline" style="font-size: 48px; margin-bottom: 10px;"></i>
+        <p>该委托单尚未分配检测员，无法生成指令书。</p>
+      </div>
+      
+      <div v-else style="max-height: 600px; overflow-y: auto; padding-right: 10px;">
+        <el-alert
+          title="请为每一位被分配任务的检测员填写具体的工作指令。"
+          type="info"
+          show-icon
+          :closable="false"
+          class="mb8"
+        ></el-alert>
+        
+        <div v-for="(item, index) in instructionList" :key="index" class="mb8">
+          <el-card shadow="hover">
+            <div slot="header" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span style="font-weight: bold; font-size: 16px;">{{ item.receiver }}</span>
+                <el-tag size="mini" type="primary" style="margin-left: 8px;">分配数量：{{ item.count }}</el-tag>
+              </div>
+              <el-tag type="danger" size="mini">指令 #{{ index + 1 }}</el-tag>
+            </div>
+            
+            <el-form label-width="100px" size="small">
+              <el-form-item label="指令内容" required>
+                <el-input
+                  type="textarea"
+                  :rows="3"
+                  v-model="item.content"
+                  placeholder="请输入具体工作要求、注意事项等"
+                ></el-input>
+              </el-form-item>
+              
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="要求完成期限" required>
+                    <el-date-picker
+                      v-model="item.deadline"
+                      type="date"
+                      placeholder="请选择日期"
+                      style="width: 100%;"
+                      value-format="yyyy-MM-dd"
+                    ></el-date-picker>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </el-form>
+          </el-card>
+        </div>
+      </div>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogInstructionVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitInstructions" :disabled="instructionList.length === 0">提交指令书</el-button>
+      </div>
+    </el-dialog>
     </template>
 
+  </div>
   </div>
 
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -683,7 +719,7 @@
           activeMenu: 'assign',
           activeTab: 'special',
           
-          lastUpdated: '',
+          lastUpdated: '2026-01-21 16:05:00',
           
           dialogTypeSelectVisible: false,
           dialogSubTypeVisible: false,
@@ -953,6 +989,10 @@
           { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', executor: '王五', date: '2024-01-13', reportDeadline: '2024-01-19' }
         ],
         dialogAssignVisible: false,
+        dialogInstructionVisible: false,
+        instructionList: [],
+        currentInstructionRow: null,
+        currentInstructionIssuer: '',
         currentAssignRow: null,
         currentAssignDevice: null,
         assignMode: 'entrust',
@@ -989,9 +1029,7 @@
         ],
           currentReport: null
         },
-        created() {
-          this.lastUpdated = this.formatUpdateTime(new Date())
-        },
+
         computed: {
         currentUser() {
           return this.userProfiles.find(u => u.id === this.currentUserId) || this.userProfiles[0]
@@ -1455,6 +1493,61 @@
           if (days <= 3) return 'warning';
           return 'success';
         },
+        openInstructionDialog(row) {
+          this.currentInstructionRow = row
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          if (!entrust || !entrust.devices) {
+            this.instructionList = []
+            this.dialogInstructionVisible = true
+            return
+          }
+
+          // Group devices by executor
+          const executorMap = {}
+          entrust.devices.forEach(d => {
+            if (d.executor) {
+              if (!executorMap[d.executor]) {
+                executorMap[d.executor] = {
+                  count: 0,
+                  devices: []
+                }
+              }
+              executorMap[d.executor].count++
+              executorMap[d.executor].devices.push(d)
+            }
+          })
+
+          // Generate instruction list
+          const issuer = this.currentUser ? this.currentUser.name : '管理员'
+          this.currentInstructionIssuer = issuer
+          const defaultDeadline = row.reportDeadline || ''
+          
+          this.instructionList = Object.keys(executorMap).map(executor => {
+            return {
+              receiver: executor,
+              count: executorMap[executor].count,
+              content: '', // Default empty content
+              deadline: defaultDeadline,
+              issuer: issuer
+            }
+          })
+
+          this.dialogInstructionVisible = true
+        },
+        submitInstructions() {
+          // Validate
+          for (let i = 0; i < this.instructionList.length; i++) {
+            const item = this.instructionList[i]
+            if (!item.content || !item.deadline) {
+              this.$message.warning(`请完善 ${item.receiver} 的指令内容和期限`)
+              return
+            }
+          }
+          
+          // Save (Mock)
+          this.$message.success('指令书已生成并下达成功！')
+          this.dialogInstructionVisible = false
+        },
         openAssignDialog(row, device, isBatch) {
           this.currentAssignRow = row
           this.currentAssignDevice = device || null
@@ -1472,16 +1565,6 @@
         },
         confirmAssignExecutor() {
           if (!this.currentAssignRow || !this.selectedExecutor) {
-            return
-          }
-          if (!this.workInstructionIssuer) {
-            this.workInstructionIssuer = this.currentUser ? this.currentUser.name : ''
-          }
-          if (!this.workInstructionReceiver) {
-            this.workInstructionReceiver = this.selectedExecutor
-          }
-          if (!this.workInstructionContent || !this.workInstructionDeadline) {
-            this.$message.warning('请填写工作指令内容和要求完成期限')
             return
           }
           const entrust = this.recordEntrustList.find(e => e.no === this.currentAssignRow.no)

@@ -277,7 +277,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             {{ getPageTitle() }}
-            <span class="update-time">（更新时间：2026-01-20 17:30:00）</span>
+            <span class="update-time">（更新时间：2026-01-21 10:30:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -1275,9 +1275,7 @@
 
                    <!-- 新增 Tab: 检验报告 -->
                    <el-tab-pane label="检验报告" name="report">
-                     <el-card shadow="never" class="mb8" :body-style="{ padding: '0' }">
-                       <div slot="header" class="clearfix"><span>检验报告生成预览</span></div>
-                       <div class="report-document">
+                       <div class="report-document" style="margin: 20px auto; width: 90%; min-height: 400px;">
                            <div class="report-header">
                                <div class="report-title">定期检验报告</div>
                                <div class="report-no">
@@ -1319,7 +1317,6 @@
                                只气瓶已判报废（《报废复合气瓶一览表》），并且按照规定实施消除使用功能处理。
                            </div>
                        </div>
-                     </el-card>
                    </el-tab-pane>
                  </el-tabs>
                </div>
@@ -2182,7 +2179,7 @@
         
         // 原始记录相关数据
         dialogRecordEntryVisible: false,
-        activeRecordTab: 'appearance', // 气瓶记录当前 Tab
+        activeRecordTab: 'basic_info', // 气瓶记录当前 Tab
         uploadTips: [
           '1. 请上传现场手写记录单或设备打印小票。',
           '2. 支持 JPG/PNG 格式。',
@@ -3317,6 +3314,7 @@
           }
           // 录入弹窗自动带出委托单信息
           if (this.currentRecordType === 'gas') {
+            this.activeRecordTab = 'basic_info'
             this.recordForm.header.usingUnit = entrust.useCompany || entrust.company || ''
             this.recordForm.header.bottleNo = device.no || ''
           } else if (this.currentRecordType === 'valve') {
