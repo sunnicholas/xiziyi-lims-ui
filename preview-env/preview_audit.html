@@ -123,11 +123,48 @@
       background: white;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       position: relative;
+      font-family: "SimSun", "Songti SC", serif;
     }
-    .report-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; }
+    .report-title { text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 30px; font-family: "SimSun", "Songti SC", serif; }
     .report-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     .report-table td, .report-table th { border: 1px solid #000; padding: 8px; text-align: center; font-size: 14px; }
     .report-info { margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
+
+    /* 2026-01-21 新增 UI 规范样式 */
+    .inline-input {
+      border: none;
+      border-bottom: 1px solid #333;
+      outline: none;
+      padding: 0 5px;
+      background: transparent;
+      font-family: inherit;
+      font-size: 14px;
+      text-align: center;
+      color: #333;
+      min-width: 60px;
+      display: inline-block;
+    }
+    .text-blue-bold {
+      color: #409EFF;
+      font-weight: bold;
+    }
+    .audit-stamp {
+      position: absolute;
+      right: 50px;
+      bottom: 50px;
+      width: 120px;
+      height: 120px;
+      border: 3px solid #F56C6C;
+      border-radius: 50%;
+      color: #F56C6C;
+      text-align: center;
+      line-height: 120px;
+      font-size: 24px;
+      font-weight: bold;
+      transform: rotate(-15deg);
+      opacity: 0.8;
+      pointer-events: none;
+    }
     
     [v-cloak] { display: none; }
 
@@ -193,13 +230,13 @@
             <span class="update-time">（更新时间：{{ lastUpdated }}）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
-        <el-dropdown>
+        <el-dropdown @command="handleUserSwitch">
           <span class="el-dropdown-link" style="cursor: pointer;">
-            <i class="el-icon-user-solid"></i> 管理员 <i class="el-icon-arrow-down el-icon--right"></i>
+            <i class="el-icon-user-solid"></i> {{ currentUser.label }} <i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item>个人中心</el-dropdown-item>
-            <el-dropdown-item divided>退出登录</el-dropdown-item>
+            <el-dropdown-item v-for="u in userProfiles" :key="u.id" :command="u.id">{{ u.label }}</el-dropdown-item>
+            <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -263,7 +300,18 @@
                 <el-tag :type="getStatusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="备注" prop="remark" show-overflow-tooltip></el-table-column>
+            <el-table-column label="审核/批准" width="220">
+              <template slot-scope="scope">
+                <div v-if="scope.row.auditor" style="font-size: 12px;">
+                  <div>审核: {{ scope.row.auditor }}</div>
+                  <div style="color: #909399;">{{ scope.row.auditTime }}</div>
+                </div>
+                <div v-if="scope.row.approver" style="font-size: 12px; margin-top: 4px; border-top: 1px dashed #eee; padding-top: 4px;">
+                  <div>批准: {{ scope.row.approver }}</div>
+                  <div style="color: #909399;">{{ scope.row.approveTime }}</div>
+                </div>
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="260" align="center">
               <template slot-scope="scope">
                 <el-button
@@ -309,6 +357,301 @@
       </div>
     </div>
 
+    <!-- 驳回原因弹窗 -->
+    <el-dialog title="驳回原因" :visible.sync="dialogRejectVisible" width="400px">
+      <el-input
+        type="textarea"
+        :rows="4"
+        placeholder="请输入驳回原因"
+        v-model="rejectReason">
+      </el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogRejectVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmReject">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 预览弹窗 -->
+    <el-dialog
+      title="记录预览"
+      :visible.sync="dialogPreviewVisible"
+      width="900px"
+      top="5vh"
+      class="preview-dialog"
+    >
+      <el-tabs v-model="previewActiveTab" type="card">
+        <el-tab-pane label="原始记录" name="record" v-if="showRecordTab">
+          <div class="a4-page" style="transform: scale(0.85); transform-origin: top center; height: 800px; overflow-y: auto;">
+             <!-- 审核印章 -->
+             <div v-if="currentRecordDevice && currentRecordDevice.status === '已审核'" class="audit-stamp">已审核</div>
+             <div v-if="currentRecordDevice && currentRecordDevice.status === '已批准'" class="audit-stamp" style="border-color: #67C23A; color: #67C23A;">已批准</div>
+
+             <div v-if="currentRecordType === 'gas'">
+               <h2 class="report-title">气瓶定期检验原始记录</h2>
+               <div class="report-info">
+                 <el-row :gutter="20">
+                   <el-col :span="12">委托单号：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.no : '' }}</span></el-col>
+                   <el-col :span="12">设备编号：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? currentRecordDevice.no : '' }}</span></el-col>
+                 </el-row>
+                 <el-row :gutter="20" class="mt20">
+                   <el-col :span="12">使用单位：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.company : '上海气体工厂' }}</span></el-col>
+                   <el-col :span="12">检验日期：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? (currentRecordDevice.auditTime || '2026-01-22').split(' ')[0] : '' }}</span></el-col>
+                 </el-row>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th width="10%">序号</th>
+                   <th width="30%">检验项目</th>
+                   <th width="30%">检验结果/数据</th>
+                   <th width="30%">单项结论</th>
+                 </tr>
+                 <tr>
+                   <td>1</td>
+                   <td>外观检查</td>
+                   <td><span class="text-blue-bold">无明显机械损伤，漆色完好</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>2</td>
+                   <td>音响检查</td>
+                   <td><span class="text-blue-bold">音响清脆</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>3</td>
+                   <td>瓶口螺纹</td>
+                   <td><span class="text-blue-bold">牙型完整，无裂纹</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>4</td>
+                   <td>内部检查</td>
+                   <td><span class="text-blue-bold">干燥，无腐蚀</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>5</td>
+                   <td>壁厚测定</td>
+                   <td>最小壁厚 <span class="text-blue-bold inline-input">4.2</span> mm</td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>6</td>
+                   <td>水压试验</td>
+                   <td>试验压力 <span class="text-blue-bold inline-input">22.5</span> MPa，保压 <span class="text-blue-bold inline-input">1</span> min</td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>7</td>
+                   <td>气密性试验</td>
+                   <td>试验压力 <span class="text-blue-bold inline-input">15.0</span> MPa，保压 <span class="text-blue-bold inline-input">1</span> min</td>
+                   <td>合格</td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 20px;">
+                 <el-row>
+                   <el-col :span="12">
+                     检测员：<span class="text-blue-bold" style="font-family: cursive; font-size: 18px;">{{ currentRecordDevice ? currentRecordDevice.executor : '' }}</span>
+                   </el-col>
+                   <el-col :span="12">
+                     日期：<span class="text-blue-bold">{{ currentRecordDevice ? (currentRecordDevice.auditTime || '').split(' ')[0] : '' }}</span>
+                   </el-col>
+                 </el-row>
+                 <el-row class="mt20" v-if="currentRecordDevice && currentRecordDevice.auditor">
+                   <el-col :span="12">
+                     审核员：<span class="text-blue-bold" style="font-family: cursive; font-size: 18px;">{{ currentRecordDevice.auditor }}</span>
+                   </el-col>
+                   <el-col :span="12">
+                     日期：<span class="text-blue-bold">{{ (currentRecordDevice.auditTime || '').split(' ')[0] }}</span>
+                   </el-col>
+                 </el-row>
+               </div>
+             </div>
+             
+             <div v-else>
+               <h2 class="report-title">安全阀校验原始记录</h2>
+               <div class="report-info">
+                 <el-row :gutter="20">
+                   <el-col :span="12">委托单号：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.no : '' }}</span></el-col>
+                   <el-col :span="12">设备编号：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? currentRecordDevice.no : '' }}</span></el-col>
+                 </el-row>
+                 <el-row :gutter="20" class="mt20">
+                   <el-col :span="12">使用单位：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.company : '江苏化工厂' }}</span></el-col>
+                   <el-col :span="12">校验日期：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? (currentRecordDevice.auditTime || '2026-01-22').split(' ')[0] : '' }}</span></el-col>
+                 </el-row>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th width="30%">项目</th>
+                   <th width="35%">参数要求</th>
+                   <th width="35%">实测数据</th>
+                 </tr>
+                 <tr>
+                   <td>整定压力</td>
+                   <td>1.0 ± 0.03 MPa</td>
+                   <td><span class="text-blue-bold inline-input">1.01</span> MPa</td>
+                 </tr>
+                 <tr>
+                   <td>密封试验压力</td>
+                   <td>0.90 MPa</td>
+                   <td><span class="text-blue-bold inline-input">0.90</span> MPa</td>
+                 </tr>
+                 <tr>
+                   <td>开启高度</td>
+                   <td>≥ 1/4 d0</td>
+                   <td><span class="text-blue-bold">符合</span></td>
+                 </tr>
+                 <tr>
+                   <td>外观检查</td>
+                   <td>完好</td>
+                   <td><span class="text-blue-bold">合格</span></td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 20px;">
+                 <el-row>
+                   <el-col :span="12">
+                     校验员：<span class="text-blue-bold" style="font-family: cursive; font-size: 18px;">{{ currentRecordDevice ? currentRecordDevice.executor : '' }}</span>
+                   </el-col>
+                   <el-col :span="12">
+                     日期：<span class="text-blue-bold">{{ currentRecordDevice ? (currentRecordDevice.auditTime || '').split(' ')[0] : '' }}</span>
+                   </el-col>
+                 </el-row>
+                 <el-row class="mt20" v-if="currentRecordDevice && currentRecordDevice.auditor">
+                   <el-col :span="12">
+                     核验员：<span class="text-blue-bold" style="font-family: cursive; font-size: 18px;">{{ currentRecordDevice.auditor }}</span>
+                   </el-col>
+                   <el-col :span="12">
+                     日期：<span class="text-blue-bold">{{ (currentRecordDevice.auditTime || '').split(' ')[0] }}</span>
+                   </el-col>
+                 </el-row>
+               </div>
+             </div>
+          </div>
+        </el-tab-pane>
+        
+        <el-tab-pane label="检验报告" name="report">
+          <div class="a4-page" style="transform: scale(0.85); transform-origin: top center; height: 800px; overflow-y: auto;">
+             <!-- 审核印章 -->
+             <div v-if="currentRecordDevice && currentRecordDevice.status === '已批准'" class="audit-stamp" style="border-color: #67C23A; color: #67C23A;">已批准</div>
+             
+             <div v-if="currentRecordType === 'gas'">
+               <div class="report-title">气瓶定期检验报告</div>
+               <div class="report-info" style="text-align: left;">
+                 <p>报告编号：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.no : '' }}-R</span></p>
+                 <p>委托单位：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.company : '' }}</span></p>
+                 <p>设备名称：无缝气瓶 &nbsp;&nbsp;&nbsp;&nbsp; 介质：氧气</p>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th colspan="4" style="background: #f0f0f0;">检验结果汇总</th>
+                 </tr>
+                 <tr>
+                   <td width="25%">外观检查</td>
+                   <td width="25%">合格</td>
+                   <td width="25%">音响检查</td>
+                   <td width="25%">合格</td>
+                 </tr>
+                 <tr>
+                   <td>瓶口螺纹</td>
+                   <td>合格</td>
+                   <td>内部检查</td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>壁厚测定</td>
+                   <td>合格</td>
+                   <td>水压试验</td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>气密性试验</td>
+                   <td>合格</td>
+                   <td>综合判定</td>
+                   <td><strong>合格</strong></td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 50px; text-align: left;">
+                 <p>检验结论：该气瓶经定期检验，符合相关标准要求，允许继续使用。</p>
+                 <p>下次检验日期：2027年01月22日</p>
+               </div>
+               
+               <div style="margin-top: 80px; display: flex; justify-content: space-around;">
+                 <div>编制：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.executor : '' }}</span></div>
+                 <div>审核：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.auditor : '' }}</span></div>
+                 <div>批准：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.approver : '' }}</span></div>
+                 <div>日期：{{ currentRecordDevice ? (currentRecordDevice.approveTime || '').split(' ')[0] : '' }}</div>
+               </div>
+             </div>
+             
+             <div v-else>
+               <div class="report-title">安全阀校验报告</div>
+               <div class="report-info" style="text-align: left;">
+                 <p>报告编号：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.no : '' }}-R</span></p>
+                 <p>使用单位：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.company : '' }}</span></p>
+                 <p>设备型号：A48Y-16C &nbsp;&nbsp;&nbsp;&nbsp; 公称通径：DN50</p>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th width="30%">检验项目</th>
+                   <th width="30%">标准要求</th>
+                   <th width="40%">检验结果</th>
+                 </tr>
+                 <tr>
+                   <td>整定压力 (MPa)</td>
+                   <td>1.0 ± 0.03</td>
+                   <td>1.01</td>
+                 </tr>
+                 <tr>
+                   <td>密封试验压力 (MPa)</td>
+                   <td>0.9</td>
+                   <td>0.9</td>
+                 </tr>
+                 <tr>
+                   <td>开启高度</td>
+                   <td>≥ 1/4 d0</td>
+                   <td>符合</td>
+                 </tr>
+                 <tr>
+                   <td>外观检查</td>
+                   <td>完好无损</td>
+                   <td>合格</td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 50px; text-align: left;">
+                 <p>校验结论：<strong>合格</strong></p>
+                 <p>备注：铅封已施加。</p>
+               </div>
+               
+               <div style="margin-top: 100px; display: flex; justify-content: space-around;">
+                 <div>校验员：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.executor : '' }}</span></div>
+                 <div>核验员：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.auditor : '' }}</span></div>
+                 <div>批准：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.approver : '' }}</span></div>
+               </div>
+             </div>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogPreviewVisible = false">关 闭</el-button>
+        <div style="display: inline-block; margin-left: 10px;" v-if="currentRecordDevice && canAuditApprove(currentRecordDevice, 'audit')">
+           <el-button type="primary" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'audit-pass')">审核通过</el-button>
+           <el-button type="danger" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'reject')">驳 回</el-button>
+        </div>
+        <div style="display: inline-block; margin-left: 10px;" v-if="currentRecordDevice && canAuditApprove(currentRecordDevice, 'approve')">
+           <el-button type="success" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'approve-pass')">批准通过</el-button>
+           <el-button type="danger" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'reject')">驳 回</el-button>
+        </div>
+      </span>
+    </el-dialog>
+
   </div>
 
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -320,12 +663,25 @@
         activeMenu: 'audit',
         activeTab: 'special',
         
-        lastUpdated: '',
+        lastUpdated: '2026-01-22 11:35:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
         dialogFormVisible: false,
         trackVisible: false,
+        
+        // 审核/驳回相关
+        dialogRejectVisible: false,
+        rejectReason: '',
+        currentAuditDevice: null,
+        currentAuditEntrust: null,
+        
+        // 预览相关
+        dialogPreviewVisible: false,
+        previewActiveTab: 'record',
+        showRecordTab: true,
+        currentRecordEntrust: null,
+        currentRecordDevice: null,
         
         selectedSubType: 'gas',
         typeSearchKeyword: '',
@@ -712,6 +1068,14 @@
               if (stage === 'to-approve' && device.status !== '已审核') {
                 return
               }
+              if (stage === 'all') {
+                // 仅显示当前用户审核或批准过的记录（历史记录）
+                const isMyAudit = device.auditor === this.currentUser.name;
+                const isMyApprove = device.approver === this.currentUser.name;
+                if (!isMyAudit && !isMyApprove) {
+                  return;
+                }
+              }
               if (statusFilter && device.status !== statusFilter) {
                 return
               }
@@ -933,11 +1297,11 @@
         },
         getStatusTagType(status) {
           if (status === '未录入') return 'info'
-          if (status === '已录入') return 'warning'
+          if (status === '已录入') return 'info'
           if (status === '驳回') return 'danger'
-          if (status === '已审核') return 'primary'
+          if (status === '已提交') return 'primary'
+          if (status === '已审核') return 'warning'
           if (status === '已批准') return 'success'
-          if (status === '已提交') return 'success'
           return 'info'
         },
         canOperateDevice(device) {
@@ -982,50 +1346,129 @@
           }
           this.dialogRecordEntryVisible = true
         },
-        previewDeviceRecord(entrust, device) {
-          if (!device.hasRecord) {
-            return
+        handleUserSwitch(command) {
+          if (command === 'logout') {
+            this.$message.info('退出登录');
+          } else {
+            const user = this.userProfiles.find(u => u.id === command);
+            if (user) {
+              this.currentUserId = user.id;
+              this.$message.success('已切换为：' + user.label);
+            }
           }
-          this.$message.info('模拟打开设备原始记录预览')
+        },
+        previewDeviceRecord(entrust, device) {
+          // 查找对应的数据
+          this.currentRecordEntrust = entrust;
+          this.currentRecordDevice = device;
+          this.currentRecordType = device.deviceType === 'valve' ? 'valve' : 'gas';
+          
+          // 判断显示逻辑
+          // 审核人(status=已提交) -> 看记录+报告
+          // 批准人(status=已审核) -> 只看报告
+          // 但作为预览功能，如果已经审核过，也应该允许查看记录，只是重点不同
+          // 这里根据题目要求：批准人只看报告内容
+          
+          // 如果当前是待批准状态，且当前用户有批准权限（即非审核人），则默认只显示报告
+          // 为了简化逻辑：
+          // 1. 状态为 已审核 -> 待批准 -> 只显示报告
+          // 2. 其他状态 -> 显示记录+报告
+          if (device.status === '已审核') {
+            this.showRecordTab = false;
+            this.previewActiveTab = 'report';
+          } else {
+            this.showRecordTab = true;
+            this.previewActiveTab = 'record';
+          }
+          
+          this.dialogPreviewVisible = true;
         },
         canAuditApprove(device, type) {
+          if (!device) return false;
           if (!this.isCurrentUserLeader) {
             return false
           }
           if (type === 'audit') {
-            return device.status === '已提交' || device.status === '驳回'
-          }
-          if (type === 'approve') {
-            return device.status === '已审核'
+            return device.status === '已提交'
+          } else if (type === 'approve') {
+            // 批准条件：状态为已审核，且当前用户不能是审核人
+            if (device.status !== '已审核') return false;
+            if (device.auditor === this.currentUser.name) return false;
+            return true;
           }
           return false
         },
         canAuditReject(device) {
+          if (!device) return false;
           if (!this.isCurrentUserLeader) {
             return false
           }
-          return device.status === '已提交' || device.status === '已审核' || device.status === '已批准'
+          // 审核阶段和批准阶段都可以驳回
+          return device.status === '已提交' || device.status === '已审核'
         },
         handleAuditAction(entrust, device, action) {
-          if (action === 'audit-pass') {
-            if (!this.canAuditApprove(device, 'audit')) {
-              return
-            }
-            device.status = '已审核'
-            this.$message.success('已审核通过')
+          if (action === 'reject') {
+            if (!this.canAuditReject(device)) return;
+            this.currentAuditDevice = device;
+            this.currentAuditEntrust = entrust;
+            this.rejectReason = '';
+            this.dialogRejectVisible = true;
+          } else if (action === 'audit-pass') {
+            if (!this.canAuditApprove(device, 'audit')) return;
+            
+            this.$confirm('确认审核通过该记录吗？', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'success'
+            }).then(() => {
+              device.status = '已审核';
+              device.auditor = this.currentUser.name;
+              device.auditTime = this.formatTime(new Date());
+              this.$message.success('已审核通过');
+              this.dialogPreviewVisible = false; // 关闭预览弹窗
+            });
           } else if (action === 'approve-pass') {
             if (!this.canAuditApprove(device, 'approve')) {
-              return
+               if (device.auditor === this.currentUser.name) {
+                 this.$message.error('审核人和批准人不能为同一人');
+               }
+               return;
             }
-            device.status = '已批准'
-            this.$message.success('已批准通过')
-          } else if (action === 'reject') {
-            if (!this.canAuditReject(device)) {
-              return
-            }
-            device.status = '驳回'
-            this.$message.warning('已驳回原始记录，等待检测员重新处理')
+            
+            this.$confirm('确认批准通过该报告吗？', '提示', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'success'
+            }).then(() => {
+              device.status = '已批准';
+              device.approver = this.currentUser.name;
+              device.approveTime = this.formatTime(new Date());
+              this.$message.success('已批准通过');
+              this.dialogPreviewVisible = false; // 关闭预览弹窗
+            });
           }
+        },
+        confirmReject() {
+          if (!this.rejectReason.trim()) {
+            this.$message.warning('请填写驳回原因');
+            return;
+          }
+          if (this.currentAuditDevice) {
+            this.currentAuditDevice.status = '驳回';
+            this.currentAuditDevice.rejectReason = this.rejectReason;
+            this.$message.warning('已驳回，原因：' + this.rejectReason);
+            this.dialogRejectVisible = false;
+            this.dialogPreviewVisible = false; // 关闭预览弹窗
+          }
+        },
+        formatTime(date) {
+           const y = date.getFullYear();
+           const m = String(date.getMonth() + 1).padStart(2, '0');
+           const d = String(date.getDate()).padStart(2, '0');
+           const h = String(date.getHours()).padStart(2, '0');
+           const min = String(date.getMinutes()).padStart(2, '0');
+           const s = String(date.getSeconds()).padStart(2, '0');
+           return `${y}-${m}-${d} ${h}:${min}:${s}`;
         },
         submitDeviceRecord(entrust, device) {
           if (!this.canSubmitDevice(device)) {
