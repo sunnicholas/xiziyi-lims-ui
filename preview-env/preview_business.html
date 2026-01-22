@@ -134,6 +134,50 @@
     .assign-expand-container {
       padding-left: 100px;
     }
+    
+    /* 预览弹窗居中与滚动优化 */
+    .preview-dialog {
+      display: flex;
+      flex-direction: column;
+      margin: 0 !important;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      height: 90vh;
+      max-width: 95vw;
+    }
+    .preview-dialog .el-dialog__body {
+      flex: 1;
+      overflow: hidden;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .preview-dialog .el-tabs {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      margin: 0;
+    }
+    .preview-dialog .el-tabs__header {
+      margin-bottom: 0;
+      padding: 10px 20px 0;
+      background: #fff;
+    }
+    .preview-dialog .el-tabs__content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f0f2f5; /* 背景色区分 */
+    }
+    /* 修复 transform 导致的滚动条位置问题 */
+    .preview-dialog .a4-page {
+      margin: 0 auto 20px; /* 底部留白 */
+      transform-origin: top center;
+      /* 移除原有的 fixed height 和 overflow */
+    }
   </style>
 </head>
 <body>
@@ -748,17 +792,190 @@
         <el-button v-if="activeStep === 3" type="success" @click="submitEntrust">提 交</el-button>
       </span>
     </el-dialog>
+    <!-- 流程追踪弹窗 -->
     <el-dialog title="流程追踪" :visible.sync="trackVisible" width="500px" append-to-body>
       <el-timeline>
         <el-timeline-item
-          v-for="item in trackItems"
-          :key="item.time + item.text"
+          v-for="(item, index) in trackItems"
+          :key="index"
           :timestamp="item.time"
           :color="item.color"
+          placement="top"
         >
-          {{ item.text }}
+          <el-card shadow="hover" :body-style="{ padding: '10px' }">
+            <h4 style="margin: 0 0 8px 0; font-size: 14px;">{{ item.text }}</h4>
+            <div v-if="item.executor" style="margin-top: 5px; font-size: 12px; color: #666; display: flex; align-items: center;">
+              <i class="el-icon-user" style="margin-right: 4px;"></i>
+              <span>执行人：{{ item.executor }}</span>
+            </div>
+            <div v-if="item.remark" style="margin-top: 5px; font-size: 12px; color: #F56C6C;">
+              <i class="el-icon-warning-outline" style="margin-right: 4px;"></i>
+              <span>原因：{{ item.remark }}</span>
+            </div>
+          </el-card>
         </el-timeline-item>
       </el-timeline>
+    </el-dialog>
+
+    <!-- 预览弹窗 -->
+    <el-dialog
+      title="记录预览"
+      :visible.sync="dialogPreviewVisible"
+      width="900px"
+      class="preview-dialog"
+      append-to-body
+    >
+      <el-tabs v-model="previewActiveTab" type="card">
+        <el-tab-pane label="原始记录" name="record" v-if="showRecordTab">
+          <div class="a4-page" style="transform: scale(0.85);">
+             <!-- 审核印章 -->
+             <div v-if="currentRecordDevice && currentRecordDevice.status === '已审核'" class="audit-stamp">已审核</div>
+             <div v-if="currentRecordDevice && currentRecordDevice.status === '已批准'" class="audit-stamp" style="border-color: #67C23A; color: #67C23A;">已批准</div>
+
+             <div v-if="currentRecordType === 'gas'">
+               <h2 class="report-title">气瓶定期检验原始记录</h2>
+               <div class="report-info">
+                 <el-row :gutter="20">
+                   <el-col :span="12">委托单号：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.no : '' }}</span></el-col>
+                   <el-col :span="12">设备编号：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? currentRecordDevice.no : '' }}</span></el-col>
+                 </el-row>
+                 <el-row :gutter="20" class="mt20">
+                   <el-col :span="12">使用单位：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.company : '上海气体工厂' }}</span></el-col>
+                   <el-col :span="12">检验日期：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? (currentRecordDevice.auditTime || '2026-01-22').split(' ')[0] : '' }}</span></el-col>
+                 </el-row>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th width="10%">序号</th>
+                   <th width="30%">检验项目</th>
+                   <th width="30%">检验结果/数据</th>
+                   <th width="30%">单项结论</th>
+                 </tr>
+                 <tr>
+                   <td>1</td>
+                   <td>外观检查</td>
+                   <td><span class="text-blue-bold">无明显机械损伤，漆色完好</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>2</td>
+                   <td>音响检查</td>
+                   <td><span class="text-blue-bold">音响清脆</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>3</td>
+                   <td>瓶口螺纹检查</td>
+                   <td><span class="text-blue-bold">螺纹完好，无腐蚀</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>4</td>
+                   <td>内部检查</td>
+                   <td><span class="text-blue-bold">内部干燥，无锈蚀</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>5</td>
+                   <td>水压试验</td>
+                   <td><span class="text-blue-bold">压力维持稳定，无渗漏</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>6</td>
+                   <td>气密性试验</td>
+                   <td><span class="text-blue-bold">保压30分钟无泄漏</span></td>
+                   <td>合格</td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 20px;">
+                 <p><strong>检验结论：</strong> <span class="text-blue-bold">合格</span></p>
+                 <p><strong>下次检验日期：</strong> <span class="text-blue-bold">2030-01-22</span></p>
+               </div>
+               
+               <div style="margin-top: 40px; display: flex; justify-content: space-around;">
+                 <div>检验员：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.executor : '' }}</span></div>
+                 <div>校核：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.auditor : '' }}</span></div>
+               </div>
+             </div>
+
+             <div v-if="currentRecordType === 'valve'">
+               <h2 class="report-title">安全阀校验原始记录</h2>
+               <div class="report-info">
+                 <el-row :gutter="20">
+                   <el-col :span="12">委托单号：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.no : '' }}</span></el-col>
+                   <el-col :span="12">设备编号：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? currentRecordDevice.no : '' }}</span></el-col>
+                 </el-row>
+                 <el-row :gutter="20" class="mt20">
+                   <el-col :span="12">使用单位：<span class="text-blue-bold inline-input">{{ currentRecordEntrust ? currentRecordEntrust.company : '上海气体工厂' }}</span></el-col>
+                   <el-col :span="12">校验日期：<span class="text-blue-bold inline-input">{{ currentRecordDevice ? (currentRecordDevice.auditTime || '2026-01-22').split(' ')[0] : '' }}</span></el-col>
+                 </el-row>
+               </div>
+               
+               <table class="report-table">
+                 <tr>
+                   <th width="10%">序号</th>
+                   <th width="30%">校验项目</th>
+                   <th width="30%">校验结果/数据</th>
+                   <th width="30%">单项结论</th>
+                 </tr>
+                 <tr>
+                   <td>1</td>
+                   <td>外观检查</td>
+                   <td><span class="text-blue-bold">铭牌清晰，铅封完好</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>2</td>
+                   <td>整定压力</td>
+                   <td><span class="text-blue-bold">1.25 MPa (要求: 1.2-1.3)</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>3</td>
+                   <td>密封试验压力</td>
+                   <td><span class="text-blue-bold">1.10 MPa</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>4</td>
+                   <td>开启压力</td>
+                   <td><span class="text-blue-bold">1.26 MPa</span></td>
+                   <td>合格</td>
+                 </tr>
+                 <tr>
+                   <td>5</td>
+                   <td>回座压力</td>
+                   <td><span class="text-blue-bold">1.15 MPa</span></td>
+                   <td>合格</td>
+                 </tr>
+               </table>
+               
+               <div style="margin-top: 20px;">
+                 <p><strong>校验结论：</strong> <span class="text-blue-bold">合格</span></p>
+                 <p><strong>下次校验日期：</strong> <span class="text-blue-bold">2027-01-22</span></p>
+               </div>
+               
+               <div style="margin-top: 100px; display: flex; justify-content: space-around;">
+                 <div>校验员：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.executor : '' }}</span></div>
+                 <div>核验员：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.auditor : '' }}</span></div>
+                 <div>批准：<span class="text-blue-bold" style="font-family: cursive;">{{ currentRecordDevice ? currentRecordDevice.approver : '' }}</span></div>
+               </div>
+             </div>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+      <span slot="footer" class="dialog-footer">
+        <div style="float: left;">
+          <el-button-group>
+            <el-button size="small" icon="el-icon-arrow-left" @click="prevPreviewDevice" :disabled="!canPrevPreview">上一条</el-button>
+            <el-button size="small" @click="nextPreviewDevice" :disabled="!canNextPreview">下一条<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+          </el-button-group>
+        </div>
+        <el-button @click="dialogPreviewVisible = false">关 闭</el-button>
+      </span>
     </el-dialog>
 
     <el-dialog
@@ -906,16 +1123,13 @@
         activeMenu: 'business',
         activeTab: 'special',
         
-        lastUpdated: '',
+        lastUpdated: '2026-01-22 14:15:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
         dialogFormVisible: false,
         trackVisible: false,
-        trackItems: [
-          { time: '2024-01-14 09:00', color: '#0bbd87', text: '委托登记完成' },
-          { time: '2024-01-14 10:00', color: '#F56C6C', text: '待分配人员' }
-        ],
+        trackItems: [],
         
         selectedSubType: 'gas',
         typeSearchKeyword: '',
@@ -1118,6 +1332,7 @@
         recordSearchKeyword: '',
         currentRecordEntrust: null,
         currentRecordDevice: null,
+        currentRecordType: 'gas',
         recordEntrustList: [
           {
             no: '20240115-GC-001',
@@ -1227,6 +1442,18 @@
         this.lastUpdated = this.formatUpdateTime(new Date())
       },
       computed: {
+        canPrevPreview() {
+          if (!this.currentRecordEntrust || !this.currentRecordDevice) return false
+          const devices = this.currentRecordEntrust.devices || []
+          const index = devices.findIndex(d => d.no === this.currentRecordDevice.no)
+          return index > 0
+        },
+        canNextPreview() {
+          if (!this.currentRecordEntrust || !this.currentRecordDevice) return false
+          const devices = this.currentRecordEntrust.devices || []
+          const index = devices.findIndex(d => d.no === this.currentRecordDevice.no)
+          return index !== -1 && index < devices.length - 1
+        },
         currentUser() {
           return this.userProfiles.find(u => u.id === this.currentUserId) || this.userProfiles[0]
         },
@@ -1395,6 +1622,15 @@
           return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
         },
         openTrackDialog() {
+          this.trackItems = [
+            { time: '2024-01-15 09:30', text: '业务受理：委托单创建成功', executor: '王受理', color: '#0bbd87' },
+            { time: '2024-01-15 10:00', text: '任务分配：已分配至检测组', executor: '李主管', color: '#0bbd87' },
+            { time: '2024-01-16 14:20', text: '原始记录：气瓶外观检查完成', executor: '张检测', color: '#0bbd87' },
+            { time: '2024-01-16 16:45', text: '原始记录：水压试验完成', executor: '张检测', color: '#0bbd87' },
+            { time: '2024-01-17 09:10', text: '报告生成：初稿已生成', executor: '系统', color: '#409EFF' },
+            { time: '2024-01-17 11:00', text: '报告审核：审核通过', executor: '赵审核', color: '#0bbd87' },
+            { time: '2024-01-17 15:30', text: '报告批准：批准通过', executor: '钱批准', color: '#0bbd87' }
+          ]
           this.trackVisible = true
         },
         closeAllDialogs() {
@@ -1583,10 +1819,38 @@
           this.dialogRecordEntryVisible = true
         },
         previewDeviceRecord(entrust, device) {
-          if (!device.hasRecord) {
+          if (!device || !device.hasRecord) {
+            this.$message.warning('该设备暂无原始记录')
             return
           }
-          this.$message.info('模拟打开设备原始记录预览')
+          this.currentRecordEntrust = entrust
+          this.currentRecordDevice = device
+          this.currentRecordType = device.deviceType
+          this.dialogPreviewVisible = true
+        },
+        prevPreviewDevice() {
+          if (!this.currentRecordEntrust || !this.currentRecordDevice) return
+          const devices = this.currentRecordEntrust.devices || []
+          const index = devices.findIndex(d => d.no === this.currentRecordDevice.no)
+          if (index > 0) {
+            this.previewDeviceRecord(this.currentRecordEntrust, devices[index - 1])
+          }
+        },
+        nextPreviewDevice() {
+          if (!this.currentRecordEntrust || !this.currentRecordDevice) return
+          const devices = this.currentRecordEntrust.devices || []
+          const index = devices.findIndex(d => d.no === this.currentRecordDevice.no)
+          if (index !== -1 && index < devices.length - 1) {
+            this.previewDeviceRecord(this.currentRecordEntrust, devices[index + 1])
+          }
+        },
+        previewEntrustmentDevices(row) {
+          const entrust = this.recordEntrustList.find(e => e.no === row.no)
+          if (entrust && entrust.devices && entrust.devices.length > 0) {
+            this.previewDeviceRecord(entrust, entrust.devices[0])
+          } else {
+            this.$message.warning('该委托单暂无关联设备记录')
+          }
         },
         canAuditApprove(device, type) {
           if (!this.isCurrentUserLeader) {

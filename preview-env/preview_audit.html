@@ -171,6 +171,43 @@
     .assign-expand-container {
       padding-left: 100px;
     }
+
+    /* 预览弹窗优化 */
+    .preview-dialog {
+      display: flex;
+      flex-direction: column;
+      margin: 0 !important;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      height: 90vh;
+      max-width: 95vw;
+    }
+    .preview-dialog .el-dialog__body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+    .preview-dialog .el-tabs {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .preview-dialog .el-tabs__content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f0f2f5;
+    }
+    .preview-dialog .el-tabs__header {
+      margin: 0;
+      padding: 10px 20px 0;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
@@ -285,70 +322,162 @@
             style="margin-bottom: 10px;"
           ></el-alert>
 
-          <el-table :data="auditDeviceList" border size="small" style="width: 100%;">
-            <el-table-column label="委托单号" prop="entrustNo" width="160"></el-table-column>
-            <el-table-column label="设备编号" prop="deviceNo" width="140"></el-table-column>
-            <el-table-column label="设备类型" prop="deviceType" width="90">
-              <template slot-scope="scope">
-                <el-tag v-if="scope.row.deviceType === 'gas'" type="info">气瓶</el-tag>
-                <el-tag v-else type="warning">安全阀</el-tag>
+          <el-table :data="auditEntrustList" border size="small" style="width: 100%;">
+            <el-table-column type="expand">
+              <template slot-scope="props">
+                  <div class="mb8" v-if="hasSelectedAuditDevices(props.row)">
+                    <el-button
+                      size="mini"
+                      type="primary"
+                      plain
+                      :disabled="!canAuditApproveAny(props.row, 'audit')"
+                      v-if="auditStage === 'to-audit'"
+                      @click="handleBatchSelected(props.row, 'pass')"
+                    >
+                      批量审核选中
+                    </el-button>
+                    <el-button
+                      size="mini"
+                      type="success"
+                      plain
+                      :disabled="!canAuditApproveAny(props.row, 'approve')"
+                      v-if="auditStage === 'to-approve'"
+                      @click="handleBatchSelected(props.row, 'pass')"
+                    >
+                      批量批准选中
+                    </el-button>
+                    <el-button
+                      size="mini"
+                      type="danger"
+                      plain
+                      @click="handleBatchSelected(props.row, 'reject')"
+                    >
+                      批量驳回选中
+                    </el-button>
+                  </div>
+                  <el-table
+                    :data="getAuditDevices(props.row)"
+                    size="small"
+                    border
+                    @selection-change="val => handleAuditSelectionChange(props.row, val)"
+                  >
+                    <el-table-column type="selection" width="50"></el-table-column>
+                    <el-table-column label="设备编号" prop="no" width="140"></el-table-column>
+                  <el-table-column label="设备类型" width="120">
+                    <template slot-scope="scope">
+                      <el-tag v-if="scope.row.deviceType === 'gas'" type="info">气瓶</el-tag>
+                      <el-tag v-else type="warning">安全阀</el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="检测员" prop="executor" width="100"></el-table-column>
+                  <el-table-column label="操作" min-width="280" align="center">
+                    <template slot-scope="scope">
+                      <div style="display: flex; justify-content: center; gap: 8px;">
+                        <el-button
+                          size="mini"
+                          type="text"
+                          icon="el-icon-view"
+                          @click="previewDeviceRecord(props.row, scope.row.deviceRef)"
+                        >
+                          预览
+                        </el-button>
+                        <el-button
+                          size="mini"
+                          type="text"
+                          icon="el-icon-time"
+                          @click="showProcessTrack(props.row, scope.row.deviceRef)"
+                        >
+                          追踪
+                        </el-button>
+                        <span v-if="auditStage !== 'all'">
+                          <el-button
+                            v-if="auditStage !== 'to-approve'"
+                            size="mini"
+                            type="primary"
+                            plain
+                            :disabled="!canAuditApprove(scope.row.deviceRef, 'audit')"
+                            @click="handleAuditAction(props.row, scope.row.deviceRef, 'audit-pass')"
+                          >
+                            审核通过
+                          </el-button>
+                          <el-button
+                            v-if="auditStage !== 'to-audit'"
+                            size="mini"
+                            type="success"
+                            plain
+                            :disabled="!canAuditApprove(scope.row.deviceRef, 'approve')"
+                            @click="handleAuditAction(props.row, scope.row.deviceRef, 'approve-pass')"
+                          >
+                            批准通过
+                          </el-button>
+                          <el-button
+                            size="mini"
+                            type="danger"
+                            plain
+                            :disabled="!canAuditReject(scope.row.deviceRef)"
+                            @click="handleAuditAction(props.row, scope.row.deviceRef, 'reject')"
+                          >
+                            驳回
+                          </el-button>
+                        </span>
+                      </div>
+                    </template>
+                  </el-table-column>
+                </el-table>
               </template>
             </el-table-column>
-            <el-table-column label="检测员" prop="executor" width="100"></el-table-column>
-            <el-table-column label="当前状态" prop="status" width="100">
+            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
+            <el-table-column label="设备总数" width="100" align="center">
               <template slot-scope="scope">
-                <el-tag :type="getStatusTagType(scope.row.status)">{{ scope.row.status }}</el-tag>
+                {{ getEntrustStats(scope.row).total }}
               </template>
             </el-table-column>
-            <el-table-column label="审核/批准" width="220">
+            <el-table-column label="已提交/总数" width="120" align="center">
               <template slot-scope="scope">
-                <div v-if="scope.row.auditor" style="font-size: 12px;">
-                  <div>审核: {{ scope.row.auditor }}</div>
-                  <div style="color: #909399;">{{ scope.row.auditTime }}</div>
-                </div>
-                <div v-if="scope.row.approver" style="font-size: 12px; margin-top: 4px; border-top: 1px dashed #eee; padding-top: 4px;">
-                  <div>批准: {{ scope.row.approver }}</div>
-                  <div style="color: #909399;">{{ scope.row.approveTime }}</div>
-                </div>
+                {{ getEntrustStats(scope.row).submitted }} / {{ getEntrustStats(scope.row).total }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="260" align="center">
+            <el-table-column label="操作" width="280" align="center">
               <template slot-scope="scope">
-                <el-button
-                  size="mini"
-                  type="text"
-                  icon="el-icon-view"
-                  @click="previewDeviceRecord(scope.row.entrustRef, scope.row.deviceRef)"
-                >
-                  预览记录
-                </el-button>
-                <el-button
-                  size="mini"
-                  type="primary"
-                  plain
-                  :disabled="!canAuditApprove(scope.row.deviceRef, 'audit')"
-                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'audit-pass')"
-                >
-                  审核通过
-                </el-button>
-                <el-button
-                  size="mini"
-                  type="success"
-                  plain
-                  :disabled="!canAuditApprove(scope.row.deviceRef, 'approve')"
-                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'approve-pass')"
-                >
-                  批准通过
-                </el-button>
-                <el-button
-                  size="mini"
-                  type="danger"
-                  plain
-                  :disabled="!canAuditReject(scope.row.deviceRef)"
-                  @click="handleAuditAction(scope.row.entrustRef, scope.row.deviceRef, 'reject')"
-                >
-                  驳回
-                </el-button>
+                 <div style="display: flex; justify-content: center; gap: 8px;">
+                    <el-button
+                      v-if="auditStage === 'to-audit'"
+                      size="mini"
+                      type="primary"
+                      plain
+                      @click="handleBatchAuditAction(scope.row, 'audit-pass')"
+                    >
+                      批量审核
+                    </el-button>
+                    <el-button
+                      v-if="auditStage === 'to-approve'"
+                      size="mini"
+                      type="success"
+                      plain
+                      @click="handleBatchAuditAction(scope.row, 'approve-pass')"
+                    >
+                      批量批准
+                    </el-button>
+                    <el-button
+                      v-if="auditStage !== 'all'"
+                      size="mini"
+                      type="danger"
+                      plain
+                      @click="handleBatchAuditAction(scope.row, 'reject')"
+                    >
+                      批量驳回
+                    </el-button>
+                    <el-button
+                      v-if="auditStage === 'all'"
+                      size="mini"
+                      type="text"
+                      icon="el-icon-view"
+                      @click="previewEntrustmentDevices(scope.row)"
+                    >
+                      逐一预览
+                    </el-button>
+                 </div>
               </template>
             </el-table-column>
           </el-table>
@@ -356,6 +485,31 @@
 
       </div>
     </div>
+
+    <!-- 流程追踪弹窗 -->
+    <el-dialog title="流程追踪" :visible.sync="trackVisible" width="500px">
+      <el-timeline>
+        <el-timeline-item
+          v-for="(item, index) in trackItems"
+          :key="index"
+          :timestamp="item.time"
+          :color="item.color"
+          placement="top"
+        >
+          <el-card shadow="hover" :body-style="{ padding: '10px' }">
+            <h4 style="margin: 0 0 8px 0; font-size: 14px;">{{ item.text }}</h4>
+            <div v-if="item.executor" style="margin-top: 5px; font-size: 12px; color: #666; display: flex; align-items: center;">
+              <i class="el-icon-user" style="margin-right: 4px;"></i>
+              <span>执行人：{{ item.executor }}</span>
+            </div>
+            <div v-if="item.remark" style="margin-top: 5px; font-size: 12px; color: #F56C6C;">
+              <i class="el-icon-warning-outline" style="margin-right: 4px;"></i>
+              <span>原因：{{ item.remark }}</span>
+            </div>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
+    </el-dialog>
 
     <!-- 驳回原因弹窗 -->
     <el-dialog title="驳回原因" :visible.sync="dialogRejectVisible" width="400px">
@@ -376,12 +530,11 @@
       title="记录预览"
       :visible.sync="dialogPreviewVisible"
       width="900px"
-      top="5vh"
       class="preview-dialog"
     >
       <el-tabs v-model="previewActiveTab" type="card">
         <el-tab-pane label="原始记录" name="record" v-if="showRecordTab">
-          <div class="a4-page" style="transform: scale(0.85); transform-origin: top center; height: 800px; overflow-y: auto;">
+          <div class="a4-page" style="transform: scale(0.85); transform-origin: top center;">
              <!-- 审核印章 -->
              <div v-if="currentRecordDevice && currentRecordDevice.status === '已审核'" class="audit-stamp">已审核</div>
              <div v-if="currentRecordDevice && currentRecordDevice.status === '已批准'" class="audit-stamp" style="border-color: #67C23A; color: #67C23A;">已批准</div>
@@ -640,6 +793,12 @@
         </el-tab-pane>
       </el-tabs>
       <span slot="footer" class="dialog-footer">
+        <div style="float: left;">
+          <el-button-group>
+            <el-button size="small" icon="el-icon-arrow-left" @click="prevPreviewDevice" :disabled="!canPrevPreview">上一条</el-button>
+            <el-button size="small" @click="nextPreviewDevice" :disabled="!canNextPreview">下一条<i class="el-icon-arrow-right el-icon--right"></i></el-button>
+          </el-button-group>
+        </div>
         <el-button @click="dialogPreviewVisible = false">关 闭</el-button>
         <div style="display: inline-block; margin-left: 10px;" v-if="currentRecordDevice && canAuditApprove(currentRecordDevice, 'audit')">
            <el-button type="primary" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'audit-pass')">审核通过</el-button>
@@ -663,12 +822,13 @@
         activeMenu: 'audit',
         activeTab: 'special',
         
-        lastUpdated: '2026-01-22 11:35:00',
+        lastUpdated: '2026-01-22 12:05:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
         dialogFormVisible: false,
         trackVisible: false,
+        trackItems: [],
         
         // 审核/驳回相关
         dialogRejectVisible: false,
@@ -890,8 +1050,8 @@
               { no: 'GC-001-001', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
               { no: 'GC-001-002', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已录入', hasRecord: true, remark: '待核对' },
               { no: 'GC-001-003', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已提交', hasRecord: true, remark: '' },
-              { no: 'GC-001-004', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已审核', hasRecord: true, remark: '' },
-              { no: 'GC-001-005', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已批准', hasRecord: true, remark: '' },
+              { no: 'GC-001-004', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已审核', hasRecord: true, remark: '', auditor: '张强', auditTime: '2024-01-20 14:30:00' },
+              { no: 'GC-001-005', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已批准', hasRecord: true, remark: '', auditor: '李敏', auditTime: '2024-01-20 14:30:00', approver: '张强', approveTime: '2024-01-21 09:15:00' },
               { no: 'GC-001-006', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '驳回', hasRecord: true, remark: '壁厚异常，需复核' }
             ]
           },
@@ -974,6 +1134,11 @@
         auditSearchKeyword: '',
         auditStatusFilter: '',
         auditStage: 'to-audit',
+        auditDeviceSelectionMap: {},
+        batchRejectMode: false,
+        batchRejectDevices: [],
+        currentPreviewIndex: 0,
+        currentPreviewList: [],
 
         // 报告相关
         reportList: [
@@ -1052,57 +1217,11 @@
             return true
           })
         },
-        auditDeviceList() {
-          const list = []
-          const keyword = this.auditSearchKeyword.trim().toLowerCase()
-          const statusFilter = this.auditStatusFilter
-          const stage = this.auditStage
-          this.recordEntrustList.forEach(entrust => {
-            (entrust.devices || []).forEach(device => {
-              if (!device.hasRecord) {
-                return
-              }
-              if (stage === 'to-audit' && device.status !== '已提交' && device.status !== '驳回') {
-                return
-              }
-              if (stage === 'to-approve' && device.status !== '已审核') {
-                return
-              }
-              if (stage === 'all') {
-                // 仅显示当前用户审核或批准过的记录（历史记录）
-                const isMyAudit = device.auditor === this.currentUser.name;
-                const isMyApprove = device.approver === this.currentUser.name;
-                if (!isMyAudit && !isMyApprove) {
-                  return;
-                }
-              }
-              if (statusFilter && device.status !== statusFilter) {
-                return
-              }
-              const text = [
-                entrust.no,
-                device.no,
-                device.executor
-              ]
-                .filter(Boolean)
-                .join(' ')
-                .toLowerCase()
-              if (keyword && text.indexOf(keyword) === -1) {
-                return
-              }
-              list.push({
-                entrustNo: entrust.no,
-                deviceNo: device.no,
-                deviceType: device.deviceType,
-                executor: device.executor,
-                status: device.status,
-                remark: device.remark,
-                entrustRef: entrust,
-                deviceRef: device
-              })
-            })
+        auditEntrustList() {
+          return this.recordEntrustList.filter(entrust => {
+            const devices = this.getAuditDevices(entrust)
+            return devices.length > 0
           })
-          return list
         },
         filteredSpecialStaff() {
           const kw = this.staffSearchKeyword.trim().toLowerCase()
@@ -1113,6 +1232,12 @@
             const text = (item.name + ' ' + item.role + ' ' + item.title).toLowerCase()
             return text.indexOf(kw) !== -1
           })
+        },
+        canPrevPreview() {
+          return this.currentPreviewIndex > 0;
+        },
+        canNextPreview() {
+          return this.currentPreviewList && this.currentPreviewIndex < this.currentPreviewList.length - 1;
         },
         filteredRecordEntrustList() {
           const keyword = this.recordSearchKeyword.trim()
@@ -1152,6 +1277,193 @@
         }
       },
       methods: {
+        getAuditDevices(entrust) {
+          const keyword = this.auditSearchKeyword.trim().toLowerCase()
+          const statusFilter = this.auditStatusFilter
+          const stage = this.auditStage
+          
+          return (entrust.devices || []).filter(device => {
+            // 1. 关键词过滤
+            if (keyword) {
+               const text = [entrust.no, device.no, device.executor, device.status].join(' ').toLowerCase()
+               if (text.indexOf(keyword) === -1) {
+                 return false
+               }
+            }
+            
+            // 2. 状态过滤 (下拉框)
+            if (statusFilter && device.status !== statusFilter) {
+              return false
+            }
+
+            // 3. 阶段过滤
+            if (!device.hasRecord) {
+              return false
+            }
+            
+            if (stage === 'to-audit') {
+              // 待审核：显示已提交或驳回(需重审)
+              if (device.status !== '已提交' && device.status !== '驳回') {
+                return false
+              }
+            } else if (stage === 'to-approve') {
+              // 待批准：显示已审核
+              if (device.status !== '已审核') {
+                return false
+              }
+            } else if (stage === 'all') {
+              // 全部记录：仅显示当前用户参与过的
+              const isMyAudit = device.auditor === this.currentUser.name;
+              const isMyApprove = device.approver === this.currentUser.name;
+              if (!isMyAudit && !isMyApprove) {
+                return false;
+              }
+            }
+            
+            return true
+          }).map(device => ({
+            ...device,
+            entrustRef: entrust,
+            deviceRef: device
+          }))
+        },
+        getAuditEntrustStats(entrust) {
+           const devices = this.getAuditDevices(entrust);
+           const total = entrust.devices.length;
+           const currentStageCount = devices.length;
+           return {
+             current: currentStageCount,
+             total: total
+           }
+        },
+        previewEntrustmentDevices(row) {
+          const entrust = row;
+          if (entrust && entrust.devices && entrust.devices.length > 0) {
+            // 优先预览过滤后的列表中的第一个，如果过滤后为空，则预览全部中的第一个
+            const visibleDevices = this.getAuditDevices(entrust);
+            if (visibleDevices && visibleDevices.length > 0) {
+              this.previewDeviceRecord(entrust, visibleDevices[0].deviceRef);
+            } else {
+              this.previewDeviceRecord(entrust, entrust.devices[0]);
+            }
+          } else {
+            this.$message.warning('该委托单暂无关联设备记录');
+          }
+        },
+        handleBatchAuditAction(entrust, action) {
+           if (action === 'reject') {
+             const devices = this.getAuditDevices(entrust).map(d => d.deviceRef);
+             const rejectable = devices.filter(d => this.canAuditReject(d));
+             if (rejectable.length === 0) {
+               this.$message.warning('没有可驳回的记录');
+               return;
+             }
+             this.batchRejectMode = true;
+             this.batchRejectDevices = rejectable;
+             this.rejectReason = '';
+             this.dialogRejectVisible = true;
+             return;
+           }
+
+           const devices = this.getAuditDevices(entrust);
+           const type = action.includes('audit') ? 'audit' : 'approve';
+           const typeText = type === 'audit' ? '审核' : '批准';
+
+           this.$confirm(`确认批量${typeText}该委托单下的所有记录吗？`, '提示', {
+             confirmButtonText: '确定',
+             cancelButtonText: '取消',
+             type: 'success'
+           }).then(() => {
+             let count = 0;
+             devices.forEach(d => {
+                if (this.canAuditApprove(d.deviceRef, type)) {
+                   this.handleAuditAction(entrust, d.deviceRef, action, true); // Pass true to skip inner confirm
+                   count++;
+                }
+             });
+             
+             if (count > 0) {
+               this.$message.success(`批量${typeText}成功，共处理 ${count} 条记录`);
+             } else {
+               this.$message.warning('没有可处理的记录');
+             }
+           }).catch(() => {});
+        },
+        handleAuditSelectionChange(entrust, selection) {
+          this.$set(this.auditDeviceSelectionMap, entrust.no, selection);
+        },
+        getSelectedAuditDevices(entrust) {
+          return this.auditDeviceSelectionMap[entrust.no] || [];
+        },
+        hasSelectedAuditDevices(entrust) {
+           const list = this.getSelectedAuditDevices(entrust);
+           return list && list.length > 0;
+        },
+        handleBatchSelected(entrust, action) {
+           const selectedWrappers = this.getSelectedAuditDevices(entrust);
+           if (!selectedWrappers || selectedWrappers.length === 0) {
+             this.$message.warning('请先选择记录');
+             return;
+           }
+           const selectedDevices = selectedWrappers.map(w => w.deviceRef);
+
+           if (action === 'reject') {
+             const rejectable = selectedDevices.filter(d => this.canAuditReject(d));
+             if (rejectable.length === 0) {
+               this.$message.warning('选中的记录中没有可驳回的项');
+               return;
+             }
+             this.batchRejectMode = true;
+             this.batchRejectDevices = rejectable;
+             this.rejectReason = '';
+             this.dialogRejectVisible = true;
+           } else if (action === 'pass') {
+             const type = this.auditStage === 'to-approve' ? 'approve' : 'audit';
+             const typeText = type === 'audit' ? '审核' : '批准';
+             
+             this.$confirm(`确认批量${typeText}选中的记录吗？`, '提示', {
+               confirmButtonText: '确定',
+               cancelButtonText: '取消',
+               type: 'success'
+             }).then(() => {
+                let count = 0;
+                selectedDevices.forEach(d => {
+                  if (this.canAuditApprove(d, type)) {
+                    if (type === 'audit') {
+                      d.status = '已审核';
+                      d.auditor = this.currentUser.name;
+                      d.auditTime = this.formatTime(new Date());
+                    } else {
+                      d.status = '已批准';
+                      d.approver = this.currentUser.name;
+                      d.approveTime = this.formatTime(new Date());
+                    }
+                    count++;
+                  }
+                });
+                
+                if (count > 0) {
+                  this.$message.success(`批量${typeText}通过 ${count} 条记录`);
+                } else {
+                  this.$message.warning('选中的记录中没有可处理的项');
+                }
+             }).catch(() => {});
+           }
+        },
+        prevPreviewDevice() {
+           if (this.currentPreviewIndex > 0) {
+             this.currentPreviewIndex--;
+             const nextDevice = this.currentPreviewList[this.currentPreviewIndex];
+             this.previewDeviceRecord(this.currentRecordEntrust, nextDevice, true);
+           }
+        },
+        nextPreviewDevice() {
+           if (this.currentPreviewIndex < this.currentPreviewList.length - 1) {
+             this.currentPreviewIndex++;
+             const nextDevice = this.currentPreviewList[this.currentPreviewIndex];
+             this.previewDeviceRecord(this.currentRecordEntrust, nextDevice, true);
+           }
+        },
         formatUpdateTime(date) {
           const y = date.getFullYear()
           const m = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -1160,6 +1472,77 @@
           const mm = date.getMinutes().toString().padStart(2, '0')
           const ss = date.getSeconds().toString().padStart(2, '0')
           return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
+        },
+        showProcessTrack(entrust, device) {
+          this.closeAllDialogs();
+          
+          const items = [];
+          
+          // 1. 委托登记 (Always)
+          items.push({
+            text: '委托登记完成',
+            time: (entrust.entrustDate || '2024-01-15') + ' 09:00',
+            color: '#67C23A',
+            executor: entrust.acceptor || '前台客服'
+          });
+          
+          // 2. 任务分配 (Check if device has executor)
+          if (device.executor) {
+            items.push({
+              text: `任务分配完成 (分配给: ${device.executor})`,
+              time: (entrust.entrustDate || '2024-01-15') + ' 10:00',
+              color: '#67C23A',
+              executor: '王主任' // Mock
+            });
+          }
+          
+          // 3. 原始记录录入 & 提交
+          if (['已提交', '已审核', '已批准', '驳回'].indexOf(device.status) !== -1) {
+             items.push({
+               text: '原始记录录入完成',
+               time: (entrust.entrustDate || '2024-01-15') + ' 14:00',
+               color: '#409EFF',
+               executor: device.executor
+             });
+             
+             items.push({
+               text: '提交审核',
+               time: (entrust.entrustDate || '2024-01-15') + ' 14:30',
+               color: '#409EFF',
+               executor: device.executor
+             });
+          }
+          
+          // 4. 审核/驳回
+          if (['已审核', '已批准'].indexOf(device.status) !== -1) {
+             items.push({
+               text: '审核通过',
+               time: device.auditTime || ((entrust.entrustDate || '2024-01-15') + ' 16:00'),
+               color: '#E6A23C',
+               executor: device.auditor || '李部长'
+             });
+          } else if (device.status === '驳回') {
+             items.push({
+               text: '审核驳回',
+               time: device.auditTime || ((entrust.entrustDate || '2024-01-15') + ' 16:00'),
+               color: '#F56C6C',
+               executor: device.auditor || '李部长',
+               remark: device.rejectReason
+             });
+          }
+          
+          // 5. 批准
+          if (device.status === '已批准') {
+             items.push({
+               text: '批准通过',
+               time: device.approveTime || ((entrust.entrustDate || '2024-01-15') + ' 17:00'),
+               color: '#67C23A',
+               executor: device.approver || '张总'
+             });
+          }
+          
+          this.trackItems = items.reverse();
+          this.trackVisible = true;
         },
         closeAllDialogs() {
           this.dialogTypeSelectVisible = false
@@ -1357,11 +1740,16 @@
             }
           }
         },
-        previewDeviceRecord(entrust, device) {
+        previewDeviceRecord(entrust, device, isNavigation = false) {
           // 查找对应的数据
           this.currentRecordEntrust = entrust;
           this.currentRecordDevice = device;
           this.currentRecordType = device.deviceType === 'valve' ? 'valve' : 'gas';
+          
+          if (!isNavigation) {
+             this.currentPreviewList = entrust.devices || [];
+             this.currentPreviewIndex = this.currentPreviewList.findIndex(d => d.no === device.no);
+          }
           
           // 判断显示逻辑
           // 审核人(status=已提交) -> 看记录+报告
@@ -1398,6 +1786,11 @@
           }
           return false
         },
+        canAuditApproveAny(entrust, type) {
+          const selected = this.getSelectedAuditDevices(entrust);
+          if (!selected || !selected.length) return false;
+          return selected.some(d => this.canAuditApprove(d.deviceRef, type));
+        },
         canAuditReject(device) {
           if (!device) return false;
           if (!this.isCurrentUserLeader) {
@@ -1406,7 +1799,7 @@
           // 审核阶段和批准阶段都可以驳回
           return device.status === '已提交' || device.status === '已审核'
         },
-        handleAuditAction(entrust, device, action) {
+        handleAuditAction(entrust, device, action, skipConfirm = false) {
           if (action === 'reject') {
             if (!this.canAuditReject(device)) return;
             this.currentAuditDevice = device;
@@ -1416,17 +1809,25 @@
           } else if (action === 'audit-pass') {
             if (!this.canAuditApprove(device, 'audit')) return;
             
-            this.$confirm('确认审核通过该记录吗？', '提示', {
-              confirmButtonText: '确定',
-              cancelButtonText: '取消',
-              type: 'success'
-            }).then(() => {
+            const doAudit = () => {
               device.status = '已审核';
               device.auditor = this.currentUser.name;
               device.auditTime = this.formatTime(new Date());
-              this.$message.success('已审核通过');
-              this.dialogPreviewVisible = false; // 关闭预览弹窗
-            });
+              if (!skipConfirm) {
+                this.$message.success('已审核通过');
+                this.dialogPreviewVisible = false; // 关闭预览弹窗
+              }
+            };
+
+            if (skipConfirm) {
+              doAudit();
+            } else {
+              this.$confirm('确认审核通过该记录吗？', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'success'
+              }).then(doAudit);
+            }
           } else if (action === 'approve-pass') {
             if (!this.canAuditApprove(device, 'approve')) {
                if (device.auditor === this.currentUser.name) {
@@ -1435,17 +1836,25 @@
                return;
             }
             
-            this.$confirm('确认批准通过该报告吗？', '提示', {
-              confirmButtonText: '确定',
-              cancelButtonText: '取消',
-              type: 'success'
-            }).then(() => {
+            const doApprove = () => {
               device.status = '已批准';
               device.approver = this.currentUser.name;
               device.approveTime = this.formatTime(new Date());
-              this.$message.success('已批准通过');
-              this.dialogPreviewVisible = false; // 关闭预览弹窗
-            });
+              if (!skipConfirm) {
+                this.$message.success('已批准通过');
+                this.dialogPreviewVisible = false; // 关闭预览弹窗
+              }
+            };
+
+            if (skipConfirm) {
+              doApprove();
+            } else {
+              this.$confirm('确认批准通过该报告吗？', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                type: 'success'
+              }).then(doApprove);
+            }
           }
         },
         confirmReject() {
@@ -1453,7 +1862,18 @@
             this.$message.warning('请填写驳回原因');
             return;
           }
-          if (this.currentAuditDevice) {
+
+          if (this.batchRejectMode) {
+            this.batchRejectDevices.forEach(device => {
+              device.status = '驳回';
+              device.rejectReason = this.rejectReason;
+            });
+            this.$message.warning(`批量驳回成功，共处理 ${this.batchRejectDevices.length} 条记录`);
+            this.batchRejectMode = false;
+            this.batchRejectDevices = [];
+            this.dialogRejectVisible = false;
+            this.dialogPreviewVisible = false;
+          } else if (this.currentAuditDevice) {
             this.currentAuditDevice.status = '驳回';
             this.currentAuditDevice.rejectReason = this.rejectReason;
             this.$message.warning('已驳回，原因：' + this.rejectReason);

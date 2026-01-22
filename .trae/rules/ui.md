@@ -13,3 +13,4 @@
 3. **Dynamic Read-only/Edit**: Use bold colored text (e.g., `.text-blue-bold`) for existing values and inputs for missing values in reports.
 4. **System Fields**: System-generated numbers/codes should be text-only (read-only), not input fields.
 5. **Tab Organization**: Place "Basic Information" as the first tab by default.
+6. **Tracking/Audit Logs**: Use `el-timeline` with `el-card` to display process history (time, status, executor, remarks).
