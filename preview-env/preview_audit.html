@@ -285,6 +285,14 @@
         
         <!-- ================= 页面 5: 审核管理 ================= -->
         <div v-if="activeMenu === 'audit'" class="app-container">
+          <!-- 权限控制：仅限科室主任和检测部长 -->
+          <div v-if="!isCurrentUserLeader" style="text-align: center; padding: 100px 0; color: #909399;">
+            <i class="el-icon-lock" style="font-size: 64px; margin-bottom: 20px; color: #C0C4CC;"></i>
+            <p style="font-size: 16px;">您没有权限访问此页面</p>
+            <p style="font-size: 14px; margin-top: 10px;">仅限 <span style="font-weight: bold; color: #303133;">科室主任</span> 和 <span style="font-weight: bold; color: #303133;">检测部长</span> 查看</p>
+          </div>
+
+          <div v-else>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <el-form :inline="true" size="small">
               <el-form-item label="搜索">
@@ -333,7 +341,7 @@
                       size="mini"
                       type="primary"
                       plain
-                      :disabled="!canAuditApproveAny(props.row, 'audit')"
+                      :disabled="!canAuditApproveAny(props.row, 'audit', true)"
                       v-if="auditStage === 'to-audit'"
                       @click="handleBatchSelected(props.row, 'pass')"
                     >
@@ -343,7 +351,7 @@
                       size="mini"
                       type="success"
                       plain
-                      :disabled="!canAuditApproveAny(props.row, 'approve')"
+                      :disabled="!canAuditApproveAny(props.row, 'approve', true)"
                       v-if="auditStage === 'to-approve'"
                       @click="handleBatchSelected(props.row, 'pass')"
                     >
@@ -365,6 +373,7 @@
                     @selection-change="val => handleAuditSelectionChange(props.row, val)"
                   >
                     <el-table-column type="selection" width="50"></el-table-column>
+                    <el-table-column label="登记号" prop="regNo" width="130"></el-table-column>
                     <el-table-column label="设备编号" prop="no" width="140"></el-table-column>
                   <el-table-column label="设备类型" width="120">
                     <template slot-scope="scope">
@@ -431,11 +440,6 @@
             </el-table-column>
             <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
             <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
-            <el-table-column label="设备总数" width="100" align="center">
-              <template slot-scope="scope">
-                {{ getEntrustStats(scope.row).total }}
-              </template>
-            </el-table-column>
             <el-table-column label="已提交/总数" width="120" align="center">
               <template slot-scope="scope">
                 {{ getEntrustStats(scope.row).submitted }} / {{ getEntrustStats(scope.row).total }}
@@ -484,6 +488,7 @@
               </template>
             </el-table-column>
           </el-table>
+          </div>
         </div>
 
       </div>
@@ -826,7 +831,7 @@
         activeMenu: 'audit',
         activeTab: 'special',
         
-        lastUpdated: '2026-01-22 17:50:00',
+        lastUpdated: '2026-01-23 15:30:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -1051,12 +1056,12 @@
             expectedReportDate: '2024-01-20',
             pagination: { currentPage: 1, pageSize: 5 },
             devices: [
-              { no: 'GC-001-001', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
-              { no: 'GC-001-002', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已录入', hasRecord: true, remark: '待核对' },
-              { no: 'GC-001-003', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已提交', hasRecord: true, remark: '' },
-              { no: 'GC-001-004', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已审核', hasRecord: true, remark: '', auditor: '张强', auditTime: '2024-01-20 14:30:00' },
-              { no: 'GC-001-005', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已批准', hasRecord: true, remark: '', auditor: '李敏', auditTime: '2024-01-20 14:30:00', approver: '张强', approveTime: '2024-01-21 09:15:00' },
-              { no: 'GC-001-006', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '驳回', hasRecord: true, remark: '壁厚异常，需复核' }
+              { regNo: 'YP20240115001', no: 'GC-001-001', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
+              { regNo: 'YP20240115002', no: 'GC-001-002', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已录入', hasRecord: true, remark: '待核对' },
+              { regNo: 'YP20240115003', no: 'GC-001-003', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已提交', hasRecord: true, remark: '' },
+              { regNo: 'YP20240115004', no: 'GC-001-004', model: 'Q-50L', deviceType: 'gas', executor: '李敏', status: '已审核', hasRecord: true, remark: '', auditor: '张强', auditTime: '2024-01-20 14:30:00' },
+              { regNo: 'YP20240115005', no: 'GC-001-005', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已批准', hasRecord: true, remark: '', auditor: '李敏', auditTime: '2024-01-20 14:30:00', approver: '张强', approveTime: '2024-01-21 09:15:00' },
+              { regNo: 'YP20240115006', no: 'GC-001-006', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '驳回', hasRecord: true, remark: '壁厚异常，需复核' }
             ]
           },
           {
@@ -1068,8 +1073,8 @@
             expectedReportDate: '2024-01-18',
             pagination: { currentPage: 1, pageSize: 5 },
             devices: [
-              { no: 'SV-002-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '' },
-              { no: 'SV-002-002', model: 'A48Y-16C', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '' }
+              { regNo: 'YP20240114001', no: 'SV-002-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '' },
+              { regNo: 'YP20240114002', no: 'SV-002-002', model: 'A48Y-16C', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '' }
             ]
           }
         ],
@@ -1151,9 +1156,7 @@
         ],
         currentReport: null
       },
-      created() {
-        this.lastUpdated = this.formatUpdateTime(new Date())
-      },
+
       computed: {
         currentUser() {
           return this.userProfiles.find(u => u.id === this.currentUserId) || this.userProfiles[0]
@@ -1285,9 +1288,19 @@
           const keyword = this.auditSearchKeyword.trim().toLowerCase()
           const statusFilter = this.auditStatusFilter
           const stage = this.auditStage
-          
-          return (entrust.devices || []).filter(device => {
-            // 1. 关键词过滤
+          const devices = entrust.devices || []
+
+          // 1. 委托单级别过滤
+          // 待审核/待批准：只要委托单未全部批准（归档），就一直保留
+          if (stage !== 'all') {
+             const isAllApproved = devices.every(d => d.status === '已批准');
+             if (isAllApproved) {
+                 return [];
+             }
+          }
+
+          return devices.filter(device => {
+            // 2. 关键词过滤
             if (keyword) {
                const text = [entrust.no, device.no, device.executor, device.status].join(' ').toLowerCase()
                if (text.indexOf(keyword) === -1) {
@@ -1295,26 +1308,20 @@
                }
             }
             
-            // 2. 状态过滤 (下拉框)
+            // 3. 状态过滤 (下拉框)
             if (statusFilter && device.status !== statusFilter) {
               return false
             }
 
-            // 3. 阶段过滤
+            // 4. 有记录检查
             if (!device.hasRecord) {
               return false
             }
             
-            if (stage === 'to-audit') {
-              // 待审核：显示已提交或驳回(需重审)
-              if (device.status !== '已提交' && device.status !== '驳回') {
-                return false
-              }
-            } else if (stage === 'to-approve') {
-              // 待批准：显示已审核
-              if (device.status !== '已审核') {
-                return false
-              }
+            // 5. 阶段过滤
+            if (stage === 'to-audit' || stage === 'to-approve') {
+              // 待审核/待批准：显示该委托单下的所有设备，保留上下文
+              return true
             } else if (stage === 'all') {
               // 全部记录：仅显示当前用户参与过的
               const isMyAudit = device.auditor === this.currentUser.name;
@@ -1355,6 +1362,15 @@
           }
         },
         handleBatchAuditAction(entrust, action) {
+           if (!this.isCurrentUserLeader) {
+             this.$confirm('当前操作需要管理角色权限，请点击右上角用户头像切换角色。', '权限提示', {
+               confirmButtonText: '知道了',
+               showCancelButton: false,
+               type: 'warning'
+             });
+             return;
+           }
+
            if (action === 'reject') {
              const devices = this.getAuditDevices(entrust).map(d => d.deviceRef);
              const rejectable = devices.filter(d => this.canAuditReject(d));
@@ -1404,6 +1420,15 @@
            return list && list.length > 0;
         },
         handleBatchSelected(entrust, action) {
+           if (!this.isCurrentUserLeader) {
+             this.$confirm('当前操作需要管理角色权限，请点击右上角用户头像切换角色。', '权限提示', {
+               confirmButtonText: '知道了',
+               showCancelButton: false,
+               type: 'warning'
+             });
+             return;
+           }
+
            const selectedWrappers = this.getSelectedAuditDevices(entrust);
            if (!selectedWrappers || selectedWrappers.length === 0) {
              this.$message.warning('请先选择记录');
@@ -1775,9 +1800,9 @@
           
           this.dialogPreviewVisible = true;
         },
-        canAuditApprove(device, type) {
+        canAuditApprove(device, type, ignoreRole = false) {
           if (!device) return false;
-          if (!this.isCurrentUserLeader) {
+          if (!ignoreRole && !this.isCurrentUserLeader) {
             return false
           }
           if (type === 'audit') {
@@ -1785,15 +1810,15 @@
           } else if (type === 'approve') {
             // 批准条件：状态为已审核，且当前用户不能是审核人
             if (device.status !== '已审核') return false;
-            if (device.auditor === this.currentUser.name) return false;
+            if (!ignoreRole && device.auditor === this.currentUser.name) return false;
             return true;
           }
           return false
         },
-        canAuditApproveAny(entrust, type) {
+        canAuditApproveAny(entrust, type, ignoreRole = false) {
           const selected = this.getSelectedAuditDevices(entrust);
           if (!selected || !selected.length) return false;
-          return selected.some(d => this.canAuditApprove(d.deviceRef, type));
+          return selected.some(d => this.canAuditApprove(d.deviceRef, type, ignoreRole));
         },
         canAuditReject(device) {
           if (!device) return false;
