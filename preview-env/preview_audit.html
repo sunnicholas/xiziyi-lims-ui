@@ -175,13 +175,16 @@
     /* 预览弹窗优化 */
     .preview-dialog {
       display: flex;
-      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden !important;
+    }
+    .preview-dialog .el-dialog {
       margin: 0 !important;
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
       height: 90vh;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
       max-width: 95vw;
     }
     .preview-dialog .el-dialog__body {
@@ -531,6 +534,7 @@
       :visible.sync="dialogPreviewVisible"
       width="900px"
       class="preview-dialog"
+      append-to-body
     >
       <el-tabs v-model="previewActiveTab" type="card">
         <el-tab-pane label="原始记录" name="record" v-if="showRecordTab">
@@ -822,7 +826,7 @@
         activeMenu: 'audit',
         activeTab: 'special',
         
-        lastUpdated: '2026-01-22 12:05:00',
+        lastUpdated: '2026-01-22 17:50:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
