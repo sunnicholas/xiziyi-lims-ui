@@ -172,14 +172,10 @@
           <i class="el-icon-s-check"></i>
           <span slot="title">审核管理</span>
         </el-menu-item>
-        <el-submenu index="report">
-          <template slot="title">
-            <i class="el-icon-document"></i>
-            <span>报告管理</span>
-          </template>
-          <el-menu-item index="report-list">报告列表</el-menu-item>
-          <el-menu-item index="report-preview" style="display:none">报告预览</el-menu-item>
-        </el-submenu>
+        <el-menu-item index="archive">
+          <i class="el-icon-s-claim"></i>
+          <span slot="title">审核归档</span>
+        </el-menu-item>
       </el-menu>
     </div>
 
@@ -719,7 +715,7 @@
           activeMenu: 'assign',
           activeTab: 'special',
           
-          lastUpdated: '2026-01-21 16:05:00',
+          lastUpdated: '2026-01-23 15:45:00',
           
           dialogTypeSelectVisible: false,
           dialogSubTypeVisible: false,
@@ -1470,7 +1466,7 @@
             'assign': 'preview_assign.html',
             'record-list': 'preview_record.html',
             'audit': 'preview_audit.html',
-            'report-list': 'preview_report.html'
+            'archive': 'preview_archive.html'
           };
           if (map[index]) {
             window.location.href = map[index];
@@ -1483,8 +1479,7 @@
             'record-list': '原始记录 / 列表',
             'record-entry': '原始记录 / 录入',
             'audit': '审核管理',
-            'report-list': '报告管理 / 列表',
-            'report-preview': '报告管理 / 预览'
+            'archive': '审核归档'
           };
           return map[this.activeMenu] || '首页';
         },

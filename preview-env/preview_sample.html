@@ -71,14 +71,10 @@
           <i class="el-icon-s-check"></i>
           <span slot="title">审核管理</span>
         </el-menu-item>
-        <el-submenu index="report">
-          <template slot="title">
-            <i class="el-icon-document"></i>
-            <span>报告管理</span>
-          </template>
-          <el-menu-item index="report-list">报告列表</el-menu-item>
-          <el-menu-item index="report-preview" style="display:none">报告预览</el-menu-item>
-        </el-submenu>
+        <el-menu-item index="archive">
+          <i class="el-icon-s-claim"></i>
+          <span slot="title">审核归档</span>
+        </el-menu-item>
       </el-menu>
     </div>
 
@@ -352,7 +348,7 @@
       data() {
         return {
           activeMenu: 'sample-reg',
-          lastUpdated: '',
+          lastUpdated: '2026-01-23 15:45:00',
           searchForm: {
             entrustNo: '',
             company: '',
@@ -449,12 +445,28 @@
                             format(now.getSeconds());
         },
         handleMenuSelect(index) {
-          if (index === 'business') window.location.href = 'preview_business.html';
-          if (index === 'sample-reg') window.location.href = 'preview_sample.html';
-          if (index === 'assign') window.location.href = 'preview_assign.html';
-          if (index === 'record-list') window.location.href = 'preview_record.html';
-          if (index === 'audit') window.location.href = 'preview_audit.html';
-          if (index === 'report-list') window.location.href = 'preview_report.html';
+          const map = {
+            'business': 'preview_business.html',
+            'sample': 'preview_sample.html',
+            'assign': 'preview_assign.html',
+            'record-list': 'preview_record.html',
+            'audit': 'preview_audit.html',
+            'archive': 'preview_archive.html'
+          };
+          if (map[index]) {
+            window.location.href = map[index];
+          }
+        },
+        getPageTitle() {
+          const map = {
+            'business': '业务受理',
+            'assign': '任务分配',
+            'record-list': '原始记录 / 列表',
+            'record-entry': '原始记录 / 录入',
+            'audit': '审核管理',
+            'archive': '审核归档'
+          };
+          return map[this.activeMenu] || '首页';
         },
         handleSearch() {
           this.$message.info('查询功能已触发');
