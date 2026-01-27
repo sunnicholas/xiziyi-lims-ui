@@ -224,7 +224,11 @@
           
           <el-table :data="reportList" border style="width: 100%">
             <el-table-column type="selection" width="55" align="center"></el-table-column>
-            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="委托单号" width="160">
+               <template slot-scope="scope">
+                 <el-link type="primary" @click.stop="showEntrustDetail(scope.row)" style="font-weight: 600;">{{ scope.row.no }}</el-link>
+               </template>
+            </el-table-column>
             <el-table-column label="报告名称" prop="name" show-overflow-tooltip></el-table-column>
             <el-table-column label="编制人" prop="author" width="100" align="center"></el-table-column>
             <el-table-column label="状态" width="100" align="center">
@@ -360,6 +364,40 @@
       </div>
     </div>
 
+    <!-- 委托单详情弹窗 -->
+    <el-dialog title="委托单详情" :visible.sync="entrustDetailVisible" width="800px">
+      <el-descriptions title="委托方信息" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="委托单位">{{ currentEntrustDetail.company || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="通讯地址">{{ currentEntrustDetail.address || '西安市高新区科技二路65号' }}</el-descriptions-item>
+        <el-descriptions-item label="联系人">{{ currentEntrustDetail.contact || '张经理' }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ currentEntrustDetail.phone || '13800138000' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName || '无缝气瓶' }}</el-descriptions-item>
+        <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model || 'CNP20-80-40' }}</el-descriptions-item>
+        <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity || 1 }}</el-descriptions-item>
+        <el-descriptions-item label="制造单位">{{ currentEntrustDetail.manufacturer || '北京天海工业有限公司' }}</el-descriptions-item>
+        <el-descriptions-item label="出厂编号" :span="2">{{ currentEntrustDetail.factoryNos || 'No.2023001' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="检验要求" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="检验类别">{{ currentEntrustDetail.testType || '定期检验' }}</el-descriptions-item>
+        <el-descriptions-item label="检验依据">{{ currentEntrustDetail.standard || 'TSG 23-2021' }}</el-descriptions-item>
+        <el-descriptions-item label="检验项目" :span="2">{{ currentEntrustDetail.testItems || '外观检查, 音响检查, 瓶口螺纹检查, 水压试验, 气密性试验' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="交付信息" :column="2" border size="small">
+        <el-descriptions-item label="领取方式">{{ currentEntrustDetail.deliveryMethod || '自提' }}</el-descriptions-item>
+        <el-descriptions-item label="预计完成时间">{{ currentEntrustDetail.planDate || '2024-01-20' }}</el-descriptions-item>
+        <el-descriptions-item label="邮寄地址" :span="2" v-if="currentEntrustDetail.deliveryMethod === '邮寄'">{{ currentEntrustDetail.deliveryAddress || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="entrustDetailVisible = false" size="small">关 闭</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -371,7 +409,11 @@
         activeMenu: 'report-list',
         activeTab: 'special',
         
-        lastUpdated: '2026-01-23 15:45:00',
+        lastUpdated: '2026-01-23 17:00:00',
+        
+        // 预览相关
+        entrustDetailVisible: false,
+        currentEntrustDetail: {},
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -839,6 +881,26 @@
         }
       },
       methods: {
+        showEntrustDetail(row) {
+          this.currentEntrustDetail = {
+            company: row.company || '上海气体工厂',
+            contact: row.contact || '张三',
+            phone: row.phone || '13800138000',
+            address: row.address || '上海市某某区某某路123号',
+            sampleName: row.sampleName || '无缝气瓶',
+            model: row.model || 'CNP20-80-40',
+            quantity: row.quantity || row.sampleCount || 1,
+            manufacturer: row.manufacturer || '北京天海工业有限公司',
+            factoryNos: row.factoryNos || row.sampleNo || 'No.2023001',
+            testType: row.testType || '定期检验',
+            standard: row.standard || row.testStandard || 'TSG 23-2021',
+            testItems: row.testItems || '外观检查, 音响检查, 瓶口螺纹检查, 水压试验, 气密性试验',
+            deliveryMethod: row.deliveryMethod || row.deliveryMode || '自提',
+            planDate: row.planDate || row.finishDate || '2024-01-20',
+            deliveryAddress: row.deliveryAddress || '-'
+          };
+          this.entrustDetailVisible = true;
+        },
         formatUpdateTime(date) {
           const y = date.getFullYear()
           const m = (date.getMonth() + 1).toString().padStart(2, '0')

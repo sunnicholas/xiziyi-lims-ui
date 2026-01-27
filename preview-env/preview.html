@@ -115,7 +115,7 @@
             <el-table-column type="selection" width="55" align="center"></el-table-column>
             <el-table-column label="委托单号" prop="no" width="160" align="center">
               <template slot-scope="scope">
-                <el-link type="primary">{{ scope.row.no }}</el-link>
+                <el-link type="primary" @click.stop="showEntrustDetail(scope.row)">{{ scope.row.no }}</el-link>
               </template>
             </el-table-column>
             <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
@@ -282,6 +282,38 @@
       </span>
     </el-dialog>
 
+    <!-- 委托单详情弹窗 -->
+    <el-dialog title="委托单详情" :visible.sync="entrustDetailVisible" width="800px" append-to-body>
+      <div v-if="currentEntrustDetail">
+        <el-descriptions title="委托方信息" :column="2" border size="small" class="mb8">
+          <el-descriptions-item label="委托单号">{{ currentEntrustDetail.no }}</el-descriptions-item>
+          <el-descriptions-item label="委托单位">{{ currentEntrustDetail.company }}</el-descriptions-item>
+          <el-descriptions-item label="联系人">{{ currentEntrustDetail.contact }}</el-descriptions-item>
+          <el-descriptions-item label="联系电话">{{ currentEntrustDetail.phone }}</el-descriptions-item>
+          <el-descriptions-item label="通讯地址" :span="2">{{ currentEntrustDetail.address }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
+          <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName }}</el-descriptions-item>
+          <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model }}</el-descriptions-item>
+          <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions title="检验要求" :column="1" border size="small" class="mb8">
+          <el-descriptions-item label="检验依据">{{ currentEntrustDetail.testStandard }}</el-descriptions-item>
+          <el-descriptions-item label="检验项目">{{ currentEntrustDetail.testItems }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions title="交付信息" :column="2" border size="small">
+          <el-descriptions-item label="交付方式">{{ currentEntrustDetail.deliveryType }}</el-descriptions-item>
+          <el-descriptions-item label="报告份数">{{ currentEntrustDetail.reportCount }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="entrustDetailVisible = false" size="small">关 闭</el-button>
+      </span>
+    </el-dialog>
+
   </div>
 
   <!-- 引入 Vue 和 Element UI -->
@@ -344,6 +376,23 @@
           const mm = date.getMinutes().toString().padStart(2, '0')
           const ss = date.getSeconds().toString().padStart(2, '0')
           return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
+        },
+        showEntrustDetail(row) {
+          this.currentEntrustDetail = {
+            no: row.no,
+            company: row.company,
+            contact: '张经理',
+            phone: '13800000000',
+            address: '上海市xx区xx路xx号',
+            sampleName: row.type === 'gas' ? '工业气瓶' : '安全阀',
+            model: 'QP-2024-X',
+            quantity: 1,
+            testStandard: 'GB/T 12345-2023',
+            testItems: '外观、气密性、水压试验',
+            deliveryType: '自提',
+            reportCount: 2
+          };
+          this.entrustDetailVisible = true;
         },
         handleMenuSelect(index) {
           this.activeMenu = index;

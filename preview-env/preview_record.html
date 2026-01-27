@@ -273,7 +273,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             {{ getPageTitle() }}
-            <span class="update-time">（更新时间：2026-01-21 10:30:00）</span>
+            <span class="update-time">（更新时间：{{ lastUpdated }}）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -394,7 +394,11 @@
                   </div>
               </template>
             </el-table-column>
-            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="委托单号" width="160">
+              <template slot-scope="scope">
+                <el-link type="primary" @click.stop="showEntrustDetail(scope.row)" style="font-weight: 600;">{{ scope.row.no }}</el-link>
+              </template>
+            </el-table-column>
             <el-table-column label="设备类型" width="120" align="center">
               <template slot-scope="scope">
                 <el-tag v-if="scope.row.type === 'gas'" type="info">气瓶</el-tag>
@@ -446,17 +450,27 @@
                 <span v-else style="color: #909399;">仅查看</span>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="260" align="center">
+            <el-table-column label="操作" width="320" align="center">
               <template slot-scope="scope">
                 <el-button
                   v-if="!isCurrentUserLeader"
                   size="mini"
                   type="primary"
                   plain
-                  :disabled="isBatchSubmitDisabled(scope.row)"
-                  @click="batchSubmitMyRecords(scope.row)"
+                  :disabled="isSubmitDisabled(scope.row)"
+                  @click="handleSubmitRecordOrReport(scope.row)"
                 >
-                  批量提交记录
+                  提交记录/报告
+                </el-button>
+                <el-button
+                  v-if="!isCurrentUserLeader && scope.row.type === 'gas'"
+                  size="mini"
+                  type="warning"
+                  plain
+                  :disabled="getEntrustStats(scope.row).percentage !== 100"
+                  @click="openGasEntrustReport(scope.row)"
+                >
+                  {{ getReportButtonText(scope.row) }}
                 </el-button>
                 <el-button
                   v-if="!isCurrentUserLeader"
@@ -479,6 +493,95 @@
             </el-table-column>
           </el-table>
         </div>
+
+        <!-- 委托单详情弹窗 -->
+        <el-dialog :visible.sync="entrustDetailVisible" title="委托单详情" width="800px" append-to-body>
+          <el-descriptions title="委托方信息" :column="2" border size="small" class="mb8">
+            <el-descriptions-item label="委托单位">{{ currentEntrustDetail.company || '-' }}</el-descriptions-item>
+            <el-descriptions-item label="通讯地址">{{ currentEntrustDetail.address || '西安市高新区科技二路65号' }}</el-descriptions-item>
+            <el-descriptions-item label="联系人">{{ currentEntrustDetail.contact || '张经理' }}</el-descriptions-item>
+            <el-descriptions-item label="联系电话">{{ currentEntrustDetail.phone || '13800138000' }}</el-descriptions-item>
+          </el-descriptions>
+
+          <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
+            <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName || '无缝气瓶' }}</el-descriptions-item>
+            <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model || 'CNP20-80-40' }}</el-descriptions-item>
+            <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity || 1 }}</el-descriptions-item>
+            <el-descriptions-item label="制造单位">{{ currentEntrustDetail.manufacturer || '北京天海工业有限公司' }}</el-descriptions-item>
+            <el-descriptions-item label="出厂编号" :span="2">{{ currentEntrustDetail.factoryNos || 'No.2023001 ~ No.2023005' }}</el-descriptions-item>
+          </el-descriptions>
+
+          <el-descriptions title="检验要求" :column="2" border size="small" class="mb8">
+            <el-descriptions-item label="检验类别">{{ currentEntrustDetail.testType || '定期检验' }}</el-descriptions-item>
+            <el-descriptions-item label="检验依据">{{ currentEntrustDetail.standard || 'TSG R0005-2011' }}</el-descriptions-item>
+            <el-descriptions-item label="检验项目" :span="2">{{ currentEntrustDetail.testItems || '外观检查, 音响检查, 瓶口螺纹检查, 水压试验, 气密性试验' }}</el-descriptions-item>
+          </el-descriptions>
+
+          <el-descriptions title="交付信息" :column="2" border size="small">
+            <el-descriptions-item label="领取方式">{{ currentEntrustDetail.deliveryMethod || '自提' }}</el-descriptions-item>
+            <el-descriptions-item label="预计完成时间">{{ currentEntrustDetail.planDate || '2023-10-25' }}</el-descriptions-item>
+            <el-descriptions-item label="邮寄地址" :span="2" v-if="currentEntrustDetail.deliveryMethod === '邮寄'">{{ currentEntrustDetail.deliveryAddress || '-' }}</el-descriptions-item>
+          </el-descriptions>
+          
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="entrustDetailVisible = false" size="small">关 闭</el-button>
+          </div>
+        </el-dialog>
+
+        <!-- 气瓶定期检验报告弹窗 -->
+        <el-dialog :visible.sync="gasReportVisible" title="气瓶定期检验报告" width="900px" append-to-body top="5vh">
+          <div v-if="currentGasReport" class="report-document" style="margin: 20px auto; width: 90%; min-height: 400px; padding: 40px; background: #fff; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);">
+              <div class="report-header" style="text-align: center; margin-bottom: 30px; position: relative;">
+                  <div class="report-title" style="font-size: 24px; font-weight: bold;">定期检验报告</div>
+                  <div class="report-no" style="position: absolute; right: 0; top: 0; font-size: 14px;">
+                      报告编号：<span style="font-weight: bold;">{{ currentGasReport.reportNo || 'Wait for generation' }}</span>
+                  </div>
+              </div>
+              
+              <div style="text-indent: 2em; line-height: 2; font-size: 16px;">
+                  根据《气瓶安全技术规程》TSG 23-2021以及国家标准《呼吸器用复合气瓶定期检验与评定》GB/T 24161-2009的规定，你单位送检的
+                  
+                  <span v-if="currentGasReport.cylinderType" class="text-blue-bold">{{ currentGasReport.cylinderType }}</span>
+                  <el-input v-else v-model="currentGasReport.cylinderType" class="inline-input" style="width: 100px; display: inline-block;"></el-input>
+                  
+                  气瓶共
+                  
+                  <span v-if="currentGasReport.totalCount" class="text-blue-bold">{{ currentGasReport.totalCount }}</span>
+                  <el-input v-else v-model="currentGasReport.totalCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
+                  
+                  只，经我机构实施定期检验（安全评定），其中
+                  
+                  <span v-if="currentGasReport.qualifiedCount" class="text-blue-bold">{{ currentGasReport.qualifiedCount }}</span>
+                  <el-input v-else v-model="currentGasReport.qualifiedCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
+                  
+                  只气瓶安全性能符合要求（《定期检验合格气瓶一览表》），
+                  
+                  <span v-if="currentGasReport.valveReplacedCount" class="text-blue-bold">{{ currentGasReport.valveReplacedCount }}</span>
+                  <el-input v-else v-model="currentGasReport.valveReplacedCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
+                  
+                  只气瓶更换了由
+                  
+                  <span v-if="currentGasReport.valveManufacturer" class="text-blue-bold">{{ currentGasReport.valveManufacturer }}</span>
+                  <el-input v-else v-model="currentGasReport.valveManufacturer" class="inline-input" style="width: 150px; display: inline-block;" placeholder="生产厂家"></el-input>
+                  
+                  生产的气瓶阀门，
+                  
+                  <span v-if="currentGasReport.scrappedCount" class="text-blue-bold">{{ currentGasReport.scrappedCount }}</span>
+                  <el-input v-else v-model="currentGasReport.scrappedCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
+                  
+                  只气瓶已判报废（《报废复合气瓶一览表》），并且按照规定实施消除使用功能处理。
+              </div>
+              
+              <div style="margin-top: 50px; text-align: right; padding-right: 50px;">
+                   <p>检验员：<span class="text-blue-bold">{{ currentUser ? currentUser.name : '' }}</span></p>
+                   <p>日期：{{ new Date().toLocaleDateString() }}</p>
+              </div>
+          </div>
+          <div slot="footer" class="dialog-footer">
+            <el-button @click="gasReportVisible = false">取消</el-button>
+            <el-button type="primary" @click="saveGasReport">保存草稿</el-button>
+          </div>
+        </el-dialog>
 
         <!-- ================= 页面 4: 原始记录录入详情 ================= -->
         <!-- ================= 弹窗: 记录/报告录入编辑 ================= -->
@@ -1269,51 +1372,7 @@
                      </el-card>
                    </el-tab-pane>
 
-                   <!-- 新增 Tab: 检验报告 -->
-                   <el-tab-pane label="检验报告" name="report">
-                       <div class="report-document" style="margin: 20px auto; width: 90%; min-height: 400px;">
-                           <div class="report-header">
-                               <div class="report-title">定期检验报告</div>
-                               <div class="report-no">
-                                   报告编号：<span style="font-weight: bold;">{{ recordForm.header.reportNo || '系统自动生成' }}</span>
-                               </div>
-                           </div>
-                           
-                           <div style="text-indent: 2em;">
-                               根据《气瓶安全技术规程》TSG 23-2021以及国家标准《呼吸器用复合气瓶定期检验与评定》GB/T 24161-2009的规定，你单位送检的
-                               
-                               <span v-if="recordForm.gas.report.cylinderType" class="text-blue-bold">{{ recordForm.gas.report.cylinderType }}</span>
-                               <el-input v-else v-model="recordForm.gas.report.cylinderType" class="inline-input" style="width: 100px; display: inline-block;"></el-input>
-                               
-                               气瓶共
-                               
-                               <span v-if="recordForm.gas.report.totalCount" class="text-blue-bold">{{ recordForm.gas.report.totalCount }}</span>
-                               <el-input v-else v-model="recordForm.gas.report.totalCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
-                               
-                               只，经我机构实施定期检验（安全评定），其中
-                               
-                               <span v-if="recordForm.gas.report.qualifiedCount" class="text-blue-bold">{{ recordForm.gas.report.qualifiedCount }}</span>
-                               <el-input v-else v-model="recordForm.gas.report.qualifiedCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
-                               
-                               只气瓶安全性能符合要求（《定期检验合格气瓶一览表》），
-                               
-                               <span v-if="recordForm.gas.report.valveReplacedCount" class="text-blue-bold">{{ recordForm.gas.report.valveReplacedCount }}</span>
-                               <el-input v-else v-model="recordForm.gas.report.valveReplacedCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
-                               
-                               只气瓶更换了由
-                               
-                               <span v-if="recordForm.gas.report.valveManufacturer" class="text-blue-bold">{{ recordForm.gas.report.valveManufacturer }}</span>
-                               <el-input v-else v-model="recordForm.gas.report.valveManufacturer" class="inline-input" style="width: 150px; display: inline-block;" placeholder="生产厂家"></el-input>
-                               
-                               生产的气瓶阀门，
-                               
-                               <span v-if="recordForm.gas.report.scrappedCount" class="text-blue-bold">{{ recordForm.gas.report.scrappedCount }}</span>
-                               <el-input v-else v-model="recordForm.gas.report.scrappedCount" class="inline-input" style="width: 60px; display: inline-block;"></el-input>
-                               
-                               只气瓶已判报废（《报废复合气瓶一览表》），并且按照规定实施消除使用功能处理。
-                           </div>
-                       </div>
-                   </el-tab-pane>
+
                  </el-tabs>
                </div>
                
@@ -2057,7 +2116,21 @@
         activeTab: 'special',
         activeAppearanceSubTab: 'visual',
         
-        lastUpdated: '2026-01-23 15:45:00',
+        // 预览相关
+        entrustDetailVisible: false,
+        currentEntrustDetail: {},
+        
+        // 气瓶报告相关
+        gasReportVisible: false,
+        currentGasReport: {},
+        gasReportStates: {
+          '20240120-GC-TEST-DRAFT': {
+             status: 'draft',
+             data: { reportNo: 'R-20240120-GC-TEST-DRAFT', company: '测试100%完成有草稿', conclusion: '合格' }
+          }
+        }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
+        
+        lastUpdated: '2026-01-27 15:00:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -2641,7 +2714,7 @@
         currentReport: null
       },
       created() {
-        this.lastUpdated = this.formatUpdateTime(new Date())
+        // this.lastUpdated = this.formatUpdateTime(new Date())
       },
       computed: {
         currentUser() {
@@ -2826,6 +2899,23 @@
         }
       },
       methods: {
+        getReportButtonText(row) {
+          if (!row) return '生成报告'
+          if (this.gasReportStates[row.no] && this.gasReportStates[row.no].status === 'draft') {
+            return '编辑报告'
+          }
+          return '生成报告'
+        },
+        getEntrustStats(entrust) {
+          if (!entrust || !entrust.devices) return { total: 0, completed: 0, percentage: 0 }
+          const total = entrust.devices.length
+          const completed = entrust.devices.filter(d => d.hasRecord).length
+          return {
+            total,
+            completed,
+            percentage: total === 0 ? 0 : Math.round((completed / total) * 100)
+          }
+        },
         syncGasReportData() {
             if (!this.recordForm.gas || !this.recordForm.gas.summary || !this.recordForm.gas.report) return
             
@@ -3179,6 +3269,68 @@
             entrust.pagination.currentPage = val
           }
         },
+        showEntrustDetail(row) {
+          this.currentEntrustDetail = {
+            no: row.no,
+            company: row.company || '未知单位',
+            contact: row.contact || '张三',
+            phone: row.phone || '13800138000',
+            address: row.address || '上海市浦东新区某路123号',
+            sampleName: row.sampleName || '工业气瓶',
+            sampleCount: row.deviceCount || (row.devices ? row.devices.length : 10),
+            model: row.model || 'Q-50L',
+            manufacturer: row.manufacturer || '某某制造厂',
+            checkType: row.checkType || '定期检验',
+            standard: row.standard || 'TSG 23-2021',
+            reportDate: row.reportDate || '2024-01-20',
+            reportCount: row.reportCount || 2,
+            deliveryMethod: row.deliveryMethod || '自提',
+            deliveryDate: row.deliveryDate || '2024-01-25',
+            receiver: row.receiver || '李四'
+          }
+          this.entrustDetailVisible = true
+        },
+        openGasEntrustReport(entrust) {
+          this.currentRecordEntrust = entrust
+          if (!this.gasReportStates[entrust.no]) {
+             this.$set(this.gasReportStates, entrust.no, {
+               status: 'draft',
+               data: {
+                reportNo: 'R-' + entrust.no,
+                company: entrust.company,
+                testDate: new Date(),
+                conclusion: '合格',
+                remark: '',
+                cylinderType: '',
+                totalCount: 0,
+                qualifiedCount: 0,
+                valveReplacedCount: 0,
+                valveManufacturer: '',
+                scrappedCount: 0
+              }
+             })
+          }
+          this.currentGasReport = JSON.parse(JSON.stringify(this.gasReportStates[entrust.no].data))
+          this.gasReportVisible = true
+        },
+        saveGasReport() {
+          if (this.currentRecordEntrust) {
+             const no = this.currentRecordEntrust.no
+             if (this.gasReportStates[no]) {
+               this.gasReportStates[no].data = JSON.parse(JSON.stringify(this.currentGasReport))
+               this.gasReportStates[no].status = 'draft'
+             }
+          }
+          this.gasReportVisible = false
+          this.$message.success('报告草稿已保存')
+        },
+        submitGasEntrustReport(entrust) {
+          if (this.gasReportStates[entrust.no]) {
+             this.gasReportStates[entrust.no].status = 'submitted'
+             this.$message.success('报告已提交')
+             this.$forceUpdate()
+          }
+        },
         getStatusTagType(status) {
           if (status === '未录入') return 'info'
           if (status === '已录入') return 'warning'
@@ -3392,6 +3544,48 @@
           }
           device.status = '已提交'
           this.$message.success('原始记录已提交')
+        },
+        isSubmitDisabled(entrust) {
+          if (this.isCurrentUserLeader) return true
+          
+          // Check if we have records to submit
+          const hasRecordsToSubmit = !this.isBatchSubmitDisabled(entrust)
+          
+          // Check if we have a report to submit (Gas only, 100% records)
+          let hasReportToSubmit = false
+          if (entrust.type === 'gas' && this.getEntrustStats(entrust).percentage === 100) {
+             const state = this.gasReportStates[entrust.no]
+             // Can submit if it exists and is draft
+             if (state && state.status === 'draft') {
+                 hasReportToSubmit = true
+             }
+          }
+          
+          return !hasRecordsToSubmit && !hasReportToSubmit
+        },
+        handleSubmitRecordOrReport(entrust) {
+            const stats = this.getEntrustStats(entrust)
+            
+            // Priority 1: Submit pending records
+            if (!this.isBatchSubmitDisabled(entrust)) {
+                this.batchSubmitMyRecords(entrust)
+                // If now 100% and gas, prompt about report
+                const newStats = this.getEntrustStats(entrust)
+                if (entrust.type === 'gas' && newStats.percentage === 100) {
+                    this.$message.info('所有记录已提交，请编写并提交气瓶报告')
+                }
+                return
+            }
+            
+            // Priority 2: Submit Report (Gas only, 100% done)
+            if (entrust.type === 'gas' && stats.percentage === 100) {
+                const state = this.gasReportStates[entrust.no]
+                if (state && state.status === 'draft') {
+                    this.submitGasEntrustReport(entrust)
+                } else if (!state) {
+                    this.$message.warning('请先编写报告（点击“编辑报告”）')
+                }
+            }
         },
         isBatchSubmitDisabled(entrust) {
           if (this.isCurrentUserLeader) {

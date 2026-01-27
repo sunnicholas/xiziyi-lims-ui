@@ -177,7 +177,41 @@
           <span slot="title">审核归档</span>
         </el-menu-item>
       </el-menu>
-    </div>
+      <!-- 委托单详情弹窗 -->
+    <el-dialog title="委托单详情" :visible.sync="entrustDetailVisible" width="800px">
+      <el-descriptions title="委托方信息" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="委托单位">{{ currentEntrustDetail.company || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="通讯地址">{{ currentEntrustDetail.address || '西安市高新区科技二路65号' }}</el-descriptions-item>
+        <el-descriptions-item label="联系人">{{ currentEntrustDetail.contact || '张经理' }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ currentEntrustDetail.phone || '13800138000' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName || '无缝气瓶' }}</el-descriptions-item>
+        <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model || 'CNP20-80-40' }}</el-descriptions-item>
+        <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity || 1 }}</el-descriptions-item>
+        <el-descriptions-item label="制造单位">{{ currentEntrustDetail.manufacturer || '北京天海工业有限公司' }}</el-descriptions-item>
+        <el-descriptions-item label="出厂编号" :span="2">{{ currentEntrustDetail.factoryNos || 'No.2023001 ~ No.2023005' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="检验要求" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="检验类别">{{ currentEntrustDetail.testType || '定期检验' }}</el-descriptions-item>
+        <el-descriptions-item label="检验依据">{{ currentEntrustDetail.standard || 'TSG R0005-2011' }}</el-descriptions-item>
+        <el-descriptions-item label="检验项目" :span="2">{{ currentEntrustDetail.testItems || '外观检查, 音响检查, 瓶口螺纹检查, 水压试验, 气密性试验' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="交付信息" :column="2" border size="small">
+        <el-descriptions-item label="领取方式">{{ currentEntrustDetail.deliveryMethod || '自提' }}</el-descriptions-item>
+        <el-descriptions-item label="预计完成时间">{{ currentEntrustDetail.planDate || '2023-10-25' }}</el-descriptions-item>
+        <el-descriptions-item label="邮寄地址" :span="2" v-if="currentEntrustDetail.deliveryMethod === '邮寄'">{{ currentEntrustDetail.deliveryAddress || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="entrustDetailVisible = false" size="small">关 闭</el-button>
+      </span>
+    </el-dialog>
+
+  </div>
 
     <!-- 主体内容 -->
     <div class="main-container">
@@ -267,7 +301,9 @@
               <el-table :data="assignInspectionList" border style="width: 100%" size="small">
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 <el-table-column label="样品名称" prop="name" show-overflow-tooltip></el-table-column>
-                <el-table-column label="委托单号" prop="no" width="140"></el-table-column>
+                <el-table-column label="委托单号" prop="no" width="140">
+                  <template slot-scope="scope"><el-link type="primary" @click="showEntrustDetail(scope.row)">{{ scope.row.no }}</el-link></template>
+                </el-table-column>
                 <el-table-column label="登记号" prop="regNo" width="140"></el-table-column>
                 <el-table-column label="检测岗位" prop="post" width="100"></el-table-column>
                 <el-table-column label="受理日期" prop="date" width="100"></el-table-column>
@@ -369,6 +405,9 @@
                         <i class="el-icon-search" style="margin-left: 4px; color: #409EFF;"></i>
                       </span>
                     </el-popover>
+                  </template>
+                  <template slot-scope="scope">
+                    <el-link type="primary" @click="showEntrustDetail(scope.row)">{{ scope.row.no }}</el-link>
                   </template>
                 </el-table-column>
 
@@ -716,6 +755,8 @@
           activeTab: 'special',
           
           lastUpdated: '2026-01-23 15:45:00',
+          entrustDetailVisible: false,
+          currentEntrustDetail: {},
           
           dialogTypeSelectVisible: false,
           dialogSubTypeVisible: false,

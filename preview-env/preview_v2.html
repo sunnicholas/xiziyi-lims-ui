@@ -230,7 +230,7 @@
               <el-table :data="specialList" border style="width: 100%" size="medium">
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 <el-table-column label="委托单号" prop="no" width="160" align="center">
-                  <template slot-scope="scope"><el-link type="primary">{{ scope.row.no }}</el-link></template>
+                  <template slot-scope="scope"><el-link type="primary" @click.stop="showEntrustDetail(scope.row)">{{ scope.row.no }}</el-link></template>
                 </el-table-column>
                 <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
                 <el-table-column label="业务类型" width="100" align="center">
@@ -337,7 +337,11 @@
               <el-table :data="assignInspectionList" border style="width: 100%" size="small">
                 <el-table-column type="selection" width="55" align="center"></el-table-column>
                 <el-table-column label="样品名称" prop="name" show-overflow-tooltip></el-table-column>
-                <el-table-column label="委托单号" prop="no" width="140"></el-table-column>
+                <el-table-column label="委托单号" prop="no" width="140">
+                  <template slot-scope="scope">
+                    <el-link type="primary" @click.stop="showEntrustDetail(scope.row)">{{ scope.row.no }}</el-link>
+                  </template>
+                </el-table-column>
                 <el-table-column label="登记号" prop="regNo" width="140"></el-table-column>
                 <el-table-column label="检测岗位" prop="post" width="100"></el-table-column>
                 <el-table-column label="受理日期" prop="date" width="100"></el-table-column>
@@ -705,7 +709,11 @@
                   </div>
               </template>
             </el-table-column>
-            <el-table-column label="委托单号" prop="no" width="160"></el-table-column>
+            <el-table-column label="委托单号" prop="no" width="160">
+              <template slot-scope="scope">
+                <el-link type="primary" @click.stop="showEntrustDetail(scope.row)">{{ scope.row.no }}</el-link>
+              </template>
+            </el-table-column>
             <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
             <el-table-column label="报告出具截止日" prop="expectedReportDate" width="160" align="center">
               <template slot-scope="scope">
@@ -1853,6 +1861,38 @@
     </el-dialog>
     </template>
 
+    <!-- 委托单详情弹窗 -->
+    <el-dialog title="委托单详情" :visible.sync="entrustDetailVisible" width="800px" append-to-body>
+      <div v-if="currentEntrustDetail">
+        <el-descriptions title="委托方信息" :column="2" border size="small" class="mb8">
+          <el-descriptions-item label="委托单号">{{ currentEntrustDetail.no }}</el-descriptions-item>
+          <el-descriptions-item label="委托单位">{{ currentEntrustDetail.company }}</el-descriptions-item>
+          <el-descriptions-item label="联系人">{{ currentEntrustDetail.contact }}</el-descriptions-item>
+          <el-descriptions-item label="联系电话">{{ currentEntrustDetail.phone }}</el-descriptions-item>
+          <el-descriptions-item label="通讯地址" :span="2">{{ currentEntrustDetail.address }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
+          <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName }}</el-descriptions-item>
+          <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model }}</el-descriptions-item>
+          <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions title="检验要求" :column="1" border size="small" class="mb8">
+          <el-descriptions-item label="检验依据">{{ currentEntrustDetail.testStandard }}</el-descriptions-item>
+          <el-descriptions-item label="检验项目">{{ currentEntrustDetail.testItems }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-descriptions title="交付信息" :column="2" border size="small">
+          <el-descriptions-item label="交付方式">{{ currentEntrustDetail.deliveryType }}</el-descriptions-item>
+          <el-descriptions-item label="报告份数">{{ currentEntrustDetail.reportCount }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="entrustDetailVisible = false" size="small">关 闭</el-button>
+      </span>
+    </el-dialog>
+
   </div>
 
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -1863,8 +1903,11 @@
       data: {
         activeMenu: 'business',
         activeTab: 'special',
+        
+        entrustDetailVisible: false,
+        currentEntrustDetail: {},
             
-            lastUpdated: '2026-01-23 15:45:00',
+        lastUpdated: '2026-01-23 15:45:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -2333,6 +2376,25 @@
         }
       },
       methods: {
+        showEntrustDetail(row) {
+          // 模拟获取委托单详情
+          // 实际开发中应根据 row.no 调用 API
+          this.currentEntrustDetail = {
+            no: row.no || '未知单号',
+            company: row.company || '未知单位',
+            contact: '张三',
+            phone: '13800138000',
+            address: '上海市浦东新区某某路123号',
+            sampleName: row.name || '示例样品',
+            model: row.model || 'Specification-001',
+            quantity: 1,
+            testStandard: 'GB/T 12345-2008',
+            testItems: '外观, 尺寸, 性能',
+            deliveryType: '自取',
+            reportCount: 2
+          };
+          this.entrustDetailVisible = true;
+        },
         formatUpdateTime(date) {
           const y = date.getFullYear()
           const m = (date.getMonth() + 1).toString().padStart(2, '0')

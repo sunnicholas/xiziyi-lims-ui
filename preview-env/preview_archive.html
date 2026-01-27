@@ -301,7 +301,7 @@
                  @click="handleArchiveEntrustSelect(item)"
                >
                  <div class="device-type-card-header">
-                   <span class="device-type-name" style="color: #409EFF;">{{ item.no }}</span>
+                   <el-link type="primary" @click.stop="showEntrustDetail(item)" style="font-weight: 600;">{{ item.no }}</el-link>
                    <span style="font-size: 12px; color: #909399;">({{ getArchiveStats(item).current }}/{{ getArchiveStats(item).total }})</span>
                  </div>
                  <div class="device-type-desc">{{ item.company }}</div>
@@ -407,6 +407,40 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogArchiveVisible = false">取 消</el-button>
         <el-button type="primary" @click="confirmArchive">确认归档</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 委托单详情弹窗 -->
+    <el-dialog title="委托单详情" :visible.sync="entrustDetailVisible" width="800px">
+      <el-descriptions title="委托方信息" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="委托单位">{{ currentEntrustDetail.company || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="通讯地址">{{ currentEntrustDetail.address || '西安市高新区科技二路65号' }}</el-descriptions-item>
+        <el-descriptions-item label="联系人">{{ currentEntrustDetail.contact || '张经理' }}</el-descriptions-item>
+        <el-descriptions-item label="联系电话">{{ currentEntrustDetail.phone || '13800138000' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName || '无缝气瓶' }}</el-descriptions-item>
+        <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model || 'CNP20-80-40' }}</el-descriptions-item>
+        <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity || 1 }}</el-descriptions-item>
+        <el-descriptions-item label="制造单位">{{ currentEntrustDetail.manufacturer || '北京天海工业有限公司' }}</el-descriptions-item>
+        <el-descriptions-item label="出厂编号" :span="2">{{ currentEntrustDetail.factoryNos || 'No.2023001 ~ No.2023005' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="检验要求" :column="2" border size="small" class="mb8">
+        <el-descriptions-item label="检验类别">{{ currentEntrustDetail.testType || '定期检验' }}</el-descriptions-item>
+        <el-descriptions-item label="检验依据">{{ currentEntrustDetail.standard || 'TSG R0005-2011' }}</el-descriptions-item>
+        <el-descriptions-item label="检验项目" :span="2">{{ currentEntrustDetail.testItems || '外观检查, 音响检查, 瓶口螺纹检查, 水压试验, 气密性试验' }}</el-descriptions-item>
+      </el-descriptions>
+
+      <el-descriptions title="交付信息" :column="2" border size="small">
+        <el-descriptions-item label="领取方式">{{ currentEntrustDetail.deliveryMethod || '自提' }}</el-descriptions-item>
+        <el-descriptions-item label="预计完成时间">{{ currentEntrustDetail.planDate || '2023-10-25' }}</el-descriptions-item>
+        <el-descriptions-item label="邮寄地址" :span="2" v-if="currentEntrustDetail.deliveryMethod === '邮寄'">{{ currentEntrustDetail.deliveryAddress || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="entrustDetailVisible = false" size="small">关 闭</el-button>
       </span>
     </el-dialog>
 
@@ -746,7 +780,7 @@
         activeMenu: 'archive',
         activeTab: 'special',
         
-        lastUpdated: '2026-01-23 15:45:00',
+        lastUpdated: '2026-01-23 16:30:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -761,6 +795,8 @@
         currentAuditEntrust: null,
         
         // 预览相关
+        entrustDetailVisible: false,
+        currentEntrustDetail: {},
         dialogPreviewVisible: false,
         previewActiveTab: 'record',
         showRecordTab: true,
@@ -1832,19 +1868,19 @@
            this.dialogArchiveVisible = true;
          },
          confirmArchive() {
-            const row = this.archiveForm.row;
-            if (!row) return;
-            
-            const originalDevice = row._raw;
-            if (originalDevice) {
-              this.$set(originalDevice, 'archiveStatus', '已归档');
-              this.$set(originalDevice, 'sampleReturned', this.archiveForm.sampleReturned);
-              this.$set(originalDevice, 'paymentSettled', this.archiveForm.paymentSettled);
-              this.$set(originalDevice, 'archiveRemark', this.archiveForm.remark);
-            }
-            this.$message.success('归档成功');
-            this.dialogArchiveVisible = false;
-         },
+           const row = this.archiveForm.row;
+           if (!row) return;
+           
+           const originalDevice = row._raw || row;
+           if (originalDevice) {
+             this.$set(originalDevice, 'archiveStatus', '已归档');
+             this.$set(originalDevice, 'sampleReturned', this.archiveForm.sampleReturned);
+             this.$set(originalDevice, 'paymentSettled', this.archiveForm.paymentSettled);
+             this.$set(originalDevice, 'archiveRemark', this.archiveForm.remark);
+           }
+           this.$message.success('归档成功');
+           this.dialogArchiveVisible = false;
+        },
          handleViewArchive(row) {
            this.$alert('查看归档详情功能开发中...', '提示');
         },
@@ -1987,6 +2023,31 @@
             window.location.href = map[index];
           }
         },
+        showEntrustDetail(row) {
+          this.currentEntrustDetail = {
+            ...row,
+            company: row.company || row.client || '陕西化建工程有限公司',
+            address: row.address || '西安市高新区科技二路65号',
+            contact: row.contact || '张经理',
+            phone: row.phone || '13800138000',
+            
+            sampleName: row.sampleName || (row.subType === 'gas' ? '无缝气瓶' : '安全阀'),
+            model: row.model || 'CNP20-80-40',
+            quantity: row.quantity || (row.devices ? row.devices.length : 1),
+            manufacturer: row.manufacturer || '北京天海工业有限公司',
+            factoryNos: row.factoryNos || 'No.2023001 ~ No.2023005',
+            
+            testType: row.testType || '定期检验',
+            standard: row.standard || 'TSG R0005-2011',
+            testItems: row.testItems || '外观检查, 音响检查, 瓶口螺纹检查, 水压试验, 气密性试验',
+            
+            deliveryMethod: row.deliveryMethod || '自提',
+            planDate: row.planDate || '2023-10-25',
+            deliveryAddress: row.deliveryAddress || '-'
+          };
+          this.entrustDetailVisible = true;
+        },
+
         getPageTitle() {
           const map = {
             'business': '业务受理',
