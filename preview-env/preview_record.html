@@ -346,7 +346,7 @@
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column label="操作" width="220" align="center">
+                  <el-table-column label="操作" width="300" align="center">
                     <template slot-scope="scope">
                       <el-button
                         size="mini"
@@ -374,6 +374,14 @@
                         @click="submitDeviceRecord(props.row, scope.row)"
                       >
                         提交
+                      </el-button>
+                      <el-button
+                        size="mini"
+                        type="text"
+                        icon="el-icon-time"
+                        @click="showProcessTrack(props.row, scope.row)"
+                      >
+                        流程追踪
                       </el-button>
                     </template>
                   </el-table-column>
@@ -437,8 +445,8 @@
               <template slot-scope="scope">
                 <el-progress
                   :percentage="getEntrustStats(scope.row).percentage"
-                  :status="getEntrustStats(scope.row).percentage === 100 ? 'success' : ''"
-                  stroke-width="16"
+                  :status="getEntrustStats(scope.row).percentage === 100 ? 'success' : undefined"
+                  :stroke-width="16"
                 ></el-progress>
               </template>
             </el-table-column>
@@ -525,6 +533,41 @@
           
           <div slot="footer" class="dialog-footer">
             <el-button @click="entrustDetailVisible = false" size="small">关 闭</el-button>
+          </div>
+        </el-dialog>
+
+        <el-dialog
+          :title="trackContext && trackContext.entrustNo ? ('流程追踪（委托单号：' + trackContext.entrustNo + (trackContext.deviceNo ? '｜设备：' + trackContext.deviceNo : '') + '）') : '流程追踪'"
+          :visible.sync="trackVisible"
+          width="520px"
+          append-to-body
+          :close-on-click-modal="false"
+        >
+          <el-timeline>
+            <el-timeline-item
+              v-for="(item, index) in trackItems"
+              :key="index"
+              :timestamp="item.time"
+              :color="item.color"
+              placement="top"
+            >
+              <el-card shadow="hover" :body-style="{ padding: '10px 12px' }">
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                  <div style="font-size: 14px; font-weight: 600; color: #303133;">{{ item.name }}</div>
+                  <el-tag v-if="item.statusText" size="mini" effect="plain" :type="item.statusType">{{ item.statusText }}</el-tag>
+                </div>
+                <div style="margin-top: 8px; font-size: 12px; color: #606266; display: flex; flex-wrap: wrap; gap: 12px;">
+                  <span v-if="item.actor"><i class="el-icon-user" style="margin-right: 4px;"></i>{{ (item.actorLabel || '操作人') + '：' + item.actor }}</span>
+                  <span v-if="item.location"><i class="el-icon-office-building" style="margin-right: 4px;"></i>{{ '环节：' + item.location }}</span>
+                </div>
+                <div v-if="item.remark" style="margin-top: 8px; font-size: 12px; color: #F56C6C; line-height: 1.5;">
+                  <i class="el-icon-warning-outline" style="margin-right: 4px;"></i>{{ item.remark }}
+                </div>
+              </el-card>
+            </el-timeline-item>
+          </el-timeline>
+          <div slot="footer" class="dialog-footer">
+            <el-button size="small" @click="trackVisible = false">关 闭</el-button>
           </div>
         </el-dialog>
 
@@ -2130,12 +2173,11 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-27 15:00:00',
+        lastUpdated: '2026-01-28 08:48:20',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
         dialogFormVisible: false,
-        trackVisible: false,
         
         selectedSubType: 'gas',
         typeSearchKeyword: '',
@@ -2678,6 +2720,12 @@
         dialogAssignVisible: false,
         currentAssignRow: null,
         currentAssignDevice: null,
+        trackVisible: false,
+        trackItems: [],
+        trackContext: {
+          entrustNo: '',
+          deviceNo: ''
+        },
         assignMode: 'entrust',
         assignReportDeadline: '',
         selectedExecutor: '',
@@ -3057,6 +3105,140 @@
           const mm = date.getMinutes().toString().padStart(2, '0')
           const ss = date.getSeconds().toString().padStart(2, '0')
           return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
+        },
+        showProcessTrack(entrust, device) {
+          if (!entrust || !device) {
+             this.$message.warning('无法获取完整的追踪信息');
+             return;
+          }
+          const parseTime = (val) => {
+            if (!val) return null
+            const d = new Date(val)
+            return isNaN(d.getTime()) ? null : d
+          }
+          const addHours = (date, h) => {
+            const newDate = new Date(date)
+            newDate.setHours(newDate.getHours() + h)
+            return this.formatUpdateTime(newDate)
+          }
+          const now = new Date()
+          const baseTime = parseTime(entrust.entrustDateTime) || parseTime(entrust.entrustDate) || parseTime(entrust.date) || parseTime(entrust.createTime) || new Date(now.getTime() - 48 * 3600 * 1000)
+          const executor = device.executor || device.submitter || device.recordUser || (this.currentUser ? this.currentUser.name : '') || '—'
+          const assigner = entrust.assigner || entrust.acceptor || '—'
+          const auditor = device.auditor || device.rejecter || '—'
+
+          this.trackContext = {
+            entrustNo: entrust.no || entrust.entrustNo || '',
+            deviceNo: device.no || ''
+          }
+
+          const items = []
+          const status = device.status
+
+          if (device.executor || entrust.assigner || entrust.acceptor) {
+            items.push({
+              name: '任务分配',
+              time: this.formatUpdateTime(parseTime(device.assignTime) || parseTime(entrust.assignTime) || new Date(baseTime.getTime() + 2 * 3600 * 1000)),
+              color: '#409EFF',
+              actorLabel: '分配人',
+              actor: assigner,
+              location: '任务分配',
+              statusText: device.executor ? '已分配' : '待分配',
+              statusType: device.executor ? 'success' : 'info'
+            })
+          }
+
+          if (status !== '未录入') {
+            items.push({
+              name: '记录编辑',
+              time: this.formatUpdateTime(parseTime(device.recordEditTime) || new Date(baseTime.getTime() + 24 * 3600 * 1000)),
+              color: '#409EFF',
+              actorLabel: '提交人',
+              actor: executor,
+              location: '原始记录',
+              statusText: '进行中',
+              statusType: 'warning'
+            })
+          }
+
+          if (['已提交', '已审核', '已批准', '驳回'].includes(status)) {
+            items.push({
+              name: '记录提交',
+              time: this.formatUpdateTime(parseTime(device.recordSubmitTime) || new Date(baseTime.getTime() + 26 * 3600 * 1000)),
+              color: '#67C23A',
+              actorLabel: '提交人',
+              actor: executor,
+              location: '原始记录',
+              statusText: '已提交',
+              statusType: 'success'
+            })
+          }
+
+          if (['已提交', '已审核', '已批准', '驳回'].includes(status)) {
+            items.push({
+              name: '报告编辑',
+              time: this.formatUpdateTime(parseTime(device.reportEditTime) || new Date(baseTime.getTime() + 27 * 3600 * 1000)),
+              color: '#409EFF',
+              actorLabel: '提交人',
+              actor: executor,
+              location: '检验报告',
+              statusText: '进行中',
+              statusType: 'warning'
+            })
+            items.push({
+              name: '报告提交',
+              time: this.formatUpdateTime(parseTime(device.reportSubmitTime) || new Date(baseTime.getTime() + 28 * 3600 * 1000)),
+              color: '#67C23A',
+              actorLabel: '提交人',
+              actor: executor,
+              location: '检验报告',
+              statusText: '已提交',
+              statusType: 'success'
+            })
+          }
+
+          if (status === '驳回') {
+            items.push({
+              name: '审核驳回',
+              time: this.formatUpdateTime(parseTime(device.rejectTime) || new Date(baseTime.getTime() + 30 * 3600 * 1000)),
+              color: '#F56C6C',
+              actorLabel: '驳回人',
+              actor: auditor,
+              location: '审核',
+              statusText: '已驳回',
+              statusType: 'danger',
+              remark: device.remark || '—'
+            })
+          }
+
+          if (['已审核', '已批准'].includes(status)) {
+            items.push({
+              name: '审核通过',
+              time: this.formatUpdateTime(parseTime(device.auditTime) || new Date(baseTime.getTime() + 32 * 3600 * 1000)),
+              color: '#67C23A',
+              actorLabel: '审核人',
+              actor: auditor,
+              location: '审核',
+              statusText: '已通过',
+              statusType: 'success'
+            })
+          }
+
+          if (items.length === 0) {
+            items.push({
+              name: '暂无追踪信息',
+              time: addHours(baseTime, 0),
+              color: '#909399',
+              actorLabel: '',
+              actor: '',
+              location: '',
+              statusText: '',
+              statusType: ''
+            })
+          }
+
+          this.trackItems = items.reverse()
+          this.trackVisible = true
         },
         getSequentialProgressText() {
           if (!this.currentRecordEntrust || !this.currentRecordDevice) return ''
