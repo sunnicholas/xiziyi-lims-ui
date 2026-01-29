@@ -481,6 +481,16 @@
                   {{ getReportButtonText(scope.row) }}
                 </el-button>
                 <el-button
+                  v-if="isCurrentUserLeader && scope.row.type === 'gas'"
+                  size="mini"
+                  type="text"
+                  icon="el-icon-document"
+                  :disabled="!canPreviewGasEntrustReport(scope.row)"
+                  @click="openGasReportPreview(scope.row)"
+                >
+                  报告预览
+                </el-button>
+                <el-button
                   v-if="!isCurrentUserLeader"
                   size="mini"
                   type="primary"
@@ -568,6 +578,250 @@
           </el-timeline>
           <div slot="footer" class="dialog-footer">
             <el-button size="small" @click="trackVisible = false">关 闭</el-button>
+          </div>
+        </el-dialog>
+
+        <el-dialog
+          :title="previewDevice && previewDevice.no ? ('预览（委托单号：' + (previewEntrust ? previewEntrust.no : '') + '｜设备：' + previewDevice.no + '）') : '预览'"
+          :visible.sync="dialogPreviewVisible"
+          width="900px"
+          class="preview-dialog"
+          append-to-body
+          :close-on-click-modal="false"
+        >
+          <el-tabs v-model="previewActiveTab" type="card">
+            <el-tab-pane label="原始记录" name="record">
+              <div class="a4-page" style="transform: scale(0.85); transform-origin: top center;">
+                <div v-if="previewRecordType === 'gas'">
+                  <h2 class="report-title">气瓶定期检验原始记录</h2>
+                  <div class="report-info">
+                    <el-row :gutter="20">
+                      <el-col :span="12">委托单号：<span class="text-blue-bold inline-input">{{ previewEntrust ? previewEntrust.no : '' }}</span></el-col>
+                      <el-col :span="12">设备编号：<span class="text-blue-bold inline-input">{{ previewDevice ? previewDevice.no : '' }}</span></el-col>
+                    </el-row>
+                    <el-row :gutter="20" class="mt20">
+                      <el-col :span="12">使用单位：<span class="text-blue-bold inline-input">{{ previewEntrust ? (previewEntrust.useCompany || previewEntrust.company) : '' }}</span></el-col>
+                      <el-col :span="12">检验日期：<span class="text-blue-bold inline-input">{{ previewEntrust ? (previewEntrust.entrustDate || '') : '' }}</span></el-col>
+                    </el-row>
+                  </div>
+
+                  <table class="report-table">
+                    <tr>
+                      <th width="10%">序号</th>
+                      <th width="30%">检验项目</th>
+                      <th width="30%">检验结果/数据</th>
+                      <th width="30%">单项结论</th>
+                    </tr>
+                    <tr>
+                      <td>1</td>
+                      <td>外观检查</td>
+                      <td><span class="text-blue-bold">无明显机械损伤，漆色完好</span></td>
+                      <td>合格</td>
+                    </tr>
+                    <tr>
+                      <td>2</td>
+                      <td>音响检查</td>
+                      <td><span class="text-blue-bold">音响清脆</span></td>
+                      <td>合格</td>
+                    </tr>
+                    <tr>
+                      <td>3</td>
+                      <td>瓶口螺纹</td>
+                      <td><span class="text-blue-bold">牙型完整，无裂纹</span></td>
+                      <td>合格</td>
+                    </tr>
+                    <tr>
+                      <td>4</td>
+                      <td>内部检查</td>
+                      <td><span class="text-blue-bold">干燥，无腐蚀</span></td>
+                      <td>合格</td>
+                    </tr>
+                    <tr>
+                      <td>5</td>
+                      <td>壁厚测定</td>
+                      <td>最小壁厚 <span class="text-blue-bold inline-input">4.2</span> mm</td>
+                      <td>合格</td>
+                    </tr>
+                    <tr>
+                      <td>6</td>
+                      <td>水压试验</td>
+                      <td>试验压力 <span class="text-blue-bold inline-input">22.5</span> MPa，保压 <span class="text-blue-bold inline-input">1</span> min</td>
+                      <td>合格</td>
+                    </tr>
+                    <tr>
+                      <td>7</td>
+                      <td>气密性试验</td>
+                      <td>试验压力 <span class="text-blue-bold inline-input">15.0</span> MPa，保压 <span class="text-blue-bold inline-input">1</span> min</td>
+                      <td>合格</td>
+                    </tr>
+                  </table>
+
+                  <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 20px;">
+                    <el-row>
+                      <el-col :span="12">检测员：<span class="text-blue-bold" style="font-family: cursive; font-size: 18px;">{{ previewDevice ? previewDevice.executor : '' }}</span></el-col>
+                      <el-col :span="12">日期：<span class="text-blue-bold">{{ previewEntrust ? (previewEntrust.entrustDate || '') : '' }}</span></el-col>
+                    </el-row>
+                  </div>
+                </div>
+
+                <div v-else>
+                  <h2 class="report-title">安全阀校验原始记录</h2>
+                  <div class="report-info">
+                    <el-row :gutter="20">
+                      <el-col :span="12">委托单号：<span class="text-blue-bold inline-input">{{ previewEntrust ? previewEntrust.no : '' }}</span></el-col>
+                      <el-col :span="12">设备编号：<span class="text-blue-bold inline-input">{{ previewDevice ? previewDevice.no : '' }}</span></el-col>
+                    </el-row>
+                    <el-row :gutter="20" class="mt20">
+                      <el-col :span="12">使用单位：<span class="text-blue-bold inline-input">{{ previewEntrust ? (previewEntrust.useCompany || previewEntrust.company) : '' }}</span></el-col>
+                      <el-col :span="12">校验日期：<span class="text-blue-bold inline-input">{{ previewEntrust ? (previewEntrust.entrustDate || '') : '' }}</span></el-col>
+                    </el-row>
+                  </div>
+
+                  <table class="report-table">
+                    <tr>
+                      <th width="30%">项目</th>
+                      <th width="35%">参数要求</th>
+                      <th width="35%">实测数据</th>
+                    </tr>
+                    <tr>
+                      <td>整定压力</td>
+                      <td>1.0 ± 0.03 MPa</td>
+                      <td><span class="text-blue-bold inline-input">1.01</span> MPa</td>
+                    </tr>
+                    <tr>
+                      <td>密封试验压力</td>
+                      <td>0.90 MPa</td>
+                      <td><span class="text-blue-bold inline-input">0.90</span> MPa</td>
+                    </tr>
+                    <tr>
+                      <td>开启高度</td>
+                      <td>≥ 1/4 d0</td>
+                      <td><span class="text-blue-bold">符合</span></td>
+                    </tr>
+                    <tr>
+                      <td>外观检查</td>
+                      <td>完好</td>
+                      <td><span class="text-blue-bold">合格</span></td>
+                    </tr>
+                  </table>
+
+                  <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 20px;">
+                    <el-row>
+                      <el-col :span="12">校验员：<span class="text-blue-bold" style="font-family: cursive; font-size: 18px;">{{ previewDevice ? previewDevice.executor : '' }}</span></el-col>
+                      <el-col :span="12">日期：<span class="text-blue-bold">{{ previewEntrust ? (previewEntrust.entrustDate || '') : '' }}</span></el-col>
+                    </el-row>
+                  </div>
+                </div>
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="检验报告" name="report" v-if="previewRecordType === 'valve'">
+              <div class="a4-page" style="transform: scale(0.85); transform-origin: top center; height: 800px; overflow-y: auto;">
+                <div class="report-title">安全阀校验报告</div>
+                <div class="report-info" style="text-align: left;">
+                  <p>报告编号：<span class="text-blue-bold inline-input">{{ previewEntrust ? (previewEntrust.no + '-R') : '' }}</span></p>
+                  <p>使用单位：<span class="text-blue-bold inline-input">{{ previewEntrust ? (previewEntrust.useCompany || previewEntrust.company) : '' }}</span></p>
+                  <p>设备型号：{{ previewDevice ? (previewDevice.model || 'A48Y-16C') : 'A48Y-16C' }}</p>
+                </div>
+
+                <table class="report-table">
+                  <tr>
+                    <th width="30%">检验项目</th>
+                    <th width="30%">标准要求</th>
+                    <th width="40%">检验结果</th>
+                  </tr>
+                  <tr>
+                    <td>整定压力 (MPa)</td>
+                    <td>1.0 ± 0.03</td>
+                    <td>1.01</td>
+                  </tr>
+                  <tr>
+                    <td>密封试验压力 (MPa)</td>
+                    <td>0.9</td>
+                    <td>0.9</td>
+                  </tr>
+                  <tr>
+                    <td>开启高度</td>
+                    <td>≥ 1/4 d0</td>
+                    <td>符合</td>
+                  </tr>
+                  <tr>
+                    <td>外观检查</td>
+                    <td>完好无损</td>
+                    <td>合格</td>
+                  </tr>
+                </table>
+
+                <div style="margin-top: 50px; text-align: left;">
+                  <p>校验结论：<strong>合格</strong></p>
+                  <p>备注：铅封已施加。</p>
+                </div>
+
+                <div style="margin-top: 100px; display: flex; justify-content: space-around;">
+                  <div>校验员：<span class="text-blue-bold" style="font-family: cursive;">{{ previewDevice ? previewDevice.executor : '' }}</span></div>
+                  <div>核验员：<span class="text-blue-bold" style="font-family: cursive;">{{ isCurrentUserLeader ? (currentUser ? currentUser.name : '') : '—' }}</span></div>
+                  <div>批准：<span class="text-blue-bold" style="font-family: cursive;">{{ isCurrentUserLeader ? (currentUser ? currentUser.name : '') : '—' }}</span></div>
+                </div>
+              </div>
+            </el-tab-pane>
+          </el-tabs>
+
+          <div slot="footer" class="dialog-footer">
+            <el-button size="small" @click="dialogPreviewVisible = false">关 闭</el-button>
+          </div>
+        </el-dialog>
+
+        <el-dialog
+          :title="gasReportPreviewEntrust ? ('气瓶定期检验报告预览（委托单号：' + gasReportPreviewEntrust.no + '）') : '气瓶定期检验报告预览'"
+          :visible.sync="dialogGasReportPreviewVisible"
+          width="900px"
+          append-to-body
+          :close-on-click-modal="false"
+          top="5vh"
+        >
+          <div v-if="gasReportPreviewData" class="report-document" style="margin: 20px auto; width: 90%; min-height: 400px; padding: 40px; background: #fff; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);">
+              <div class="report-header" style="text-align: center; margin-bottom: 30px; position: relative;">
+                  <div class="report-title" style="font-size: 24px; font-weight: bold;">定期检验报告</div>
+                  <div class="report-no" style="position: absolute; right: 0; top: 0; font-size: 14px;">
+                      报告编号：<span style="font-weight: bold;">{{ gasReportPreviewData.reportNo || ('R-' + (gasReportPreviewEntrust ? gasReportPreviewEntrust.no : '')) }}</span>
+                  </div>
+              </div>
+
+              <div style="text-indent: 2em; line-height: 2; font-size: 16px;">
+                  根据《气瓶安全技术规程》TSG 23-2021以及国家标准《呼吸器用复合气瓶定期检验与评定》GB/T 24161-2009的规定，你单位送检的
+
+                  <span class="text-blue-bold">{{ gasReportPreviewData.cylinderType || '—' }}</span>
+
+                  气瓶共
+
+                  <span class="text-blue-bold">{{ gasReportPreviewData.totalCount === 0 ? 0 : (gasReportPreviewData.totalCount || '—') }}</span>
+
+                  只，经我机构实施定期检验（安全评定），其中
+
+                  <span class="text-blue-bold">{{ gasReportPreviewData.qualifiedCount === 0 ? 0 : (gasReportPreviewData.qualifiedCount || '—') }}</span>
+
+                  只气瓶安全性能符合要求（《定期检验合格气瓶一览表》），
+
+                  <span class="text-blue-bold">{{ gasReportPreviewData.valveReplacedCount === 0 ? 0 : (gasReportPreviewData.valveReplacedCount || '—') }}</span>
+
+                  只气瓶更换了由
+
+                  <span class="text-blue-bold">{{ gasReportPreviewData.valveManufacturer || '—' }}</span>
+
+                  生产的气瓶阀门，
+
+                  <span class="text-blue-bold">{{ gasReportPreviewData.scrappedCount === 0 ? 0 : (gasReportPreviewData.scrappedCount || '—') }}</span>
+
+                  只气瓶已判报废（《报废复合气瓶一览表》），并且按照规定实施消除使用功能处理。
+              </div>
+
+              <div style="margin-top: 50px; text-align: right; padding-right: 50px;">
+                   <p>检验员：<span class="text-blue-bold">{{ gasReportPreviewData.inspector || getEntrustMainInspector(gasReportPreviewEntrust) }}</span></p>
+                   <p>日期：{{ formatDateYMD(gasReportPreviewData.testDate) }}</p>
+              </div>
+          </div>
+          <div slot="footer" class="dialog-footer">
+            <el-button size="small" @click="dialogGasReportPreviewVisible = false">关 闭</el-button>
           </div>
         </el-dialog>
 
@@ -2162,6 +2416,16 @@
         // 预览相关
         entrustDetailVisible: false,
         currentEntrustDetail: {},
+
+        dialogPreviewVisible: false,
+        previewActiveTab: 'record',
+        previewEntrust: null,
+        previewDevice: null,
+        previewRecordType: 'gas',
+
+        dialogGasReportPreviewVisible: false,
+        gasReportPreviewEntrust: null,
+        gasReportPreviewData: {},
         
         // 气瓶报告相关
         gasReportVisible: false,
@@ -2173,7 +2437,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-28 09:06:07',
+        lastUpdated: '2026-01-28 09:49:01',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -3705,10 +3969,60 @@
           this.dialogRecordEntryVisible = true
         },
         previewDeviceRecord(entrust, device) {
-          if (!device.hasRecord) {
+          if (!device || !device.hasRecord) {
             return
           }
-          this.$message.info('模拟打开设备原始记录预览')
+          this.previewEntrust = entrust
+          this.previewDevice = device
+          this.previewRecordType = device.deviceType === 'valve' ? 'valve' : 'gas'
+          this.previewActiveTab = 'record'
+          this.dialogPreviewVisible = true
+        },
+        canPreviewGasEntrustReport(entrust) {
+          if (!entrust || entrust.type !== 'gas') {
+            return false
+          }
+          const state = this.gasReportStates[entrust.no]
+          return !!(state && state.status === 'submitted')
+        },
+        openGasReportPreview(entrust) {
+          if (!this.isCurrentUserLeader) {
+            return
+          }
+          if (!this.canPreviewGasEntrustReport(entrust)) {
+            this.$message.warning('报告未提交，无法预览')
+            return
+          }
+          this.gasReportPreviewEntrust = entrust
+          this.gasReportPreviewData = JSON.parse(JSON.stringify(this.gasReportStates[entrust.no].data || {}))
+          this.dialogGasReportPreviewVisible = true
+        },
+        formatDateYMD(val) {
+          const d = val ? new Date(val) : new Date()
+          if (isNaN(d.getTime())) {
+            return ''
+          }
+          const y = d.getFullYear()
+          const m = (d.getMonth() + 1).toString().padStart(2, '0')
+          const day = d.getDate().toString().padStart(2, '0')
+          return y + '-' + m + '-' + day
+        },
+        getEntrustMainInspector(entrust) {
+          if (!entrust || !Array.isArray(entrust.devices) || entrust.devices.length === 0) {
+            return '—'
+          }
+          const countMap = {}
+          entrust.devices.forEach(d => {
+            const name = d && d.executor ? d.executor : ''
+            if (!name) return
+            countMap[name] = (countMap[name] || 0) + 1
+          })
+          const names = Object.keys(countMap)
+          if (names.length === 0) {
+            return '—'
+          }
+          names.sort((a, b) => countMap[b] - countMap[a])
+          return names[0]
         },
         canAuditApprove(device, type) {
           if (!this.isCurrentUserLeader) {

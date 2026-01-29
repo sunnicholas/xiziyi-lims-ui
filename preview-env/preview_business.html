@@ -500,8 +500,8 @@
               <el-col :span="6">
                 <el-form-item label="委托类别" required>
                   <el-radio-group v-model="form.category">
-                    <el-radio label="送检">送检</el-radio>
-                    <el-radio label="现场">现场</el-radio>
+                    <el-radio label="送检">送检/在线</el-radio>
+                    <el-radio label="现场">现场/离线</el-radio>
                   </el-radio-group>
                 </el-form-item>
               </el-col>
@@ -538,17 +538,7 @@
                 </el-form-item>
               </el-col>
             </el-row>
-            <el-row v-if="currentDevice && currentDevice.value === 'valve'">
-              <el-col :span="8">
-                <el-form-item label="报告方式" required>
-                  <el-radio-group v-model="form.valveMode" @change="updateTestStandard">
-                    <el-radio label="离线"></el-radio>
-                    <el-radio label="在线"></el-radio>
-                  </el-radio-group>
-                </el-form-item>
-              </el-col>
-            </el-row>
-            
+
             <div class="section-header">单位信息</div>
             <el-row :gutter="20">
               <el-col :span="12">
