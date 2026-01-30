@@ -374,11 +374,10 @@
       </el-descriptions>
 
       <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
-        <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName || '无缝气瓶' }}</el-descriptions-item>
-        <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model || 'CNP20-80-40' }}</el-descriptions-item>
-        <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity || 1 }}</el-descriptions-item>
-        <el-descriptions-item label="制造单位">{{ currentEntrustDetail.manufacturer || '北京天海工业有限公司' }}</el-descriptions-item>
-        <el-descriptions-item label="出厂编号" :span="2">{{ currentEntrustDetail.factoryNos || 'No.2023001' }}</el-descriptions-item>
+        <el-descriptions-item label="样品数量">{{ currentEntrustDetail.sampleCount || 0 }}</el-descriptions-item>
+        <el-descriptions-item label="详情">
+          <el-link type="primary" @click="openSampleDetail">详情</el-link>
+        </el-descriptions-item>
       </el-descriptions>
 
       <el-descriptions title="检验要求" :column="2" border size="small" class="mb8">
@@ -398,6 +397,19 @@
       </div>
     </el-dialog>
 
+    <el-dialog title="样品信息详情" :visible.sync="sampleDetailVisible" width="900px" append-to-body :close-on-click-modal="false">
+      <el-table :data="sampleDetailList" border size="small" style="width: 100%;">
+        <el-table-column prop="name" label="样品名称" min-width="160"></el-table-column>
+        <el-table-column prop="model" label="规格型号" min-width="140"></el-table-column>
+        <el-table-column prop="quantity" label="数量" width="80" align="center"></el-table-column>
+        <el-table-column prop="manufacturer" label="制造单位" min-width="180"></el-table-column>
+        <el-table-column prop="factoryNo" label="编号/出厂编号" min-width="180"></el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="sampleDetailVisible = false" size="small">关 闭</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -414,6 +426,8 @@
         // 预览相关
         entrustDetailVisible: false,
         currentEntrustDetail: {},
+        sampleDetailVisible: false,
+        sampleDetailList: [],
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -882,6 +896,16 @@
       },
       methods: {
         showEntrustDetail(row) {
+          const rawList = Array.isArray(row.samples) ? row.samples : (Array.isArray(row.devices) ? row.devices : [])
+          const list = rawList.map((s, idx) => {
+            const name = s.sampleName || s.bottleName || s.name || row.sampleName || '样品'
+            const model = s.model || row.model || ''
+            const quantity = s.quantity || s.count || 1
+            const manufacturer = s.manufacturer || row.manufacturer || ''
+            const factoryNo = s.factoryNo || s.factoryNos || s.number || s.no || row.factoryNos || row.sampleNo || ''
+            return { id: idx + 1, name, model, quantity, manufacturer, factoryNo }
+          })
+          this.sampleDetailList = list.length ? list : [{ id: 1, name: row.sampleName || '样品', model: row.model || '', quantity: row.quantity || row.sampleCount || 1, manufacturer: row.manufacturer || '北京天海工业有限公司', factoryNo: row.factoryNos || row.sampleNo || '' }]
           this.currentEntrustDetail = {
             company: row.company || '上海气体工厂',
             contact: row.contact || '张三',
@@ -890,6 +914,7 @@
             sampleName: row.sampleName || '无缝气瓶',
             model: row.model || 'CNP20-80-40',
             quantity: row.quantity || row.sampleCount || 1,
+            sampleCount: row.sampleCount || (this.sampleDetailList ? this.sampleDetailList.length : 0),
             manufacturer: row.manufacturer || '北京天海工业有限公司',
             factoryNos: row.factoryNos || row.sampleNo || 'No.2023001',
             testType: row.testType || '定期检验',
@@ -900,6 +925,9 @@
             deliveryAddress: row.deliveryAddress || '-'
           };
           this.entrustDetailVisible = true;
+        },
+        openSampleDetail() {
+          this.sampleDetailVisible = true
         },
         formatUpdateTime(date) {
           const y = date.getFullYear()

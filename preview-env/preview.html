@@ -294,9 +294,10 @@
         </el-descriptions>
 
         <el-descriptions title="样品信息" :column="2" border size="small" class="mb8">
-          <el-descriptions-item label="样品名称">{{ currentEntrustDetail.sampleName }}</el-descriptions-item>
-          <el-descriptions-item label="规格型号">{{ currentEntrustDetail.model }}</el-descriptions-item>
-          <el-descriptions-item label="数量">{{ currentEntrustDetail.quantity }}</el-descriptions-item>
+          <el-descriptions-item label="样品数量">{{ currentEntrustDetail.sampleCount || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="详情">
+            <el-link type="primary" @click="openSampleDetail">详情</el-link>
+          </el-descriptions-item>
         </el-descriptions>
 
         <el-descriptions title="检验要求" :column="1" border size="small" class="mb8">
@@ -314,6 +315,19 @@
       </span>
     </el-dialog>
 
+    <el-dialog title="样品信息详情" :visible.sync="sampleDetailVisible" width="900px" append-to-body :close-on-click-modal="false">
+      <el-table :data="sampleDetailList" border size="small" style="width: 100%;">
+        <el-table-column prop="name" label="样品名称" min-width="160"></el-table-column>
+        <el-table-column prop="model" label="规格型号" min-width="140"></el-table-column>
+        <el-table-column prop="quantity" label="数量" width="80" align="center"></el-table-column>
+        <el-table-column prop="manufacturer" label="制造单位" min-width="180"></el-table-column>
+        <el-table-column prop="factoryNo" label="编号/出厂编号" min-width="180"></el-table-column>
+      </el-table>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="sampleDetailVisible = false" size="small">关 闭</el-button>
+      </span>
+    </el-dialog>
+
   </div>
 
   <!-- 引入 Vue 和 Element UI -->
@@ -326,6 +340,11 @@
           activeMenu: 'entrust',
           
           lastUpdated: '',
+
+          entrustDetailVisible: false,
+          currentEntrustDetail: {},
+          sampleDetailVisible: false,
+          sampleDetailList: [],
           
           // 委托管理数据
           entrustQuery: { no: '', type: '' },
@@ -378,21 +397,35 @@
           return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
         },
         showEntrustDetail(row) {
+          const rawList = Array.isArray(row.samples) ? row.samples : []
+          const list = rawList.map((s, idx) => {
+            const name = s.sampleName || s.bottleName || s.name || (row.type === '气瓶' ? '工业气瓶' : '安全阀')
+            const model = s.model || ''
+            const quantity = s.quantity || s.count || 1
+            const manufacturer = s.manufacturer || ''
+            const factoryNo = s.factoryNo || s.factoryNos || s.number || ''
+            return { id: idx + 1, name, model, quantity, manufacturer, factoryNo }
+          })
+          this.sampleDetailList = list.length ? list : [{ id: 1, name: row.type === '气瓶' ? '工业气瓶' : '安全阀', model: 'QP-2024-X', quantity: 1, manufacturer: '—', factoryNo: row.no }]
           this.currentEntrustDetail = {
             no: row.no,
             company: row.company,
             contact: '张经理',
             phone: '13800000000',
             address: '上海市xx区xx路xx号',
-            sampleName: row.type === 'gas' ? '工业气瓶' : '安全阀',
+            sampleName: row.type === '气瓶' ? '工业气瓶' : '安全阀',
             model: 'QP-2024-X',
             quantity: 1,
+            sampleCount: this.sampleDetailList.length,
             testStandard: 'GB/T 12345-2023',
             testItems: '外观、气密性、水压试验',
             deliveryType: '自提',
             reportCount: 2
           };
           this.entrustDetailVisible = true;
+        },
+        openSampleDetail() {
+          this.sampleDetailVisible = true
         },
         handleMenuSelect(index) {
           this.activeMenu = index;
