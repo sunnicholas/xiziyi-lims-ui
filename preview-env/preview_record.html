@@ -111,6 +111,8 @@
       border: 1px solid #ebeef5;
       box-shadow: 0 2px 12px 0 rgba(0,0,0,0.05);
     }
+    .summary-yellow-header { background: #F5E38A !important; color: #000; }
+    .summary-yellow-cell { background: #FFF7C2; }
     .report-document .report-header {
       display: flex;
       justify-content: space-between;
@@ -912,7 +914,7 @@
             <div style="flex: 1; overflow-y: auto; padding-right: 10px;">
                <div v-if="currentRecordType === 'gas'">
              <!-- 模板A：气瓶检测记录 (Tabs 布局) -->
-               <el-tabs v-model="activeRecordTab" type="border-card">
+              <el-tabs v-model="activeRecordTab" type="border-card">
                  <!-- 新增 Tab: 基本信息 -->
                  <el-tab-pane label="基本信息" name="basic_info">
                    <el-card shadow="never" class="mb8">
@@ -1367,7 +1369,7 @@
                  </el-tab-pane>
 
                    <!-- 表2：装置校验 -->
-                   <el-tab-pane label="装置校验" name="calibration">
+                   <el-tab-pane label="水压试验" name="calibration">
                       <div style="font-size: 12px; color: #909399; margin-bottom: 15px;">气瓶外测法水压试验装置校验</div>
                       
                       <!-- 头部公共字段 -->
@@ -1638,24 +1640,44 @@
                      <el-card shadow="never" class="mb8">
                        <div slot="header" class="clearfix"><span>定期检验结论汇总</span></div>
                        <el-table :data="recordForm.gas.summary.items" border size="small">
-                         <el-table-column prop="cylinderNo" label="气瓶编号" width="100"></el-table-column>
-                         <el-table-column prop="waterVolume" label="水容积(L)" width="80"></el-table-column>
-                         <el-table-column prop="nominalPressure" label="公称工作压力(MPa)" width="120"></el-table-column>
-                         <el-table-column prop="testPressure" label="水压试验压力(MPa)" width="120"></el-table-column>
-                         <el-table-column prop="mfgMark" label="制造钢印" width="100"></el-table-column>
-                         <el-table-column prop="inspMark" label="检验钢印" width="100"></el-table-column>
-                         <el-table-column prop="valveNo" label="气瓶阀门" width="100"></el-table-column>
-                         <el-table-column prop="medium" label="介质" width="80"></el-table-column>
-                         <el-table-column prop="appearance" label="外观" width="80"></el-table-column>
-                         <el-table-column prop="internal" label="内表面" width="80"></el-table-column>
-                         <el-table-column prop="mouth" label="瓶口" width="80"></el-table-column>
-                         <el-table-column prop="hydro" label="水压" width="80"></el-table-column>
-                         <el-table-column prop="drying" label="烘干" width="80"></el-table-column>
-                         <el-table-column prop="valveCheck" label="瓶阀" width="80"></el-table-column>
-                         <el-table-column prop="airtightness" label="气密" width="80"></el-table-column>
-                         <el-table-column label="检验结论" width="120" fixed="right">
+                         <el-table-column label="基本信息" align="center">
+                           <el-table-column prop="model" label="气瓶型号" width="120" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="cylinderNo" label="气瓶编号" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="waterVolume" label="气瓶水容积L" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="nominalPressure" label="公称工作压力MPa" width="140" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="testPressure" label="水压试验压力(MPa)" width="140" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="trialPressure" label="试验压力" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column label="制造标记" width="110">
+                             <template slot-scope="scope">
+                              <span class="text-blue-bold">{{ scope.row.mfgMark || '—' }}</span>
+                             </template>
+                           </el-table-column>
+                           <el-table-column label="检验标记" width="110">
+                             <template slot-scope="scope">
+                              <span class="text-blue-bold">{{ scope.row.inspMark || '—' }}</span>
+                             </template>
+                           </el-table-column>
+                           <el-table-column label="瓶阀编号" width="110">
+                             <template slot-scope="scope">
+                              <span class="text-blue-bold">{{ scope.row.valveNo || '—' }}</span>
+                             </template>
+                           </el-table-column>
+                           <el-table-column prop="medium" label="使用介质" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                         </el-table-column>
+
+                         <el-table-column label="检验结果" align="center">
+                           <el-table-column prop="appearance" label="外观检查" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="internal" label="内部检查" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="mouth" label="瓶口检查" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="hydro" label="水压试验" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="drying" label="内部干燥" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="valveCheck" label="瓶阀检验" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="airtightness" label="气密性试验" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                         </el-table-column>
+
+                         <el-table-column label="结论" width="120" fixed="right">
                            <template slot-scope="scope">
-                             <el-select v-model="scope.row.conclusion" size="mini" placeholder="请选择">
+                             <el-select v-model="scope.row.conclusion" size="mini" placeholder="请选择" style="width: 100%;">
                                <el-option label="合格" value="合格"></el-option>
                                <el-option label="报废" value="报废"></el-option>
                              </el-select>
@@ -2433,7 +2455,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-28 09:49:01',
+        lastUpdated: '2026-01-30 09:03:01',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -2601,7 +2623,8 @@
               items: [
                 { 
                   model: '', cylinderNo: '', waterVolume: '', nominalPressure: '', testPressure: '',
-                  mfgMark: '', inspMark: '', valveNo: '', medium: '',
+                  trialPressure: '',
+                  mfgMark: 'MFG-2026-001', inspMark: 'INSP-2026-001', valveNo: 'BV-2026-001', medium: '',
                   appearance: '', internal: '', mouth: '', hydro: '', drying: '', valveCheck: '', airtightness: '',
                   conclusion: '合格'
                 }
@@ -3239,9 +3262,11 @@
                 const hydro = this.recordForm.gas.hydrostatic
                 if (hydro) {
                     if (hydro.cylinderModel) summaryItem.model = hydro.cylinderModel
+                    if (!summaryItem.waterVolume && hydro.waterVolume) summaryItem.waterVolume = hydro.waterVolume
+                    if (!summaryItem.nominalPressure && hydro.nominalPressure) summaryItem.nominalPressure = hydro.nominalPressure
                     if (hydro.testPressure) summaryItem.testPressure = hydro.testPressure
-                    if (hydro.manufactureDate) summaryItem.mfgMark = hydro.manufactureDate // Simplification
-                    if (hydro.testDate) summaryItem.inspMark = hydro.testDate // Simplification
+                    if (!summaryItem.mfgMark && hydro.manufactureDate) summaryItem.mfgMark = hydro.manufactureDate // Simplification
+                    if (!summaryItem.inspMark && hydro.testDate) summaryItem.inspMark = hydro.testDate // Simplification
                     if (hydro.result) summaryItem.hydro = hydro.result
                 }
 
@@ -3251,13 +3276,19 @@
                    summaryItem.appearance = app.conclusion || '合格'
                    if (app.internal && app.internal.result) summaryItem.internal = app.internal.result
                    if (app.mouth && app.mouth.result) summaryItem.mouth = app.mouth.result
-                   if (app.valve && app.valve.valveNo) summaryItem.valveNo = app.valve.valveNo
+                   if (!summaryItem.valveNo && app.valve && app.valve.valveNo) summaryItem.valveNo = app.valve.valveNo
                    if (app.valve && app.valve.result) summaryItem.valveCheck = app.valve.result
                 }
                 
                 // Map Other Tests
                 if (this.recordForm.gas.airtightness && this.recordForm.gas.airtightness.result) {
                     summaryItem.airtightness = this.recordForm.gas.airtightness.result
+                }
+                if (this.recordForm.gas.airtightness && this.recordForm.gas.airtightness.medium) {
+                    summaryItem.medium = this.recordForm.gas.airtightness.medium
+                }
+                if (this.recordForm.gas.airtightness && this.recordForm.gas.airtightness.pressure) {
+                    summaryItem.trialPressure = this.recordForm.gas.airtightness.pressure
                 }
                 
                 // Defaults
