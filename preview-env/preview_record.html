@@ -113,6 +113,59 @@
     }
     .summary-yellow-header { background: #F5E38A !important; color: #000; }
     .summary-yellow-cell { background: #FFF7C2; }
+    .gas-summary-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .gas-summary-section {
+      border: 1px solid #ebeef5;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .gas-summary-section-title {
+      background: #f5f7fa;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #303133;
+      border-bottom: 1px solid #ebeef5;
+    }
+    .gas-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px;
+      background: #fff;
+    }
+    .gas-summary-field {
+      border: 1px solid #ebeef5;
+      border-radius: 4px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 32px;
+      background: #fff;
+    }
+    .gas-summary-field.is-prefilled {
+      background: #FFF7C2;
+    }
+    .gas-summary-field-label {
+      font-size: 12px;
+      color: #606266;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .gas-summary-field-value {
+      font-size: 12px;
+      color: #303133;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
     .report-document .report-header {
       display: flex;
       justify-content: space-between;
@@ -1641,20 +1694,20 @@
                        <div slot="header" class="clearfix"><span>定期检验结论汇总</span></div>
                        <el-table :data="recordForm.gas.summary.items" border size="small">
                          <el-table-column label="基本信息" align="center">
-                           <el-table-column prop="model" label="气瓶型号" width="120" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="cylinderNo" label="气瓶编号" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="waterVolume" label="气瓶水容积L" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="nominalPressure" label="公称工作压力MPa" width="140" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="testPressure" label="水压试验压力(MPa)" width="140" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="trialPressure" label="试验压力" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="model" label="气瓶型号" width="120" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="cylinderNo" label="气瓶编号" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="waterVolume" label="气瓶水容积L" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="nominalPressure" label="公称工作压力MPa" width="140" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="testPressure" label="水压试验压力(MPa)" width="140" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="trialPressure" label="试验压力" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
                            <el-table-column label="制造标记" width="110">
                              <template slot-scope="scope">
-                              <span class="text-blue-bold">{{ scope.row.mfgMark || '—' }}</span>
+                              <el-input v-model="scope.row.mfgMark" size="mini" placeholder="请输入"></el-input>
                              </template>
                            </el-table-column>
                            <el-table-column label="检验标记" width="110">
                              <template slot-scope="scope">
-                              <span class="text-blue-bold">{{ scope.row.inspMark || '—' }}</span>
+                              <el-input v-model="scope.row.inspMark" size="mini" placeholder="请输入"></el-input>
                              </template>
                            </el-table-column>
                            <el-table-column label="瓶阀编号" width="110">
@@ -1662,17 +1715,17 @@
                               <span class="text-blue-bold">{{ scope.row.valveNo || '—' }}</span>
                              </template>
                            </el-table-column>
-                           <el-table-column prop="medium" label="使用介质" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="medium" label="使用介质" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
                          </el-table-column>
 
                          <el-table-column label="检验结果" align="center">
-                           <el-table-column prop="appearance" label="外观检查" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="internal" label="内部检查" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="mouth" label="瓶口检查" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="hydro" label="水压试验" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="drying" label="内部干燥" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="valveCheck" label="瓶阀检验" width="100" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="airtightness" label="气密性试验" width="110" header-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="appearance" label="外观检查" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="internal" label="内部检查" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="mouth" label="瓶口检查" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="hydro" label="水压试验" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="drying" label="内部干燥" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="valveCheck" label="瓶阀检验" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                           <el-table-column prop="airtightness" label="气密性试验" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
                          </el-table-column>
 
                          <el-table-column label="结论" width="120" fixed="right">
@@ -2455,7 +2508,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-30 09:03:01',
+        lastUpdated: '2026-01-30 09:08:16',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
