@@ -113,6 +113,13 @@
     }
     .summary-yellow-header { background: #F5E38A !important; color: #000; }
     .summary-yellow-cell { background: #FFF7C2; }
+    .device-remark-cell .cell {
+      white-space: pre-line;
+      word-break: break-all;
+      line-height: 18px;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
     .gas-summary-stack {
       display: flex;
       flex-direction: column;
@@ -383,6 +390,7 @@
             <el-table
               ref="recordEntrustTable"
               :data="filteredRecordEntrustList"
+              default-expand-all
               border
               style="width: 100%"
               size="small"
@@ -392,7 +400,11 @@
                   <el-table :data="getPagedDevices(props.row)" size="small" border>
                     <el-table-column label="气瓶编号" prop="no" width="140"></el-table-column>
                     <el-table-column label="样品型号" prop="model" width="140" show-overflow-tooltip></el-table-column>
-                    <el-table-column label="备注" prop="remark" show-overflow-tooltip></el-table-column>
+                    <el-table-column label="备注" width="160" class-name="device-remark-cell">
+                      <template slot-scope="scope">
+                        <span>{{ formatRemark(scope.row.remark) }}</span>
+                      </template>
+                    </el-table-column>
                     <el-table-column label="检测员" prop="executor" width="100"></el-table-column>
                   <el-table-column label="状态" prop="status" width="120">
                     <template slot-scope="scope">
@@ -447,7 +459,7 @@
                       background
                       layout="total, sizes, prev, pager, next"
                       :current-page="props.row.pagination.currentPage"
-                      :page-sizes="[5, 10, 50, 100]"
+                      :page-sizes="[10, 20, 50, 100]"
                       :page-size="props.row.pagination.pageSize"
                       :total="getVisibleDevices(props.row).length"
                       @size-change="(val) => handleDeviceSizeChange(val, props.row)"
@@ -2573,7 +2585,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-30 09:40:07',
+        lastUpdated: '2026-01-30 11:28:39',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -3039,7 +3051,7 @@
             entrustDate: '2024-01-12',
             acceptor: '张三',
             expectedReportDate: '2024-01-20',
-            pagination: { currentPage: 1, pageSize: 5 },
+            pagination: { currentPage: 1, pageSize: 10 },
             devices: [
               { no: 'GC-001-001', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '未录入', hasRecord: false, remark: '' },
               { no: 'GC-001-002', model: 'Q-50L', deviceType: 'gas', executor: '张强', status: '已录入', hasRecord: true, remark: '待核对' },
@@ -3058,7 +3070,7 @@
             entrustDate: '2024-01-15',
             acceptor: '李四',
             expectedReportDate: '2024-01-22',
-            pagination: { currentPage: 1, pageSize: 5 },
+            pagination: { currentPage: 1, pageSize: 10 },
             devices: [
               { no: 'SV-OL-001', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '已提交', hasRecord: true, remark: '在线校验场景' },
               { no: 'SV-OL-002', model: 'A48Y-16C', deviceType: 'valve', executor: '张强', status: '未录入', hasRecord: false, remark: '需登高作业' }
@@ -3073,7 +3085,7 @@
             entrustDate: '2024-01-16',
             acceptor: '王五',
             expectedReportDate: '2024-01-23',
-            pagination: { currentPage: 1, pageSize: 5 },
+            pagination: { currentPage: 1, pageSize: 10 },
             devices: [
               { no: 'SV-OF-001', model: 'A42Y-25', deviceType: 'valve', executor: '李敏', status: '已提交', hasRecord: true, remark: '离线校验场景' },
               { no: 'SV-OF-002', model: 'A42Y-25', deviceType: 'valve', executor: '张强', status: '未录入', hasRecord: false, remark: '需解体' }
@@ -3348,6 +3360,16 @@
         }
       },
       methods: {
+        formatRemark(text) {
+          const s = (text == null ? '' : String(text)).trim()
+          if (!s) return '-'
+          const chunkSize = 10
+          const parts = []
+          for (let i = 0; i < s.length; i += chunkSize) {
+            parts.push(s.slice(i, i + chunkSize))
+          }
+          return parts.join('\n')
+        },
         getReportButtonText(row) {
           if (!row) return '生成报告'
           if (this.gasReportStates[row.no] && this.gasReportStates[row.no].status === 'draft') {
@@ -3777,7 +3799,7 @@
           return entrust.devices
         },
         getAssignEntrust(row) {
-          return this.recordEntrustList.find(e => e.no === row.no) || { pagination: { currentPage: 1, pageSize: 5 } }
+          return this.recordEntrustList.find(e => e.no === row.no) || { pagination: { currentPage: 1, pageSize: 10 } }
         },
         getAssignPagedDevices(row) {
           const entrust = this.recordEntrustList.find(e => e.no === row.no)
