@@ -1735,16 +1735,16 @@
                                      <div class="gas-summary-field-label">瓶阀编号</div>
                                      <div class="gas-summary-field-value">{{ scope.row.valveNo || '—' }}</div>
                                    </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">使用介质</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.medium || '—' }}</div>
+                                   </div>
                                  </div>
                                </div>
 
                                <div class="gas-summary-section">
                                  <div class="gas-summary-section-title">检验结果</div>
                                  <div class="gas-summary-grid">
-                                   <div class="gas-summary-field is-prefilled">
-                                     <div class="gas-summary-field-label">使用介质</div>
-                                     <div class="gas-summary-field-value">{{ scope.row.medium || '—' }}</div>
-                                   </div>
                                    <div class="gas-summary-field is-prefilled">
                                      <div class="gas-summary-field-label">外观检查</div>
                                      <div class="gas-summary-field-value">{{ scope.row.appearance || '—' }}</div>
@@ -2559,7 +2559,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-30 09:15:46',
+        lastUpdated: '2026-01-30 09:40:07',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
