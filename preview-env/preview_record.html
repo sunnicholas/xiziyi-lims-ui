@@ -1693,42 +1693,93 @@
                      <el-card shadow="never" class="mb8">
                        <div slot="header" class="clearfix"><span>定期检验结论汇总</span></div>
                        <el-table :data="recordForm.gas.summary.items" border size="small">
-                         <el-table-column label="基本信息" align="center">
-                           <el-table-column prop="model" label="气瓶型号" width="120" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="cylinderNo" label="气瓶编号" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="waterVolume" label="气瓶水容积L" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="nominalPressure" label="公称工作压力MPa" width="140" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="testPressure" label="水压试验压力(MPa)" width="140" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="trialPressure" label="试验压力" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column label="制造标记" width="110">
-                             <template slot-scope="scope">
-                              <el-input v-model="scope.row.mfgMark" size="mini" placeholder="请输入"></el-input>
-                             </template>
-                           </el-table-column>
-                           <el-table-column label="检验标记" width="110">
-                             <template slot-scope="scope">
-                              <el-input v-model="scope.row.inspMark" size="mini" placeholder="请输入"></el-input>
-                             </template>
-                           </el-table-column>
-                           <el-table-column label="瓶阀编号" width="110">
-                             <template slot-scope="scope">
-                              <span class="text-blue-bold">{{ scope.row.valveNo || '—' }}</span>
-                             </template>
-                           </el-table-column>
-                           <el-table-column prop="medium" label="使用介质" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
+                         <el-table-column label="定期检验结论" min-width="720">
+                           <template slot-scope="scope">
+                             <div class="gas-summary-stack">
+                               <div class="gas-summary-section">
+                                 <div class="gas-summary-section-title">基本信息</div>
+                                 <div class="gas-summary-grid">
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">气瓶型号</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.model || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">气瓶编号</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.cylinderNo || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">气瓶水容积L</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.waterVolume || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">公称工作压力MPa</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.nominalPressure || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">水压试验压力(MPa)</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.testPressure || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">试验压力</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.trialPressure || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field">
+                                     <div class="gas-summary-field-label">制造标记</div>
+                                     <el-input v-model="scope.row.mfgMark" size="mini" placeholder="请输入"></el-input>
+                                   </div>
+                                   <div class="gas-summary-field">
+                                     <div class="gas-summary-field-label">检验标记</div>
+                                     <el-input v-model="scope.row.inspMark" size="mini" placeholder="请输入"></el-input>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">瓶阀编号</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.valveNo || '—' }}</div>
+                                   </div>
+                                 </div>
+                               </div>
+
+                               <div class="gas-summary-section">
+                                 <div class="gas-summary-section-title">检验结果</div>
+                                 <div class="gas-summary-grid">
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">使用介质</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.medium || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">外观检查</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.appearance || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">内部检查</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.internal || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">瓶口检查</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.mouth || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">水压试验</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.hydro || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">内部干燥</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.drying || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">瓶阀检验</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.valveCheck || '—' }}</div>
+                                   </div>
+                                   <div class="gas-summary-field is-prefilled">
+                                     <div class="gas-summary-field-label">气密性试验</div>
+                                     <div class="gas-summary-field-value">{{ scope.row.airtightness || '—' }}</div>
+                                   </div>
+                                 </div>
+                               </div>
+                             </div>
+                           </template>
                          </el-table-column>
 
-                         <el-table-column label="检验结果" align="center">
-                           <el-table-column prop="appearance" label="外观检查" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="internal" label="内部检查" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="mouth" label="瓶口检查" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="hydro" label="水压试验" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="drying" label="内部干燥" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="valveCheck" label="瓶阀检验" width="100" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                           <el-table-column prop="airtightness" label="气密性试验" width="110" label-class-name="summary-yellow-header" class-name="summary-yellow-cell"></el-table-column>
-                         </el-table-column>
-
-                         <el-table-column label="结论" width="120" fixed="right">
+                         <el-table-column label="结论" width="140" fixed="right">
                            <template slot-scope="scope">
                              <el-select v-model="scope.row.conclusion" size="mini" placeholder="请选择" style="width: 100%;">
                                <el-option label="合格" value="合格"></el-option>
@@ -2508,7 +2559,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-30 09:08:16',
+        lastUpdated: '2026-01-30 09:15:46',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
