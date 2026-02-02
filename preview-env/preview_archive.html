@@ -11,9 +11,59 @@
     #app { display: flex; height: 100vh; overflow: hidden; }
     
     /* 侧边栏 */
-    .sidebar-container { width: 220px; background-color: #304156; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
-    .logo { height: 50px; line-height: 50px; text-align: center; font-size: 16px; font-weight: 600; background-color: #2b2f3a; color: #fff; border-bottom: 1px solid #1f2d3d; }
+    .sidebar-container { width: 220px; background-color: #304156; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; transition: width 0.3s ease-in-out; }
+    .sidebar-container.collapsed { width: 64px; }
+    .logo { height: 50px; line-height: 50px; text-align: center; font-size: 16px; font-weight: 600; background-color: #2b2f3a; color: #fff; border-bottom: 1px solid #1f2d3d; transition: all 0.3s ease-in-out; }
+    .sidebar-container.collapsed .logo { font-size: 12px; }
     .el-menu { border-right: none; }
+    .sidebar-toggle { position: absolute; top: 50%; right: -10px; transform: translateY(-50%); width: 20px; height: 20px; background-color: #409EFF; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: all 0.3s ease-in-out; }
+    .sidebar-toggle:hover { background-color: #66b1ff; }
+    .sidebar-container.collapsed .el-menu-item span,
+    .sidebar-container.collapsed .el-submenu__title span {
+      display: none;
+    }
+    .sidebar-container.collapsed .el-menu-item,
+    .sidebar-container.collapsed .el-submenu__title {
+      padding: 0 20px !important;
+      text-align: center;
+    }
+    .sidebar-container .el-menu-item,
+    .sidebar-container .el-submenu__title {
+      position: relative;
+    }
+    .sidebar-container.collapsed .el-menu-item .menu-tooltip,
+    .sidebar-container.collapsed .el-submenu__title .menu-tooltip {
+      display: block;
+    }
+    .menu-tooltip {
+      display: none;
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 1000;
+      margin-left: 8px;
+    }
+    .menu-tooltip::after {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 4px;
+      border-style: solid;
+      border-color: transparent rgba(0, 0, 0, 0.8) transparent transparent;
+    }
+    .sidebar-container.collapsed .el-menu-item:hover .menu-tooltip,
+    .sidebar-container.collapsed .el-submenu__title:hover .menu-tooltip {
+      display: block;
+    }
     
     /* 主体区域 */
     .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
@@ -216,8 +266,11 @@
 <body>
   <div id="app" v-cloak>
     <!-- 侧边栏 -->
-    <div class="sidebar-container">
+    <div class="sidebar-container" :class="{ collapsed: sidebarCollapsed }">
       <div class="logo">西自仪 LIMS</div>
+      <div class="sidebar-toggle" @click="toggleSidebar">
+        <i :class="sidebarCollapsed ? 'el-icon-s-unfold' : 'el-icon-s-fold'"></i>
+      </div>
       <el-menu
         :default-active="activeMenu"
         background-color="#304156"
@@ -227,31 +280,31 @@
       >
         <el-menu-item index="business">
           <i class="el-icon-s-order"></i>
-          <span slot="title">业务受理</span>
+          <span slot="title">业务受理<span class="menu-tooltip">业务受理</span></span>
         </el-menu-item>
         <el-menu-item index="sample">
           <i class="el-icon-box"></i>
-          <span slot="title">样品管理</span>
+          <span slot="title">样品管理<span class="menu-tooltip">样品管理</span></span>
         </el-menu-item>
         <el-menu-item index="assign">
           <i class="el-icon-s-custom"></i>
-          <span slot="title">任务分配</span>
+          <span slot="title">任务分配<span class="menu-tooltip">任务分配</span></span>
         </el-menu-item>
         <el-submenu index="record">
           <template slot="title">
             <i class="el-icon-edit-outline"></i>
-            <span>原始记录</span>
+            <span>原始记录<span class="menu-tooltip">原始记录</span></span>
           </template>
           <el-menu-item index="record-list">记录列表</el-menu-item>
           <el-menu-item index="record-entry" style="display:none">录入详情</el-menu-item>
         </el-submenu>
         <el-menu-item index="audit">
           <i class="el-icon-s-check"></i>
-          <span slot="title">审核管理</span>
+          <span slot="title">审核管理<span class="menu-tooltip">审核管理</span></span>
         </el-menu-item>
         <el-menu-item index="archive">
           <i class="el-icon-s-claim"></i>
-          <span slot="title">审核归档</span>
+          <span slot="title">审核归档<span class="menu-tooltip">审核归档</span></span>
         </el-menu-item>
       </el-menu>
     </div>
@@ -791,6 +844,7 @@
       data: {
         activeMenu: 'archive',
         activeTab: 'special',
+        sidebarCollapsed: false,
         
         lastUpdated: '2026-01-23 16:30:00',
         
@@ -2024,7 +2078,11 @@
             this.$message.success('已提交' + count + '条原始记录')
           }
         },
+        toggleSidebar() {
+          this.sidebarCollapsed = !this.sidebarCollapsed;
+        },
         handleMenuSelect(index) {
+          this.sidebarCollapsed = false;
           const map = {
             'business': 'preview_business.html',
             'sample': 'preview_sample.html',

@@ -7,6 +7,13 @@
 6、注意我们使用的是北京时间。
 7、每一次对话后都想想是否有什么有用的信息可以加入到 skills 或规则中，如果有就对其进行更新。
 
+## Project Goals and Requirements (Added 2026-02-02)
+1. **Online Preview Prototype**: The primary goal of the project is to create a prototype that can be previewed online using GitHub Pages.
+2. **Smooth Navigation**: Ensure smooth page browsing and menu navigation between different functional modules.
+3. **Complete Design Logic**: Focus on comprehensive design logic and sufficient page use cases to cover the entire business process.
+4. **GitHub Pages Deployment**: Ensure all files are properly structured for GitHub Pages deployment without any build processes.
+5. **Prototype Functionality**: The prototype should demonstrate complete business flows and user interactions, even if some features are simulated.
+
 ## UI Design Patterns (Added 2026-01-21)
 1. **Document-Style Forms**: For official report previews, use a "Paper" metaphor (white background, padding, shadow, standard fonts like SimSun).
 2. **Inline Editing**: For document-style forms, use underline-only input boxes (`.inline-input`) to mimic handwritten/typed lines.
