@@ -1387,7 +1387,7 @@
                          <el-form-item label="爆破片是否更换">
                            <el-input v-model="recordForm.gas.appearance.valve.burstDiscReplaced"></el-input>
                          </el-form-item>
-                         <el-form-item label="瓶阀检验结论">
+                         <el-form-item label="校验结">
                            <el-radio-group v-model="recordForm.gas.appearance.valve.result">
                              <el-radio label="合格">合格</el-radio>
                              <el-radio label="修复">修复</el-radio>
@@ -2173,7 +2173,7 @@
                         </el-row>
                         <el-row>
                              <el-col :span="8">
-                               <el-form-item label="校验结论">
+                               <el-form-item label="校验结">
                                   <el-radio-group v-model="recordForm.valveOnline.calibration.result">
                                     <el-radio label="合格">合格</el-radio>
                                     <el-radio label="不合格">不合格</el-radio>
@@ -2226,7 +2226,7 @@
                   </el-tab-pane>
                   <el-tab-pane label="校验报告" name="report">
                       <div class="report-container" style="padding: 10px;">
-                          <div style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px;">安全阀校验报告</div>
+                          
                           <div style="text-align: right; margin-bottom: 10px;">报告编号：{{ recordForm.valveReport.header.reportNo || '系统自动生成' }}</div>
                           
                           <el-form :model="recordForm.valveReport" label-width="140px" size="small" class="report-form" border>
@@ -2264,9 +2264,7 @@
                                <el-col :span="12"><el-form-item label="整定压力(MPa)"><el-input v-model="recordForm.valveReport.calibration.setPressure"></el-input></el-form-item></el-col>
                                <el-col :span="12"><el-form-item label="密封试验压力(MPa)"><el-input v-model="recordForm.valveReport.calibration.sealPressure"></el-input></el-form-item></el-col>
                              </el-row>
-                             <el-row>
-                               <el-col :span="24"><el-form-item label="校验结论"><el-input v-model="recordForm.valveReport.calibration.result"></el-input></el-form-item></el-col>
-                             </el-row>
+                            
                              <el-row>
                                <el-col :span="24"><el-form-item label="维护检修情况说明"><el-input type="textarea" :rows="3" v-model="recordForm.valveReport.calibration.desc"></el-input></el-form-item></el-col>
                              </el-row>
@@ -2463,7 +2461,7 @@
                             
                             <el-row>
                               <el-col :span="8"><el-form-item label="校验有效期"><el-input v-model="recordForm.valveOffline.test.validDate"></el-input></el-form-item></el-col>
-                              <el-col :span="8"><el-form-item label="校验结论"><el-input v-model="recordForm.valveOffline.test.result"></el-input></el-form-item></el-col>
+                              <el-col :span="8"><el-form-item label="校验结"><el-input v-model="recordForm.valveOffline.test.result"></el-input></el-form-item></el-col>
                               <el-col :span="8"><el-form-item label="备注"><el-input v-model="recordForm.valveOffline.test.remark"></el-input></el-form-item></el-col>
                             </el-row>
                          </el-form>
@@ -2508,7 +2506,7 @@
                    </el-tab-pane>
                    <el-tab-pane label="校验报告" name="report">
                        <div class="report-container" style="padding: 10px;">
-                           <div style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px;">安全阀校验报告</div>
+                           
                            <div style="text-align: right; margin-bottom: 10px;">报告编号：{{ recordForm.valveReport.header.reportNo || '系统自动生成' }}</div>
                            
                            <el-form :model="recordForm.valveReport" label-width="140px" size="small" class="report-form" border>
@@ -2546,9 +2544,7 @@
                                 <el-col :span="12"><el-form-item label="整定压力(MPa)"><el-input v-model="recordForm.valveReport.calibration.setPressure"></el-input></el-form-item></el-col>
                                 <el-col :span="12"><el-form-item label="密封试验压力(MPa)"><el-input v-model="recordForm.valveReport.calibration.sealPressure"></el-input></el-form-item></el-col>
                               </el-row>
-                              <el-row>
-                                <el-col :span="24"><el-form-item label="校验结论"><el-input v-model="recordForm.valveReport.calibration.result"></el-input></el-form-item></el-col>
-                              </el-row>
+                              
                               <el-row>
                                 <el-col :span="24"><el-form-item label="维护检修情况说明"><el-input type="textarea" :rows="3" v-model="recordForm.valveReport.calibration.desc"></el-input></el-form-item></el-col>
                               </el-row>
@@ -2565,9 +2561,9 @@
                </div>
                
               <el-card shadow="never">
-               <div slot="header"><span>检验结论</span></div>
+
                <el-form size="small" label-width="100px">
-                 <el-form-item label="综合判定">
+                 <el-form-item label="校验结论">
                     <el-radio-group v-model="recordForm.gas.result" v-if="currentRecordType==='gas'">
                       <el-radio label="合格" border></el-radio>
                       <el-radio label="报废" border class="text-danger"></el-radio>
@@ -2638,7 +2634,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-01-30 11:28:39',
+        lastUpdated: '2026-02-03 17:40:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
