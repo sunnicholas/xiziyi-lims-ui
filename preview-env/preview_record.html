@@ -450,7 +450,12 @@
             <el-table-column type="expand">
               <template slot-scope="props">
                   <el-table :data="getPagedDevices(props.row)" size="small" border>
-                    <el-table-column label="气瓶编号" prop="no" width="140"></el-table-column>
+                    <el-table-column label="样品编号" prop="no" width="140"></el-table-column>
+                    <el-table-column label="样品名称" width="140" show-overflow-tooltip>
+                      <template slot-scope="scope">
+                        <span>{{ scope.row.sampleName || scope.row.bottleName || (scope.row.deviceType === 'gas' ? '气瓶' : (scope.row.deviceType === 'valve' ? '安全阀' : '样品')) }}</span>
+                      </template>
+                    </el-table-column>
                     <el-table-column label="样品型号" prop="model" width="140" show-overflow-tooltip></el-table-column>
                     <el-table-column label="备注" width="160" class-name="device-remark-cell">
                       <template slot-scope="scope">
@@ -2642,7 +2647,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-02-04 10:15:00',
+        lastUpdated: '2026-02-04 10:31:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
