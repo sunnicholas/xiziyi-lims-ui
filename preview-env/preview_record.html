@@ -1018,6 +1018,7 @@
              <span class="el-dialog__title">记录/报告录入编辑</span>
              <el-tag v-if="currentRecordType === 'valve' && recordForm.valveType === 'online'" type="success" size="small" style="margin-left: 10px; vertical-align: middle;">安全阀(在线)</el-tag>
              <el-tag v-else-if="currentRecordType === 'valve' && recordForm.valveType === 'offline'" type="warning" size="small" style="margin-left: 10px; vertical-align: middle;">安全阀(离线)</el-tag>
+             <el-tag v-else-if="currentRecordType === 'gas'" type="info" size="small" effect="dark" style="margin-left: 10px; vertical-align: middle;">气瓶</el-tag>
           </div>
           <div style="display: flex; flex-direction: column; height: 100%;">
             <div style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
@@ -2641,7 +2642,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-02-04 10:08:00',
+        lastUpdated: '2026-02-04 10:15:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
