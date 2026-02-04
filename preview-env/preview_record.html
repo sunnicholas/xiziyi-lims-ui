@@ -2173,12 +2173,15 @@
                         </el-row>
                         <el-row>
                              <el-col :span="8">
-                               <el-form-item label="校验结">
+                               <el-form-item label="校验结论">
                                   <el-radio-group v-model="recordForm.valveOnline.calibration.result">
                                     <el-radio label="合格">合格</el-radio>
                                     <el-radio label="不合格">不合格</el-radio>
                                   </el-radio-group>
                                </el-form-item>
+                             </el-col>
+                             <el-col :span="8">
+                               <el-form-item label="校验有效期"><span class="text-blue-bold">3年</span></el-form-item>
                              </el-col>
                         </el-row>
                         </el-form>
@@ -2270,7 +2273,7 @@
                              </el-row>
                              <el-row>
                                <el-col :span="12"><el-form-item label="校验日期"><el-date-picker v-model="recordForm.valveReport.dates.checkDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
-                               <el-col :span="12"><el-form-item label="下次校验日期"><el-date-picker v-model="recordForm.valveReport.dates.nextCheckDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
+                               <el-col :span="12"><el-form-item label="下次校验日期"><div class="inline-input text-blue-bold">{{ recordForm.valveReport.dates.nextCheckDate }}</div></el-form-item></el-col>
                              </el-row>
                              
 
@@ -2460,8 +2463,8 @@
                             </el-table>
                             
                             <el-row>
-                              <el-col :span="8"><el-form-item label="校验有效期"><el-input v-model="recordForm.valveOffline.test.validDate"></el-input></el-form-item></el-col>
                               <el-col :span="8"><el-form-item label="校验结"><el-input v-model="recordForm.valveOffline.test.result"></el-input></el-form-item></el-col>
+                              <el-col :span="8"><el-form-item label="校验有效期"><span class="text-blue-bold">3年</span></el-form-item></el-col>
                               <el-col :span="8"><el-form-item label="备注"><el-input v-model="recordForm.valveOffline.test.remark"></el-input></el-form-item></el-col>
                             </el-row>
                          </el-form>
@@ -2550,7 +2553,7 @@
                               </el-row>
                               <el-row>
                                 <el-col :span="12"><el-form-item label="校验日期"><el-date-picker v-model="recordForm.valveReport.dates.checkDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
-                                <el-col :span="12"><el-form-item label="下次校验日期"><el-date-picker v-model="recordForm.valveReport.dates.nextCheckDate" type="date" style="width: 100%;"></el-date-picker></el-form-item></el-col>
+                                <el-col :span="12"><el-form-item label="下次校验日期"><div class="inline-input text-blue-bold">{{ recordForm.valveReport.dates.nextCheckDate }}</div></el-form-item></el-col>
                               </el-row>
                            </el-form>
                        </div>
@@ -2564,20 +2567,24 @@
 
                <el-form size="small" label-width="100px">
                  <el-form-item label="校验结论">
-                    <el-radio-group v-model="recordForm.gas.result" v-if="currentRecordType==='gas'">
-                      <el-radio label="合格" border></el-radio>
-                      <el-radio label="报废" border class="text-danger"></el-radio>
-                    </el-radio-group>
-                    <div v-else>
-                      <el-radio-group v-model="recordForm.valveOnline.calibration.result" v-if="recordForm.valveType === 'online'">
-                        <el-radio label="合格" border></el-radio>
-                        <el-radio label="不合格" border class="text-danger"></el-radio>
-                      </el-radio-group>
-                      <el-radio-group v-model="recordForm.valveOffline.test.result" v-else>
-                        <el-radio label="合格" border></el-radio>
-                        <el-radio label="不合格" border class="text-danger"></el-radio>
-                      </el-radio-group>
-                   </div>
+                   <template v-if="currentRecordType==='gas'">
+                     <el-radio-group v-model="recordForm.gas.result">
+                       <el-radio label="合格" border></el-radio>
+                       <el-radio label="报废" border class="text-danger"></el-radio>
+                     </el-radio-group>
+                     <span class="text-blue-bold" style="margin-left: 12px;">校验有效期：3年</span>
+                   </template>
+                   <template v-else>
+                     <el-radio-group v-model="recordForm.valveOnline.calibration.result" v-if="recordForm.valveType === 'online'">
+                       <el-radio label="合格" border></el-radio>
+                       <el-radio label="不合格" border class="text-danger"></el-radio>
+                     </el-radio-group>
+                     <el-radio-group v-model="recordForm.valveOffline.test.result" v-else>
+                       <el-radio label="合格" border></el-radio>
+                       <el-radio label="不合格" border class="text-danger"></el-radio>
+                     </el-radio-group>
+                     <span class="text-blue-bold" style="margin-left: 12px;">校验有效期：3年</span>
+                   </template>
                  </el-form-item>
                  <el-form-item label="备注/意见">
                    <el-input type="textarea" :rows="2"></el-input>
@@ -2634,7 +2641,7 @@
           }
         }, // Key: entrustNo, Value: { status: 'draft'|'submitted', data: ... }
         
-        lastUpdated: '2026-02-03 17:40:00',
+        lastUpdated: '2026-02-04 10:08:00',
         
         dialogTypeSelectVisible: false,
         dialogSubTypeVisible: false,
@@ -3224,7 +3231,11 @@
         currentReport: null
       },
       created() {
-        // this.lastUpdated = this.formatUpdateTime(new Date())
+        const today = new Date()
+        const check = this.formatDate(today)
+        const next = this.formatDate(this.addYears(today, 3))
+        this.recordForm.valveReport.dates.checkDate = check
+        this.recordForm.valveReport.dates.nextCheckDate = next
       },
       computed: {
         currentUser() {
@@ -3383,6 +3394,11 @@
         selectedExecutor(val) {
           this.workInstructionReceiver = val
         },
+        'recordForm.valveReport.dates.checkDate'(val) {
+          if (!val) return
+          const d = typeof val === 'string' ? new Date(val) : val
+          this.recordForm.valveReport.dates.nextCheckDate = this.formatDate(this.addYears(d, 3))
+        },
         valveMainTab(val) {
           if (val === 'report') {
             this.syncValveReportData()
@@ -3409,6 +3425,18 @@
         }
       },
       methods: {
+        formatDate(date) {
+          const d = new Date(date)
+          const y = d.getFullYear()
+          const m = String(d.getMonth() + 1).padStart(2, '0')
+          const day = String(d.getDate()).padStart(2, '0')
+          return `${y}-${m}-${day}`
+        },
+        addYears(date, years) {
+          const d = new Date(date)
+          d.setFullYear(d.getFullYear() + years)
+          return d
+        },
         formatRemark(text) {
           const s = (text == null ? '' : String(text)).trim()
           if (!s) return '-'
