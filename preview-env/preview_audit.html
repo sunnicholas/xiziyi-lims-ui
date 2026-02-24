@@ -298,14 +298,15 @@
           <el-menu-item index="record-list">记录列表</el-menu-item>
           <el-menu-item index="record-entry" style="display:none">录入详情</el-menu-item>
         </el-submenu>
-        <el-menu-item index="audit">
-          <i class="el-icon-s-check"></i>
-          <span slot="title">审核管理<span class="menu-tooltip">审核管理</span></span>
-        </el-menu-item>
-        <el-menu-item index="archive">
-          <i class="el-icon-s-claim"></i>
-          <span slot="title">审核归档<span class="menu-tooltip">审核归档</span></span>
-        </el-menu-item>
+        <el-submenu index="audit-management">
+          <template slot="title">
+            <i class="el-icon-s-check"></i>
+            <span>审批管理<span class="menu-tooltip">审批管理</span></span>
+          </template>
+          <el-menu-item index="audit">特种设备审核</el-menu-item>
+          <el-menu-item index="approve">特种设备批准</el-menu-item>
+          <el-menu-item index="archive">特种设备归档</el-menu-item>
+        </el-submenu>
       </el-menu>
       <!-- 委托单详情弹窗 -->
     <el-dialog title="委托单详情" :visible.sync="entrustDetailVisible" width="800px">
@@ -378,8 +379,8 @@
 
       <div class="app-main">
         
-        <!-- ================= 页面 5: 审核管理 ================= -->
-        <div v-if="activeMenu === 'audit'" class="app-container">
+        <!-- ================= 页面 5: 审批管理 ================= -->
+        <div v-if="['audit', 'approve', 'archive'].includes(activeMenu)" class="app-container">
           <!-- 权限控制：仅限科室主任和检测部长 -->
           <div v-if="!isCurrentUserLeader" style="text-align: center; padding: 100px 0; color: #909399;">
             <i class="el-icon-lock" style="font-size: 64px; margin-bottom: 20px; color: #C0C4CC;"></i>
@@ -415,7 +416,7 @@
           </div>
 
           <el-tabs v-model="auditStage" type="card" class="mb8">
-            <el-tab-pane label="待审核" name="to-audit"></el-tab-pane>
+            <el-tab-pane :label="auditTabLabel" name="to-audit"></el-tab-pane>
             <el-tab-pane label="全部记录" name="all"></el-tab-pane>
           </el-tabs>
 
@@ -423,7 +424,7 @@
             v-if="!isCurrentUserLeader"
             type="info"
             show-icon
-            title="当前为检测员视角，仅可查看审核进度，不能执行审核操作。"
+            :title="`当前为检测员视角，仅可查看${pageActionName}进度，不能执行${pageActionName}操作。`"
             style="margin-bottom: 10px;"
           ></el-alert>
 
@@ -439,12 +440,13 @@
                       v-if="auditStage === 'to-audit'"
                       @click="handleBatchSelected(props.row, 'pass')"
                     >
-                      批量审核选中
+                      批量{{ pageActionName }}选中
                     </el-button>
                     <el-button
                       size="mini"
                       type="danger"
                       plain
+                      v-if="activeMenu !== 'archive'"
                       @click="handleBatchSelected(props.row, 'reject')"
                     >
                       批量驳回选中
@@ -493,9 +495,10 @@
                             :disabled="!canAuditApprove(scope.row.deviceRef, 'audit')"
                             @click="handleAuditAction(props.row, scope.row.deviceRef, 'audit-pass')"
                           >
-                            审核通过
+                            {{ activeMenu === 'archive' ? '归档' : (activeMenu === 'approve' ? '批准通过' : '审核通过') }}
                           </el-button>
                           <el-button
+                            v-if="activeMenu !== 'archive'"
                             size="mini"
                             type="danger"
                             plain
@@ -515,7 +518,7 @@
               <template slot-scope="scope"><el-link type="primary" @click="showEntrustDetail(scope.row)">{{ scope.row.no }}</el-link></template>
             </el-table-column>
             <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
-            <el-table-column label="已提交/总数" width="120" align="center">
+            <el-table-column :label="statsLabel" width="120" align="center">
               <template slot-scope="scope">
                 {{ getEntrustStats(scope.row).submitted }} / {{ getEntrustStats(scope.row).total }}
               </template>
@@ -530,10 +533,10 @@
                       plain
                       @click="handleBatchAuditAction(scope.row, 'audit-pass')"
                     >
-                      批量审核
+                      批量{{ pageActionName }}
                     </el-button>
                     <el-button
-                      v-if="auditStage !== 'all'"
+                      v-if="auditStage !== 'all' && activeMenu !== 'archive'"
                       size="mini"
                       type="danger"
                       plain
@@ -875,8 +878,10 @@
         </div>
         <el-button @click="dialogPreviewVisible = false">关 闭</el-button>
         <div style="display: inline-block; margin-left: 10px;" v-if="currentRecordDevice && canAuditApprove(currentRecordDevice, 'audit')">
-           <el-button type="primary" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'audit-pass')">审核通过</el-button>
-           <el-button type="danger" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'reject')">驳 回</el-button>
+           <el-button type="primary" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'audit-pass')">
+             {{ activeMenu === 'archive' ? '归档' : (activeMenu === 'approve' ? '批准通过' : '审核通过') }}
+           </el-button>
+           <el-button v-if="activeMenu !== 'archive'" type="danger" @click="handleAuditAction(currentRecordEntrust, currentRecordDevice, 'reject')">驳 回</el-button>
         </div>
       </span>
     </el-dialog>
@@ -893,7 +898,7 @@
         activeTab: 'special',
         sidebarCollapsed: false,
         
-        lastUpdated: '2026-01-23 15:45:00',
+        lastUpdated: '2026-02-24 10:00:00',
         entrustDetailVisible: false,
         currentEntrustDetail: {},
         sampleDetailVisible: false,
@@ -1223,7 +1228,28 @@
         currentReport: null
       },
 
+      created() {
+        const hash = window.location.hash.replace('#', '');
+        if (['audit', 'approve', 'archive'].includes(hash)) {
+          this.activeMenu = hash;
+        }
+      },
       computed: {
+        pageActionName() {
+          if (this.activeMenu === 'approve') return '批准';
+          if (this.activeMenu === 'archive') return '归档';
+          return '审核';
+        },
+        auditTabLabel() {
+           if (this.activeMenu === 'approve') return '待批准';
+           if (this.activeMenu === 'archive') return '待归档';
+           return '待审核';
+        },
+        statsLabel() {
+           if (this.activeMenu === 'approve') return '已审核/总数';
+           if (this.activeMenu === 'archive') return '已批准/总数';
+           return '已提交/总数';
+        },
         currentUser() {
           return this.userProfiles.find(u => u.id === this.currentUserId) || this.userProfiles[0]
         },
@@ -1389,13 +1415,17 @@
           const keyword = this.auditSearchKeyword.trim().toLowerCase()
           const statusFilter = this.auditStatusFilter
           const stage = this.auditStage
+          const mode = this.activeMenu
           const devices = entrust.devices || []
 
           // 1. 委托单级别过滤
-          // 待审核：仅显示状态为“已提交”的记录
           if (stage === 'to-audit') {
-             // 如果没有任何“已提交”的记录，则该委托单不显示
-             const hasPending = devices.some(d => d.status === '已提交');
+             const hasPending = devices.some(d => {
+               if (mode === 'audit') return d.status === '已提交';
+               if (mode === 'approve') return d.status === '已审核';
+               if (mode === 'archive') return d.status === '已批准';
+               return false;
+             });
              if (!hasPending) {
                  return [];
              }
@@ -1422,15 +1452,13 @@
             
             // 5. 阶段过滤
             if (stage === 'to-audit') {
-              // 待审核：仅显示“已提交”状态的记录
-              return device.status === '已提交';
+              if (mode === 'audit') return device.status === '已提交';
+              if (mode === 'approve') return device.status === '已审核';
+              if (mode === 'archive') return device.status === '已批准';
             } else if (stage === 'all') {
-              // 全部记录：
-              // 如果是领导，可以看到所有记录
               if (this.isCurrentUserLeader) {
                 return true;
               }
-              // 如果是普通员工，仅显示自己参与过的（审核或批准）
               const isMyAudit = device.auditor === this.currentUser.name;
               const isMyApprove = device.approver === this.currentUser.name;
               if (!isMyAudit && !isMyApprove) {
@@ -1494,7 +1522,7 @@
 
            const devices = this.getAuditDevices(entrust);
            const type = 'audit';
-           const typeText = '审核';
+           const typeText = this.pageActionName;
 
            this.$confirm(`确认批量${typeText}该委托单下的所有记录吗？`, '提示', {
              confirmButtonText: '确定',
@@ -1764,13 +1792,27 @@
           let myTotal = 0
           let mySubmitted = 0
           const user = this.currentUser
+          const mode = this.activeMenu
+
           devices.forEach(d => {
-            if (['已提交', '已审核', '已批准'].indexOf(d.status) !== -1) {
+            let isCounted = false;
+            if (mode === 'audit') {
+               // 只要提交过就算
+               if (['已提交', '已审核', '已批准', '已归档'].indexOf(d.status) !== -1) isCounted = true;
+            } else if (mode === 'approve') {
+               // 只要审核过就算
+               if (['已审核', '已批准', '已归档'].indexOf(d.status) !== -1) isCounted = true;
+            } else if (mode === 'archive') {
+               // 只要批准过就算
+               if (['已批准', '已归档'].indexOf(d.status) !== -1) isCounted = true;
+            }
+
+            if (isCounted) {
               submitted += 1
             }
             if (user && d.executor === user.name) {
               myTotal += 1
-              if (['已提交', '已审核', '已批准'].indexOf(d.status) !== -1) {
+              if (isCounted) {
                 mySubmitted += 1
               }
             }
@@ -1904,9 +1946,9 @@
           if (!ignoreRole && !this.isCurrentUserLeader) {
             return false
           }
-          if (type === 'audit') {
-            return device.status === '已提交'
-          }
+          if (this.activeMenu === 'audit') return device.status === '已提交';
+          if (this.activeMenu === 'approve') return device.status === '已审核';
+          if (this.activeMenu === 'archive') return device.status === '已批准';
           return false
         },
         canAuditApproveAny(entrust, type, ignoreRole = false) {
@@ -1919,10 +1961,12 @@
           if (!this.isCurrentUserLeader) {
             return false
           }
-          // 审核阶段和批准阶段都可以驳回
-          return device.status === '已提交' || device.status === '已审核'
+          if (this.activeMenu === 'audit') return device.status === '已提交';
+          if (this.activeMenu === 'approve') return device.status === '已审核';
+          return false;
         },
         handleAuditAction(entrust, device, action, skipConfirm = false) {
+          const mode = this.activeMenu;
           if (action === 'reject') {
             if (!this.canAuditReject(device)) return;
             this.currentAuditDevice = device;
@@ -1932,24 +1976,38 @@
           } else if (action === 'audit-pass') {
             if (!this.canAuditApprove(device, 'audit')) return;
             
-            const doAudit = () => {
-              device.status = '已审核';
-              device.auditor = this.currentUser.name;
-              device.auditTime = this.formatTime(new Date());
+            const doAction = () => {
+              if (mode === 'audit') {
+                 device.status = '已审核';
+                 device.auditor = this.currentUser.name;
+                 device.auditTime = this.formatTime(new Date());
+                 if (!skipConfirm) this.$message.success('已审核通过');
+              } else if (mode === 'approve') {
+                 device.status = '已批准';
+                 device.approver = this.currentUser.name;
+                 device.approveTime = this.formatTime(new Date());
+                 if (!skipConfirm) this.$message.success('已批准通过');
+              } else if (mode === 'archive') {
+                 device.status = '已归档';
+                 if (!skipConfirm) this.$message.success('已归档');
+              }
               if (!skipConfirm) {
-                this.$message.success('已审核通过');
-                this.dialogPreviewVisible = false; // 关闭预览弹窗
+                this.dialogPreviewVisible = false;
               }
             };
 
             if (skipConfirm) {
-              doAudit();
+              doAction();
             } else {
-              this.$confirm('确认审核通过该记录吗？', '提示', {
+              let confirmText = '确认审核通过该记录吗？';
+              if (mode === 'approve') confirmText = '确认批准通过该记录吗？';
+              if (mode === 'archive') confirmText = '确认归档该记录吗？';
+
+              this.$confirm(confirmText, '提示', {
                 confirmButtonText: '确定',
                 cancelButtonText: '取消',
                 type: 'success'
-              }).then(doAudit);
+              }).then(doAction);
             }
           }
         },
@@ -2026,13 +2084,18 @@
         },
         handleMenuSelect(index) {
           this.sidebarCollapsed = false;
+          if (['audit', 'approve', 'archive'].includes(index)) {
+            this.activeMenu = index;
+            window.location.hash = index;
+            this.auditStage = 'to-audit'; // 切换菜单时重置 Tab
+            return;
+          }
           const map = {
             'business': 'preview_business.html',
             'sample': 'preview_sample.html',
             'assign': 'preview_assign.html',
             'record-list': 'preview_record.html',
-            'audit': 'preview_audit.html',
-            'archive': 'preview_archive.html'
+            'record-entry': 'preview_record.html'
           };
           if (map[index]) {
             window.location.href = map[index];
@@ -2044,8 +2107,9 @@
             'assign': '任务分配',
             'record-list': '原始记录 / 列表',
             'record-entry': '原始记录 / 录入',
-            'audit': '审核管理',
-            'archive': '审核归档'
+            'audit': '特种设备审核',
+            'approve': '特种设备批准',
+            'archive': '特种设备归档'
           };
           return map[this.activeMenu] || '首页';
         },

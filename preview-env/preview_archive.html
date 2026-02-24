@@ -298,14 +298,15 @@
           <el-menu-item index="record-list">记录列表</el-menu-item>
           <el-menu-item index="record-entry" style="display:none">录入详情</el-menu-item>
         </el-submenu>
-        <el-menu-item index="audit">
-          <i class="el-icon-s-check"></i>
-          <span slot="title">审核管理<span class="menu-tooltip">审核管理</span></span>
-        </el-menu-item>
-        <el-menu-item index="archive">
-          <i class="el-icon-s-claim"></i>
-          <span slot="title">审核归档<span class="menu-tooltip">审核归档</span></span>
-        </el-menu-item>
+        <el-submenu index="audit-management">
+          <template slot="title">
+            <i class="el-icon-s-check"></i>
+            <span>审批管理<span class="menu-tooltip">审批管理</span></span>
+          </template>
+          <el-menu-item index="audit">特种设备审核</el-menu-item>
+          <el-menu-item index="approve">特种设备批准</el-menu-item>
+          <el-menu-item index="archive">特种设备归档</el-menu-item>
+        </el-submenu>
       </el-menu>
     </div>
 
@@ -2088,8 +2089,10 @@
             'sample': 'preview_sample.html',
             'assign': 'preview_assign.html',
             'record-list': 'preview_record.html',
-            'audit': 'preview_audit.html',
-            'archive': 'preview_archive.html'
+            'record-entry': 'preview_record.html',
+            'audit': 'preview_audit.html#audit',
+            'approve': 'preview_audit.html#approve',
+            'archive': 'preview_audit.html#archive'
           };
           if (map[index]) {
             window.location.href = map[index];
@@ -2140,8 +2143,9 @@
             'assign': '任务分配',
             'record-list': '原始记录 / 列表',
             'record-entry': '原始记录 / 录入',
-            'audit': '审核管理',
-            'archive': '审核归档'
+            'audit': '特种设备审核',
+            'approve': '特种设备批准',
+            'archive': '特种设备归档'
           };
           return map[this.activeMenu] || '首页';
         },
