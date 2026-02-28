@@ -490,10 +490,10 @@
             <el-table-column label="预计完成时间" prop="completionTime" width="180" align="center"></el-table-column>
             <el-table-column label="操作" width="200" align="center">
               <template slot-scope="scope">
+                <el-button v-if="scope.row.status !== '已财务确认' && scope.row.status !== '已出发'" size="mini" type="primary" icon="el-icon-finished" @click="openFinanceConfirmDetail(scope.row)">财务确认</el-button>
                 <el-button v-if="scope.row.status === '待出发'" size="mini" type="warning" icon="el-icon-refresh-left" @click="cancelTaskFromEntrust(scope.row)">撤销</el-button>
                 <el-button v-if="scope.row.status === '已财务确认'" size="mini" type="success" icon="el-icon-check" @click="confirmDeparture(scope.row)">确认已出发</el-button>
                 <el-button v-if="scope.row.status === '已出发'" size="mini" type="info" icon="el-icon-finished" disabled>派单结束</el-button>
-                <el-button v-if="scope.row.status !== '已财务确认' && scope.row.status !== '已出发'" size="mini" type="primary" icon="el-icon-finished" @click="openFinanceConfirmDetail(scope.row)">财务确认</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -2855,20 +2855,74 @@
             this.$message.warning('请填写必填项');
             return;
           }
-          const newNo = 'OS-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + (this.onSiteEntrustList.length + 1).toString().padStart(3, '0');
+          
           // Format the createTime if it is a Date object
           const formattedCreateTime = this.onSiteForm.createTime instanceof Date 
             ? this.formatUpdateTime(this.onSiteForm.createTime) 
             : this.onSiteForm.createTime;
-            
-          this.onSiteEntrustList.unshift({
-            no: newNo,
-            ...this.onSiteForm,
-            createTime: formattedCreateTime,
-            status: '待派单'
-          });
-          this.$message.success('预受理成功');
+
+          // Check if editing existing
+          const index = this.onSiteEntrustList.findIndex(item => item.no === this.onSiteForm.no);
+          if (index !== -1) {
+             // Update
+             this.$set(this.onSiteEntrustList, index, {
+               ...this.onSiteEntrustList[index],
+               ...this.onSiteForm,
+               createTime: formattedCreateTime
+             });
+             this.$message.success('修改成功');
+          } else {
+              // Create new
+              const newNo = 'OS-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + (this.onSiteEntrustList.length + 1).toString().padStart(3, '0');
+              this.onSiteEntrustList.unshift({
+                no: newNo,
+                ...this.onSiteForm,
+                createTime: formattedCreateTime,
+                status: '待派单'
+              });
+              this.$message.success('预受理成功');
+          }
           this.dialogOnSiteVisible = false;
+        },
+        
+        editOnSiteEntrust(row) {
+          this.onSiteForm = { ...row };
+          this.dialogOnSiteVisible = true;
+        },
+        deleteOnSiteEntrust(row) {
+          this.$confirm('确认删除此预受理单？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            const index = this.onSiteEntrustList.indexOf(row);
+            if (index !== -1) {
+              this.onSiteEntrustList.splice(index, 1);
+              this.$message.success('删除成功');
+            }
+          });
+        },
+        cancelTaskFromEntrust(row) {
+          this.$confirm('确认撤销已生成的任务单？撤销后任务单将被删除，预受理单恢复为待派单状态。', '确认撤销', {
+            confirmButtonText: '确定撤销',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+             // 1. Reset entrustment status
+             row.status = '待派单';
+             const taskNo = row.taskNo;
+             row.taskNo = '';
+             
+             // 2. Remove from task list
+             const taskIndex = this.onSiteTaskList.findIndex(t => t.taskNo === taskNo);
+             if (taskIndex !== -1) {
+               this.onSiteTaskList.splice(taskIndex, 1);
+             }
+             
+             this.$message.success('撤销成功，任务单已删除');
+          }).catch(() => {
+             this.$message.info('已取消撤销');
+          });
         },
         
         // 外检任务相关方法
