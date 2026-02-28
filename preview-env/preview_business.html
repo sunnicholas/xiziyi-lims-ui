@@ -257,6 +257,18 @@
           <i class="el-icon-s-custom"></i>
           <span slot="title">任务分配<span class="menu-tooltip">任务分配</span></span>
         </el-menu-item>
+        <el-submenu index="on-site-entrust">
+          <template slot="title">
+            <i class="el-icon-s-flag"></i>
+            <span>现场委托<span class="menu-tooltip">现场委托</span></span>
+          </template>
+          <el-menu-item index="on-site-pre-entrust" @click="activeMenu = 'on-site-pre-entrust'">
+            <span slot="title">预委托受理<span class="menu-tooltip">预委托受理</span></span>
+          </el-menu-item>
+          <el-menu-item index="on-site-task" @click="activeMenu = 'on-site-task'">
+            <span slot="title">外检任务管理<span class="menu-tooltip">外检任务管理</span></span>
+          </el-menu-item>
+        </el-submenu>
         <el-submenu index="record">
           <template slot="title">
             <i class="el-icon-edit-outline"></i>
@@ -346,6 +358,324 @@
 
       <div class="app-main">
         
+        <!-- ================= 页面: 现场委托 - 预委托受理 ================= -->
+        <div v-if="activeMenu === 'on-site-pre-entrust'" class="app-container">
+          <!-- 搜索区 -->
+          <el-form :inline="true" size="small" class="demo-form-inline">
+            <el-form-item label="委托单号"><el-input placeholder="请输入"></el-input></el-form-item>
+            <el-form-item label="委托单位"><el-input placeholder="请输入"></el-input></el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="el-icon-search">搜索</el-button>
+              <el-button icon="el-icon-refresh">重置</el-button>
+            </el-form-item>
+          </el-form>
+
+          <!-- 工具栏 -->
+          <el-row :gutter="10" class="mb8">
+            <el-col :span="1.5"><el-button type="primary" icon="el-icon-plus" size="mini" @click="addOnSiteEntrust">新增预委托</el-button></el-col>
+          </el-row>
+
+          <!-- 列表 -->
+          <el-table :data="onSiteEntrustList" border style="width: 100%" size="medium">
+            <el-table-column type="selection" width="55" align="center"></el-table-column>
+            <el-table-column label="委托单号" prop="no" width="180" align="center">
+               <template slot-scope="scope"><el-link type="primary">{{ scope.row.no }}</el-link></template>
+            </el-table-column>
+            <el-table-column label="委托单位" prop="company" show-overflow-tooltip></el-table-column>
+            <el-table-column label="联系人" prop="contact" width="120" align="center"></el-table-column>
+            <el-table-column label="联系电话" prop="phone" width="140" align="center"></el-table-column>
+            <el-table-column label="检测地址" prop="address" show-overflow-tooltip></el-table-column>
+            <el-table-column label="检测类型" prop="testType" width="120" align="center"></el-table-column>
+            <el-table-column label="受理时间" prop="createTime" width="160" align="center"></el-table-column>
+            <el-table-column label="状态" prop="status" width="100" align="center">
+              <template slot-scope="scope">
+                <el-tag :type="scope.row.status === '待派单' ? 'warning' : 'success'">{{ scope.row.status }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="关联任务单" prop="taskNo" width="160" align="center">
+              <template slot-scope="scope">
+                <el-link v-if="scope.row.taskNo" type="primary" @click="viewTaskDetails(scope.row.taskNo)">{{ scope.row.taskNo }}</el-link>
+                <span v-else>-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="220" align="center">
+              <template slot-scope="scope">
+                <el-button v-if="scope.row.status === '待派单'" size="mini" type="text" icon="el-icon-s-promotion" @click="createTaskFromEntrust(scope.row)">生成任务</el-button>
+                <el-button v-if="scope.row.status === '待派单'" size="mini" type="text" icon="el-icon-edit" @click="editOnSiteEntrust(scope.row)">修改</el-button>
+                <el-button v-if="scope.row.status === '待派单'" size="mini" type="text" icon="el-icon-delete" class="text-danger" @click="deleteOnSiteEntrust(scope.row)">删除</el-button>
+                <el-button v-if="scope.row.status === '已派单' && scope.row.taskNo" size="mini" type="warning" icon="el-icon-refresh-left" @click="cancelTaskFromEntrust(scope.row)">撤销</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 新增预委托弹窗 -->
+          <el-dialog title="新增现场委托（预受理）" :visible.sync="dialogOnSiteVisible" width="600px" append-to-body>
+            <el-form :model="onSiteForm" label-width="100px" size="small">
+              <el-form-item label="委托单位" required>
+                <el-input v-model="onSiteForm.company" placeholder="请输入委托单位名称"></el-input>
+              </el-form-item>
+              <el-form-item label="联系人" required>
+                <el-input v-model="onSiteForm.contact" placeholder="请输入联系人姓名"></el-input>
+              </el-form-item>
+              <el-form-item label="联系电话" required>
+                <el-input v-model="onSiteForm.phone" placeholder="请输入联系电话"></el-input>
+              </el-form-item>
+              <el-form-item label="检测地址" required>
+                <el-input v-model="onSiteForm.address" placeholder="请输入现场检测地址"></el-input>
+              </el-form-item>
+              <el-form-item label="检测类型" required>
+                <el-select v-model="onSiteForm.testType" style="width: 100%;">
+                  <el-option label="定期检验" value="定期检验"></el-option>
+                  <el-option label="监督检验" value="监督检验"></el-option>
+                  <el-option label="委托检验" value="委托检验"></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item label="受理时间" required>
+                <el-date-picker
+                  v-model="onSiteForm.createTime"
+                  type="datetime"
+                  placeholder="选择日期时间"
+                  style="width: 100%;">
+                </el-date-picker>
+              </el-form-item>
+              <el-form-item label="备注">
+                <el-input type="textarea" v-model="onSiteForm.remarks" :rows="3" placeholder="其他特殊要求"></el-input>
+              </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+              <el-button @click="dialogOnSiteVisible = false">取 消</el-button>
+              <el-button type="primary" @click="submitOnSiteEntrust">确 定</el-button>
+            </div>
+          </el-dialog>
+        </div>
+
+        <!-- ================= 页面: 现场委托 - 外检任务管理 ================= -->
+        <div v-if="activeMenu === 'on-site-task'" class="app-container">
+          <!-- 搜索区 -->
+          <el-form :inline="true" size="small" class="demo-form-inline">
+            <el-form-item label="任务单编号"><el-input v-model="onSiteTaskSearch.taskNo" placeholder="请输入"></el-input></el-form-item>
+            <el-form-item label="任务单位"><el-input v-model="onSiteTaskSearch.unit" placeholder="请输入"></el-input></el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="el-icon-search" @click="searchOnSiteTask">搜索</el-button>
+              <el-button icon="el-icon-refresh" @click="resetOnSiteTaskSearch">重置</el-button>
+            </el-form-item>
+          </el-form>
+
+          <!-- 工具栏 -->
+          <el-row :gutter="10" class="mb8">
+            <el-col :span="1.5"><el-button type="primary" icon="el-icon-plus" size="mini" @click="addOnSiteTask">新增任务</el-button></el-col>
+            <el-col :span="1.5"><el-button type="warning" plain icon="el-icon-download" size="mini" @click="exportOnSiteTask">导出</el-button></el-col>
+          </el-row>
+
+          <!-- 列表 -->
+          <el-table :data="onSiteTaskList" border style="width: 100%" size="medium" @selection-change="handleSelectionChange">
+            <el-table-column type="selection" width="55" align="center"></el-table-column>
+            <el-table-column label="任务单编号" prop="taskNo" width="180" align="center">
+               <template slot-scope="scope"><el-link type="primary" @click="viewTaskDetails(scope.row.taskNo)">{{ scope.row.taskNo }}</el-link></template>
+            </el-table-column>
+            <el-table-column label="任务单位" prop="unit" show-overflow-tooltip></el-table-column>
+            <el-table-column label="执行部门" prop="dept" width="140" align="center"></el-table-column>
+            <el-table-column label="检测地址" prop="address" show-overflow-tooltip></el-table-column>
+            <el-table-column label="检测器具" prop="deviceName" width="120" align="center"></el-table-column>
+            <el-table-column label="器具数量" prop="deviceCount" width="100" align="center"></el-table-column>
+            <el-table-column label="检测人员" prop="inspectors" width="180" align="center">
+              <template slot-scope="scope">{{ scope.row.inspectors }}</template>
+            </el-table-column>
+            <el-table-column label="状态" prop="status" width="120" align="center">
+              <template slot-scope="scope">
+                <el-tag :type="scope.row.status === '待出发' ? 'info' : (scope.row.status === '已财务确认' ? 'success' : (scope.row.status === '已出发' ? 'warning' : 'success'))">{{ scope.row.status || '待出发' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column label="预计出发时间" prop="departureTime" width="180" align="center"></el-table-column>
+            <el-table-column label="预计完成时间" prop="completionTime" width="180" align="center"></el-table-column>
+            <el-table-column label="操作" width="200" align="center">
+              <template slot-scope="scope">
+                <el-button v-if="scope.row.status === '待出发'" size="mini" type="warning" icon="el-icon-refresh-left" @click="cancelTaskFromEntrust(scope.row)">撤销</el-button>
+                <el-button v-if="scope.row.status === '已财务确认'" size="mini" type="success" icon="el-icon-check" @click="confirmDeparture(scope.row)">确认已出发</el-button>
+                <el-button v-if="scope.row.status === '已出发'" size="mini" type="info" icon="el-icon-finished" disabled>派单结束</el-button>
+                <el-button v-if="scope.row.status !== '已财务确认' && scope.row.status !== '已出发'" size="mini" type="primary" icon="el-icon-finished" @click="openFinanceConfirmDetail(scope.row)">财务确认</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-container" style="margin-top: 10px; text-align: right;">
+            <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="currentPage"
+              :page-sizes="[10, 20, 50, 100]"
+              :page-size="pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="onSiteTaskList.length">
+            </el-pagination>
+          </div>
+        </div>
+
+          <!-- 外检任务单弹窗 -->
+          <el-dialog :title="fromFinanceConfirm ? '财务确认 - 任务单详情' : '外检任务单'" :visible.sync="dialogOnSiteTaskVisible" width="1000px" append-to-body top="5vh">
+            <el-form :model="onSiteTaskForm" label-width="110px" size="small" border>
+              
+              <div class="section-header">基本信息</div>
+              <el-row :gutter="20">
+                <el-col :span="8">
+                  <el-form-item label="任务单编号">
+                    <el-input v-model="onSiteTaskForm.taskNo" placeholder="自动生成" disabled></el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="执行部门">
+                    <el-select v-model="onSiteTaskForm.dept" style="width: 100%;" :disabled="fromFinanceConfirm">
+                      <el-option label="特种设备检测室" value="特种设备检测室"></el-option>
+                      <el-option label="计量校准中心" value="计量校准中心"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="任务单位">
+                    <el-input v-model="onSiteTaskForm.unit" :disabled="fromFinanceConfirm"></el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="检测地址">
+                    <el-input v-model="onSiteTaskForm.address" :disabled="fromFinanceConfirm"></el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item label="公司联络员">
+                    <el-input v-model="onSiteTaskForm.liaison" :disabled="fromFinanceConfirm"></el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="6">
+                  <el-form-item label="联络员电话">
+                    <el-input v-model="onSiteTaskForm.liaisonPhone" :disabled="fromFinanceConfirm"></el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <div class="section-header">检测内容</div>
+              <el-row :gutter="20">
+                <el-col :span="8">
+                  <el-form-item label="检测器具名称">
+                    <el-input v-model="onSiteTaskForm.deviceName" :disabled="fromFinanceConfirm"></el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="器具数量">
+                    <el-input v-model="onSiteTaskForm.deviceCount" placeholder="预估数量" :disabled="fromFinanceConfirm"></el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="检测方式">
+                    <el-select v-model="onSiteTaskForm.testMethod" style="width: 100%;" :disabled="fromFinanceConfirm">
+                      <el-option label="现场检测" value="现场检测"></el-option>
+                      <el-option label="带回检测" value="带回检测"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <div class="section-header">行程与车辆</div>
+              <el-row :gutter="20">
+                <el-col :span="8">
+                  <el-form-item label="预计出发时间">
+                    <el-date-picker v-model="onSiteTaskForm.departureTime" type="datetime" style="width: 100%;" :disabled="fromFinanceConfirm"></el-date-picker>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="预计完成时间">
+                    <el-date-picker v-model="onSiteTaskForm.completionTime" type="datetime" style="width: 100%;" :disabled="fromFinanceConfirm"></el-date-picker>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="预计里程">
+                    <el-input v-model="onSiteTaskForm.mileage" placeholder="公里" :disabled="fromFinanceConfirm"></el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="20">
+                <el-col :span="8">
+                  <el-form-item label="车牌号">
+                    <el-select v-model="onSiteTaskForm.carPlate" placeholder="请选择车辆" style="width: 100%;" :disabled="fromFinanceConfirm">
+                      <el-option
+                        v-for="item in carList"
+                        :key="item.plate"
+                        :label="item.plate + ' (' + item.type + ')'"
+                        :value="item.plate">
+                      </el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="驾驶员">
+                    <el-select v-model="onSiteTaskForm.driver" placeholder="请选择驾驶员" style="width: 100%;" :disabled="fromFinanceConfirm">
+                      <el-option
+                        v-for="item in specialStaff"
+                        :key="item.name"
+                        :label="item.name"
+                        :value="item.name">
+                      </el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                 <el-col :span="8">
+                  <el-form-item label="派车人">
+                    <el-select v-model="onSiteTaskForm.carDispatcher" placeholder="请选择派车人" style="width: 100%;" :disabled="fromFinanceConfirm">
+                      <el-option
+                        v-for="item in specialStaff"
+                        :key="item.name"
+                        :label="item.name"
+                        :value="item.name">
+                      </el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <div class="section-header">财务信息</div>
+              <el-row :gutter="20">
+                <el-col :span="8">
+                  <el-form-item label="现金借款">
+                    <el-input v-model="onSiteTaskForm.cashAdvance" type="number">
+                      <template slot="append">元</template>
+                    </el-input>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="8">
+                  <el-form-item label="财务">
+                    <el-input v-model="onSiteTaskForm.financeContact" placeholder="待审核" disabled></el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+              <div class="section-header">人员信息</div>
+              <el-row :gutter="20">
+                <el-col :span="24">
+                  <el-form-item label="检测人员">
+                    <el-select v-model="onSiteTaskForm.inspectors" multiple placeholder="请选择检测人员" style="width: 100%;" :disabled="fromFinanceConfirm">
+                      <el-option v-for="p in specialStaff" :key="p.name" :label="p.name" :value="p.name"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+              <el-row :gutter="20">
+                <el-col :span="8">
+                  <el-form-item label="派单人">
+                    <el-input v-model="onSiteTaskForm.dispatcher" disabled></el-input>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+              <el-button @click="dialogOnSiteTaskVisible = false">关 闭</el-button>
+              <el-button v-if="!isTaskViewMode && onSiteTaskForm.status !== '已财务确认'" type="primary" @click="submitOnSiteTask">保存并派单</el-button>
+              <el-button v-if="fromFinanceConfirm && onSiteTaskForm.status !== '已财务确认'" type="primary" @click="financeConfirmInDetail">财务确认</el-button>
+            </div>
+          </el-dialog>
+
         <!-- ================= 页面 1: 业务受理 (委托管理) ================= -->
         <div v-if="activeMenu === 'business'" class="app-container">
           <!-- 搜索区 -->
@@ -422,125 +752,141 @@
 
       </div>
     </div>
-    <!-- ================= 弹窗 1: 新增委托类型选择 (三选一) ================= -->
+    <!-- ================= 弹窗 1: 新增委托类型选择 (两级选择) ================= -->
     <el-dialog 
-      title="新增委托" 
+      :title="entrustLevel === 1 ? '新增委托 - 选择业务板块' : '新增委托 - 选择资质属性'" 
       :visible.sync="dialogTypeSelectVisible" 
-      width="1100px" 
+      width="900px" 
       center
       append-to-body
+      @close="resetEntrustLevel"
     >
-      <el-row :gutter="20" style="padding: 20px 0;">
-        <el-col :span="8">
-          <div class="type-card" @click="$message.info('检定校准 - 跳转原有页面')">
-            <i class="el-icon-setting"></i>
-            <h3>检定校准</h3>
-            <p>常规仪器仪表的校准业务</p>
-          </div>
-        </el-col>
-        <el-col :span="8">
-          <div class="type-card" @click="$message.info('检验检测 - 跳转原有页面')">
-            <i class="el-icon-s-operation"></i>
-            <h3>检验检测</h3>
-            <p>各类综合性检验业务</p>
-          </div>
-        </el-col>
-        <el-col :span="8">
-          <div class="type-card" @click="handleSpecialSelect">
-            <i class="el-icon-s-cooperation"></i>
-            <h3>特种设备</h3>
-            <p>气瓶、安全阀等特种检测</p>
-          </div>
-        </el-col>
-      </el-row>
-    </el-dialog>
-
-    <!-- ================= 弹窗 2: 特种设备业务类型选择 ================= -->
-    <el-dialog 
-      title="请选择特种设备类型" 
-      :visible.sync="dialogSubTypeVisible" 
-      width="900px"
-      append-to-body
-    >
-      <div style="padding: 10px 20px 0;">
-        <div class="device-type-toolbar">
-          <el-input
-            v-model="typeSearchKeyword"
-            size="small"
-            placeholder="搜索设备类型（名称/编码/关键字）"
-            prefix-icon="el-icon-search"
-            clearable
-          ></el-input>
-          <el-radio-group v-model="typeCategoryFilter" size="small">
-            <el-radio-button label="all">全部类型</el-radio-button>
-            <el-radio-button
-              v-for="cat in deviceCategories"
-              :key="cat"
-              :label="cat"
-            >
-              {{ cat }}
-            </el-radio-button>
-          </el-radio-group>
-        </div>
-
-        <div class="device-type-grid">
-          <el-row :gutter="16">
-            <el-col
-              v-for="item in filteredDeviceTypes"
-              :key="item.value"
-              :span="12"
-              style="margin-bottom: 12px;"
-            >
-              <div
-                class="device-type-card"
-                :class="{ 'is-active': selectedSubType === item.value }"
-                @click="selectedSubType = item.value"
-              >
-                <div class="device-type-card-header">
-                  <span class="device-type-name">{{ item.label }}</span>
-                  <el-tag v-if="item.category" size="mini" type="info">{{ item.category }}</el-tag>
-                </div>
-                <div class="device-type-code">编码：{{ item.value }}</div>
-                <div class="device-type-desc">{{ item.description }}</div>
-                <div class="device-type-tags">
-                  <el-tag
-                    v-if="item.scene"
-                    size="mini"
-                    effect="plain"
-                    style="margin-right: 4px;"
-                  >
-                    {{ item.scene }}
-                  </el-tag>
-                  <el-tag
-                    v-if="item.hot"
-                    size="mini"
-                    type="danger"
-                    effect="plain"
-                  >
-                    高频
-                  </el-tag>
-                </div>
-              </div>
-            </el-col>
-          </el-row>
-          <div
-            v-if="!filteredDeviceTypes.length"
-            class="text-center"
-            style="padding: 20px 0; color: #909399;"
-          >
-            暂无匹配的设备类型，请调整搜索或分类条件
-          </div>
-
-        <div style="margin-top: 8px; color: #666; font-size: 13px;">
-          <i class="el-icon-info"></i> 不同类型的设备将加载不同的委托单模板
-        </div>
+      <!-- Level 1: 业务板块 -->
+      <div v-if="entrustLevel === 1">
+        <el-row :gutter="20" style="padding: 20px 0;">
+          <el-col :span="8">
+            <div class="type-card" @click="handleModuleSelect('cal')">
+              <i class="el-icon-setting"></i>
+              <h3>检定校准</h3>
+              <p>计量授权 / CNAS 校准</p>
+            </div>
+          </el-col>
+          <el-col :span="8">
+            <div class="type-card" @click="handleModuleSelect('test')">
+              <i class="el-icon-s-operation"></i>
+              <h3>检验检测</h3>
+              <p>CMA 检验检测业务</p>
+            </div>
+          </el-col>
+          <el-col :span="8">
+            <div class="type-card" @click="handleModuleSelect('special')">
+              <i class="el-icon-s-cooperation"></i>
+              <h3>特种设备</h3>
+              <p>气瓶 / 安全阀 (特种设备核准)</p>
+            </div>
+          </el-col>
+        </el-row>
       </div>
-    </div>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogSubTypeVisible = false">取 消</el-button>
-        <el-button type="primary" @click="openSpecialForm">下一步</el-button>
-      </span>
+
+      <!-- Level 2: 资质属性 -->
+      <div v-else>
+        <div style="margin-bottom: 20px; display: flex; align-items: center;">
+            <el-button type="text" icon="el-icon-back" @click="entrustLevel = 1" style="font-size: 16px;">返回</el-button>
+            <el-divider direction="vertical"></el-divider>
+            <span style="font-weight: bold; color: #303133;">{{ getModuleName(selectedBusinessModule) }}</span>
+        </div>
+
+        <!-- 特种设备：显示详细的搜索和筛选界面 -->
+        <div v-if="selectedBusinessModule === 'special'">
+            <div class="device-type-toolbar">
+                <el-input
+                  v-model="typeSearchKeyword"
+                  size="small"
+                  placeholder="搜索设备类型（名称/编码/关键字）"
+                  prefix-icon="el-icon-search"
+                  clearable
+                ></el-input>
+                <el-radio-group v-model="typeCategoryFilter" size="small">
+                  <el-radio-button label="all">全部类型</el-radio-button>
+                  <el-radio-button
+                    v-for="cat in deviceCategories"
+                    :key="cat"
+                    :label="cat"
+                  >
+                    {{ cat }}
+                  </el-radio-button>
+                </el-radio-group>
+            </div>
+      
+            <div class="device-type-grid">
+                <el-row :gutter="16">
+                  <el-col
+                    v-for="item in filteredDeviceTypes"
+                    :key="item.value"
+                    :span="12"
+                    style="margin-bottom: 12px;"
+                  >
+                    <div
+                      class="device-type-card"
+                      :class="{ 'is-active': selectedSubType === item.value }"
+                      @click="handleSpecialDeviceSelect(item)"
+                    >
+                      <div class="device-type-card-header">
+                        <span class="device-type-name">{{ item.label }}</span>
+                        <el-tag v-if="item.category" size="mini" type="info">{{ item.category }}</el-tag>
+                      </div>
+                      <div class="device-type-code">编码：{{ item.value }}</div>
+                      <div class="device-type-desc">{{ item.description }}</div>
+                      <div class="device-type-tags">
+                        <el-tag
+                          v-if="item.scene"
+                          size="mini"
+                          effect="plain"
+                          style="margin-right: 4px;"
+                        >
+                          {{ item.scene }}
+                        </el-tag>
+                        <el-tag
+                          v-if="item.hot"
+                          size="mini"
+                          type="danger"
+                          effect="plain"
+                        >
+                          高频
+                        </el-tag>
+                      </div>
+                    </div>
+                  </el-col>
+                </el-row>
+                <div
+                  v-if="!filteredDeviceTypes.length"
+                  class="text-center"
+                  style="padding: 20px 0; color: #909399;"
+                >
+                  暂无匹配的设备类型，请调整搜索或分类条件
+                </div>
+      
+              <div style="margin-top: 8px; color: #666; font-size: 13px;">
+                <i class="el-icon-info"></i> 不同类型的设备将加载不同的委托单模板
+              </div>
+            </div>
+        </div>
+
+        <!-- 其他模块：显示简单的卡片列表 -->
+        <el-row v-else :gutter="20" type="flex" justify="center" style="flex-wrap: wrap;">
+            <el-col :span="8" v-for="opt in currentQualifications" :key="opt.id" style="margin-bottom: 20px;">
+                <div class="type-card" @click="handleQualificationSelect(opt)">
+                    <i :class="opt.icon"></i>
+                    <h3>{{ opt.label }}</h3>
+                    <p>{{ opt.subLabel }}</p>
+                </div>
+            </el-col>
+        </el-row>
+      </div>
     </el-dialog>
+
+    <!-- ================= 弹窗 2: 特种设备业务类型选择 (DEPRECATED) ================= -->
+    <!-- Removed as it is now integrated into dialogTypeSelectVisible -->
 
     <!-- ================= 弹窗 3: 特种设备委托单录入 (核心) ================= -->
     <el-dialog 
@@ -1210,9 +1556,25 @@
         activeTab: 'special',
         sidebarCollapsed: false,
         
-        lastUpdated: '2026-01-23 15:45:00',
+        lastUpdated: '2026-02-28 10:15:00',
         
         dialogTypeSelectVisible: false,
+        entrustLevel: 1, // 1: 业务板块选择, 2: 资质属性选择
+        selectedBusinessModule: '', // 'cal', 'test', 'special'
+        qualificationOptions: {
+          cal: [
+            { id: 'ver_auth', label: '检定', subLabel: '（计量授权）', icon: 'el-icon-s-check' },
+            { id: 'cal_auth', label: '校准', subLabel: '（计量授权）', icon: 'el-icon-s-operation' },
+            { id: 'cal_cnas', label: '校准', subLabel: '（CNAS）', icon: 'el-icon-s-claim' }
+          ],
+          test: [
+            { id: 'test_cma', label: '检验检测', subLabel: '（CMA）', icon: 'el-icon-s-marketing' },
+            { id: 'test_cnas', label: '检测', subLabel: '（CNAS）', icon: 'el-icon-s-claim' }
+          ],
+          special: [
+            // The content for special is now handled dynamically by deviceTypes
+          ]
+        },
         entrustDetailVisible: false,
         currentEntrustDetail: {},
         sampleDetailVisible: false,
@@ -1497,6 +1859,77 @@
           { no: '20240115-GC-001', type: 'gas', status: '待分配', acceptor: '张三', executor: '', date: '2024-01-12', reportDeadline: '2024-01-20' },
           { no: '20240115-SV-005', type: 'valve', status: '已分配', acceptor: '李四', executor: '王五', date: '2024-01-13', reportDeadline: '2024-01-19' }
         ],
+        // 现场委托相关数据
+        onSiteEntrustSearch: {
+          company: '',
+          contact: '',
+          dateRange: []
+        },
+        onSiteEntrustList: [
+          {
+            no: 'OS-20240120-001',
+            company: '西安热工研究院',
+            contact: '刘工',
+            phone: '13800138000',
+            address: '西安市未央区',
+            testType: '定期检验',
+            createDate: '2024-01-20',
+            status: '待派单',
+            remarks: '需携带爬梯'
+          }
+        ],
+        dialogOnSiteVisible: false,
+        onSiteForm: {
+          company: '',
+          contact: '',
+          phone: '',
+          address: '',
+          testType: '定期检验',
+          createTime: null,
+          remarks: ''
+        },
+        currentEditRow: null,
+
+        // 外检任务相关数据
+        onSiteTaskSearch: {
+          taskNo: '',
+          company: '',
+          status: ''
+        },
+        onSiteTaskList: [
+           {
+            taskNo: 'RW-20240121-001',
+            entrustNo: 'OS-20240120-001',
+            dept: '特种设备检测室',
+            company: '西安热工研究院',
+            contact: '刘工',
+            phone: '13800138000',
+            address: '西安市未央区',
+            deviceType: '安全阀',
+            deviceCount: '待定',
+            inspectors: '张强, 李敏',
+            departureTime: '2024-01-21 09:00',
+            status: '执行中'
+           }
+        ],
+        dialogOnSiteTaskVisible: false,
+        onSiteTaskForm: {
+           taskNo: '',
+           dept: '特种设备检测室',
+           company: '',
+           contact: '',
+           phone: '',
+           address: '',
+           deviceType: '',
+           deviceCount: '',
+           inspectors: [],
+           departureTime: '',
+           vehicle: '',
+           driver: '',
+           cashAdvance: '',
+           dispatcher: '',
+           financeContact: ''
+        },
         dialogAssignVisible: false,
         currentAssignRow: null,
         currentAssignDevice: null,
@@ -1509,6 +1942,12 @@
         workInstructionIssuer: '',
         workInstructionReceiver: '',
         assignDeviceSelectionMap: {},
+        carList: [
+          { plate: '陕A 12345', type: '轿车', status: '空闲' },
+          { plate: '陕A 67890', type: '商务车', status: '使用中' },
+          { plate: '陕A 54321', type: '皮卡', status: '空闲' },
+          { plate: '陕A 09876', type: '货车', status: '维修中' }
+        ],
         specialStaff: [
           { name: '张强', role: '检验工程师', title: '高级', workload: 6, status: '在岗' },
           { name: '李敏', role: '检验工程师', title: '中级', workload: 3, status: '在岗' },
@@ -1532,12 +1971,118 @@
           { no: '20240115-GC-001', name: '上海气体工厂-气瓶定期检验报告', author: '张三', status: '待审批', type: 'gas' },
           { no: '20240115-SV-005', name: '江苏化工厂-安全阀校验报告', author: '李四', status: '已批准', type: 'valve' }
         ],
-        currentReport: null
+        currentReport: null,
+
+        // 现场委托相关数据
+        onSiteEntrustList: [
+          {
+            no: 'OS-20240227-001',
+            company: '陕西天然气股份有限公司',
+            contact: '王工',
+            phone: '13900001111',
+            address: '西安市未央区未央路100号',
+            testType: '定期检验',
+            createTime: '2024-02-27 09:30:00',
+            status: '已派单', // 待派单, 进行中, 已完成
+            taskNo: 'RW-20260228-001'
+          }
+        ],
+        dialogOnSiteVisible: false,
+        onSiteForm: {
+          company: '',
+          contact: '',
+          phone: '',
+          address: '',
+          testType: '定期检验',
+          remarks: ''
+        },
+        
+        // 外检任务相关数据
+        onSiteTaskList: [
+          {
+             taskNo: 'RW-20260228-001',
+             dept: '特种设备检测室',
+             unit: '陕西天然气股份有限公司',
+             liaison: '王工',
+             liaisonPhone: '13900001111',
+             deviceName: '安全阀',
+             deviceCount: 20, 
+             testMethod: '现场检测',
+             contact1: '',
+             contact1Phone: '',
+             contact2: '',
+             contact2Phone: '',
+             address: '西安市未央区未央路100号',
+             inspectors: '张强, 李敏',
+             manager: '张强', 
+             deviceAdmin: '', 
+             techManager: '', 
+             departureTime: '2026-03-01 09:00:00',
+             completionTime: '2026-03-01 17:00:00',
+             carPlate: '陕A 12345',
+             driver: '张强',
+             mileage: '50',
+             cashAdvance: 200,
+             dispatcher: '王主任', 
+             carDispatcher: '李部长', 
+             financeContact: '',
+             pageCount: 1,
+             status: '待出发'
+          }
+        ],
+        isTaskViewMode: false,
+        dialogOnSiteTaskVisible: false,
+        onSiteTaskForm: {
+           taskNo: '',
+           dept: '',
+           unit: '',
+           liaison: '',
+           liaisonPhone: '',
+           deviceName: '',
+           deviceCount: 0, // 初始预估
+           testMethod: '',
+           contact1: '',
+           contact1Phone: '',
+           contact2: '',
+           contact2Phone: '',
+           address: '',
+           inspectors: [],
+           manager: '', // 负责人
+           deviceAdmin: '', // 设备管理员
+           techManager: '', // 技术负责人
+           departureTime: '',
+           completionTime: '',
+           carPlate: '',
+           driver: '',
+           mileage: '',
+           cashAdvance: 0,
+           dispatcher: '', // 派单人
+           carDispatcher: '', // 派车人
+           financeContact: '',
+           pageCount: 1
+        },
+        onSiteTaskSearch: {
+          taskNo: '',
+          unit: ''
+        },
+        currentPage: 1,
+        pageSize: 10,
+        multipleSelection: [],
+        fromFinanceConfirm: false
       },
       created() {
         this.lastUpdated = this.formatUpdateTime(new Date())
+        // 处理 URL 参数，设置初始页面
+        const urlParams = new URLSearchParams(window.location.search)
+        const page = urlParams.get('page')
+        if (page) {
+          this.activeMenu = page
+        }
       },
       computed: {
+        currentQualifications() {
+          return this.qualificationOptions[this.selectedBusinessModule] || []
+        },
         canPrevPreview() {
           if (!this.currentRecordEntrust || !this.currentRecordDevice) return false
           const devices = this.currentRecordEntrust.devices || []
@@ -1708,6 +2253,107 @@
         }
       },
       methods: {
+        // 现场委托相关方法
+        addOnSiteEntrust() {
+          this.onSiteForm = {
+            company: '',
+            contact: '',
+            phone: '',
+            address: '',
+            testType: '定期检验',
+            createTime: new Date(),
+            remarks: ''
+          }
+          this.dialogOnSiteVisible = true
+        },
+        submitOnSiteEntrust() {
+          if (!this.onSiteForm.company || !this.onSiteForm.contact) {
+            this.$message.warning('请填写完整的委托信息')
+            return
+          }
+          
+          if (this.currentEditRow) {
+            // 修改模式
+            this.currentEditRow.company = this.onSiteForm.company
+            this.currentEditRow.contact = this.onSiteForm.contact
+            this.currentEditRow.phone = this.onSiteForm.phone
+            this.currentEditRow.address = this.onSiteForm.address
+            this.currentEditRow.testType = this.onSiteForm.testType
+            this.currentEditRow.createTime = this.onSiteForm.createTime ? this.formatUpdateTime(this.onSiteForm.createTime) : this.formatUpdateTime(new Date())
+            if (this.onSiteForm.remarks !== undefined) {
+              this.currentEditRow.remarks = this.onSiteForm.remarks
+            }
+            this.$message.success('修改成功')
+            this.currentEditRow = null
+          } else {
+            // 新增模式
+            const newEntrust = {
+              no: 'OS-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + Math.floor(Math.random()*1000).toString().padStart(3,'0'),
+              company: this.onSiteForm.company,
+              contact: this.onSiteForm.contact,
+              phone: this.onSiteForm.phone,
+              address: this.onSiteForm.address,
+              testType: this.onSiteForm.testType,
+              createTime: this.onSiteForm.createTime ? this.formatUpdateTime(this.onSiteForm.createTime) : this.formatUpdateTime(new Date()),
+              status: '待派单',
+              taskNo: ''
+            }
+            
+            this.onSiteEntrustList.unshift(newEntrust)
+            this.$message.success('预委托受理成功')
+          }
+          
+          this.dialogOnSiteVisible = false
+        },
+        editOnSiteEntrust(row) {
+          this.onSiteForm = {
+            company: row.company,
+            contact: row.contact,
+            phone: row.phone,
+            address: row.address,
+            testType: row.testType,
+            createTime: row.createTime ? new Date(row.createTime.replace(/-/g, '/')) : new Date(),
+            remarks: row.remarks || ''
+          }
+          this.currentEditRow = row
+          this.dialogOnSiteVisible = true
+        },
+        deleteOnSiteEntrust(row) {
+          this.$confirm('确认删除此预委托单？删除后无法恢复。', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            const index = this.onSiteEntrustList.findIndex(item => item.no === row.no)
+            if (index !== -1) {
+              this.onSiteEntrustList.splice(index, 1)
+              this.$message.success('删除成功')
+            }
+          }).catch(() => {
+            this.$message.info('已取消删除')
+          })
+        },
+        cancelTaskFromEntrust(row) {
+          this.$confirm('确认撤销此任务单？撤销后委托单将恢复为待派单状态，可以重新编辑或删除。', '确认撤销', {
+            confirmButtonText: '确定撤销',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            row.status = '待派单'
+            row.taskNo = ''
+            this.$message.success('撤销成功！委托单已恢复为待派单状态')
+          }).catch(() => {
+            this.$message.info('已取消撤销')
+          })
+        },
+        handleMenuSelect(index) {
+          this.activeMenu = index
+          // 移动端自动折叠
+          if (window.innerWidth < 768) {
+             this.sidebarCollapsed = true
+          }
+        },
+
         formatUpdateTime(date) {
           const y = date.getFullYear()
           const m = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -2056,6 +2702,36 @@
             this.$message.success('已提交' + count + '条原始记录')
           }
         },
+        resetEntrustLevel() {
+          this.entrustLevel = 1
+          this.selectedBusinessModule = ''
+        },
+        handleModuleSelect(module) {
+          this.selectedBusinessModule = module
+          this.entrustLevel = 2
+        },
+        handleQualificationSelect(opt) {
+          if (this.selectedBusinessModule === 'special') {
+             // For special equipment, we use handleSpecialDeviceSelect instead
+             return
+          } else {
+             // For other modules, show a placeholder message for now
+             this.$message.info(`已选择：${this.getModuleName(this.selectedBusinessModule)} - ${opt.label} ${opt.subLabel}，即将跳转...`)
+             this.dialogTypeSelectVisible = false
+          }
+        },
+        handleSpecialDeviceSelect(item) {
+          this.selectedSubType = item.value
+          this.openSpecialForm()
+        },
+        getModuleName(module) {
+          const map = {
+            'cal': '检定校准',
+            'test': '检验检测',
+            'special': '特种设备'
+          }
+          return map[module] || ''
+        },
         toggleSidebar() {
           this.sidebarCollapsed = !this.sidebarCollapsed;
         },
@@ -2156,6 +2832,254 @@
           }
           this.$message.success('分配成功，已生成工作指令')
           this.dialogAssignVisible = false
+        },
+          formatUpdateTime(date) {
+            const pad = (n) => n.toString().padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+          },
+          // 现场委托相关方法
+        addOnSiteEntrust() {
+          this.onSiteForm = {
+            company: '',
+            contact: '',
+            phone: '',
+            address: '',
+            testType: '定期检验',
+            createTime: new Date(),
+            remarks: ''
+          }
+          this.dialogOnSiteVisible = true
+        },
+        submitOnSiteEntrust() {
+          if(!this.onSiteForm.company || !this.onSiteForm.contact || !this.onSiteForm.createTime) {
+            this.$message.warning('请填写必填项');
+            return;
+          }
+          const newNo = 'OS-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + (this.onSiteEntrustList.length + 1).toString().padStart(3, '0');
+          // Format the createTime if it is a Date object
+          const formattedCreateTime = this.onSiteForm.createTime instanceof Date 
+            ? this.formatUpdateTime(this.onSiteForm.createTime) 
+            : this.onSiteForm.createTime;
+            
+          this.onSiteEntrustList.unshift({
+            no: newNo,
+            ...this.onSiteForm,
+            createTime: formattedCreateTime,
+            status: '待派单'
+          });
+          this.$message.success('预受理成功');
+          this.dialogOnSiteVisible = false;
+        },
+        
+        // 外检任务相关方法
+        addOnSiteTask() {
+          this.isTaskViewMode = false;
+          // 生成任务单号
+          const taskNo = 'RW-' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '-' + (this.onSiteTaskList.length + 1).toString().padStart(3, '0');
+          this.onSiteTaskForm = {
+             taskNo: taskNo,
+             dept: '特种设备检测室',
+             unit: '',
+             liaison: '',
+             liaisonPhone: '',
+             deviceName: '',
+             deviceCount: 0,
+             testMethod: '现场检测',
+             address: '',
+             inspectors: [],
+             departureTime: '',
+             completionTime: '',
+             carPlate: '',
+             driver: '',
+             mileage: '',
+             cashAdvance: 0,
+             dispatcher: this.currentUser ? this.currentUser.name : '',
+             carDispatcher: '',
+             financeContact: ''
+          };
+          this.dialogOnSiteTaskVisible = true;
+        },
+        submitOnSiteTask() {
+           if(!this.onSiteTaskForm.unit) {
+            this.$message.warning('请填写任务单位');
+            return;
+          }
+          if (this.onSiteTaskForm.status === '已财务确认') {
+            this.$message.warning('该任务单已财务确认，不可修改');
+            return;
+          }
+          const index = this.onSiteTaskList.findIndex(t => t.taskNo === this.onSiteTaskForm.taskNo);
+          const taskData = {
+            ...this.onSiteTaskForm,
+            // Keep existing status if updating, else default to '待出发'
+            status: index !== -1 ? this.onSiteTaskList[index].status : '待出发',
+            inspectors: Array.isArray(this.onSiteTaskForm.inspectors) ? this.onSiteTaskForm.inspectors.join(', ') : this.onSiteTaskForm.inspectors
+          };
+          
+          if (index !== -1) {
+             this.$set(this.onSiteTaskList, index, taskData);
+             this.$message.success('任务单更新成功');
+          } else {
+             this.onSiteTaskList.unshift(taskData);
+             this.$message.success('任务单下达成功');
+          }
+          this.dialogOnSiteTaskVisible = false;
+        },
+        editOnSiteTask(row) {
+          if (row.status === '已财务确认') {
+            this.$message.warning('该任务单已财务确认，不可修改');
+            return;
+          }
+          this.onSiteTaskForm = { ...row };
+          // Convert string inspectors back to array for select component
+          if (typeof row.inspectors === 'string') {
+              this.onSiteTaskForm.inspectors = row.inspectors.split(', ').filter(i => i);
+          } else if (!row.inspectors) {
+              this.onSiteTaskForm.inspectors = [];
+          }
+          this.isTaskViewMode = false;
+          this.dialogOnSiteTaskVisible = true;
+        },
+        deleteSingleOnSiteTask(row) {
+          this.$confirm('确认删除此任务单？删除后无法恢复。', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            const index = this.onSiteTaskList.findIndex(item => item.taskNo === row.taskNo);
+            if (index !== -1) {
+              this.onSiteTaskList.splice(index, 1);
+              this.$message.success('删除成功');
+            }
+          }).catch(() => {
+            this.$message.info('已取消删除');
+          });
+        },
+        deleteOnSiteTask() {
+          if (!this.multipleSelection || this.multipleSelection.length === 0) {
+            this.$message.warning('请选择要删除的任务单');
+            return;
+          }
+          this.$confirm('确认删除选中的任务单？删除后无法恢复。', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            const taskNos = this.multipleSelection.map(item => item.taskNo);
+            this.onSiteTaskList = this.onSiteTaskList.filter(item => !taskNos.includes(item.taskNo));
+            this.$message.success('删除成功');
+          }).catch(() => {
+            this.$message.info('已取消删除');
+          });
+        },
+        searchOnSiteTask() {
+          // 这里可以实现搜索逻辑
+          this.$message.success('搜索功能已触发');
+        },
+        resetOnSiteTaskSearch() {
+          this.onSiteTaskSearch = {
+            taskNo: '',
+            unit: ''
+          };
+          this.$message.success('搜索条件已重置');
+        },
+        exportOnSiteTask() {
+          this.$message.success('任务单导出功能已触发');
+        },
+        handleSizeChange(size) {
+          this.pageSize = size;
+        },
+        handleCurrentChange(current) {
+          this.currentPage = current;
+        },
+        handleSelectionChange(val) {
+          this.multipleSelection = val;
+        },
+        financeConfirm(row) {
+          this.$confirm('确认进行财务确认？确认后任务单将不可再进行任何修改操作。', '财务确认', {
+            confirmButtonText: '确定确认',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            row.status = '已财务确认';
+            this.$message.success('财务确认成功！任务单已锁定，不可再修改');
+          }).catch(() => {
+            this.$message.info('已取消财务确认');
+          });
+        },
+        openFinanceConfirmDetail(row) {
+          this.viewTaskDetails(row.taskNo);
+          // 设置标记，表示这是从财务确认进入的
+          this.fromFinanceConfirm = true;
+        },
+        financeConfirmInDetail() {
+          this.$confirm('确认进行财务确认？确认后任务单将不可再进行任何修改操作。', '财务确认', {
+            confirmButtonText: '确定确认',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            const task = this.onSiteTaskList.find(t => t.taskNo === this.onSiteTaskForm.taskNo);
+            if (task) {
+              task.status = '已财务确认';
+              this.onSiteTaskForm.status = '已财务确认';
+              this.$message.success('财务确认成功！任务单已锁定，不可再修改');
+              this.dialogOnSiteTaskVisible = false;
+              this.fromFinanceConfirm = false;
+            }
+          }).catch(() => {
+            this.$message.info('已取消财务确认');
+          });
+        },
+        confirmDeparture(row) {
+          this.$confirm('确认该任务单已出发？', '确认已出发', {
+            confirmButtonText: '确定出发',
+            cancelButtonText: '取消',
+            type: 'success'
+          }).then(() => {
+            row.status = '已出发';
+            this.$message.success('确认成功！任务单状态已更新为已出发');
+          }).catch(() => {
+            this.$message.info('已取消确认');
+          });
+        },
+        printOnSiteTask(row) {
+          const taskNo = row ? row.taskNo : (this.onSiteTaskList.length > 0 ? this.onSiteTaskList[0].taskNo : '');
+          if(taskNo) {
+             this.$message.success('正在打印任务单：' + taskNo);
+          } else {
+             this.$message.warning('请选择要打印的任务单');
+          }
+        },
+        // 从预受理生成任务单
+        createTaskFromEntrust(row) {
+           this.addOnSiteTask();
+           // 回填预受理信息
+           this.onSiteTaskForm.unit = row.company;
+           this.onSiteTaskForm.liaison = row.contact;
+           this.onSiteTaskForm.liaisonPhone = row.phone;
+           this.onSiteTaskForm.address = row.address;
+           
+           // 更新状态
+           row.status = '已派单';
+           row.taskNo = this.onSiteTaskForm.taskNo;
+           
+           // this.activeMenu = 'on-site-task';
+        },
+        viewTaskDetails(taskNo) {
+          const task = this.onSiteTaskList.find(t => t.taskNo === taskNo);
+          if (task) {
+            this.onSiteTaskForm = { ...task };
+            this.isTaskViewMode = true;
+            // Convert string inspectors back to array for select component
+            if (typeof task.inspectors === 'string') {
+                this.onSiteTaskForm.inspectors = task.inspectors.split(', ').filter(i => i);
+            } else if (!task.inspectors) {
+                this.onSiteTaskForm.inspectors = [];
+            }
+            this.dialogOnSiteTaskVisible = true;
+          } else {
+            this.$message.warning('未找到相关任务单信息');
+          }
         },
         // 任务分配 - 特种设备表头筛选
         handleAssignNoFilter(command) {

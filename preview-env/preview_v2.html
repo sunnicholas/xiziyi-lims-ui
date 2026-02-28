@@ -218,6 +218,18 @@
           <i class="el-icon-s-custom"></i>
           <span slot="title">任务分配</span>
         </el-menu-item>
+        <el-submenu index="on-site-entrust" class="menu-tooltip" :data-title="'现场委托'">
+          <template slot="title">
+            <i class="el-icon-s-flag"></i>
+            <span>现场委托</span>
+          </template>
+          <el-menu-item index="on-site-pre-entrust">
+            <a href="preview_business.html?page=on-site-pre-entrust" style="color: inherit; text-decoration: none;"><span slot="title">预委托受理</span></a>
+          </el-menu-item>
+          <el-menu-item index="on-site-task">
+            <a href="preview_business.html?page=on-site-task" style="color: inherit; text-decoration: none;"><span slot="title">外检任务管理</span></a>
+          </el-menu-item>
+        </el-submenu>
         <el-submenu index="record" class="menu-tooltip" :data-title="'原始记录'">
           <template slot="title">
             <i class="el-icon-edit-outline"></i>

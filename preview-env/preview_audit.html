@@ -290,6 +290,18 @@
           <i class="el-icon-s-custom"></i>
           <span slot="title">任务分配<span class="menu-tooltip">任务分配</span></span>
         </el-menu-item>
+        <el-submenu index="on-site-entrust">
+          <template slot="title">
+            <i class="el-icon-s-flag"></i>
+            <span>现场委托<span class="menu-tooltip">现场委托</span></span>
+          </template>
+          <el-menu-item index="on-site-pre-entrust">
+            <a href="preview_business.html?page=on-site-pre-entrust" style="color: inherit; text-decoration: none;"><span slot="title">预委托受理<span class="menu-tooltip">预委托受理</span></span></a>
+          </el-menu-item>
+          <el-menu-item index="on-site-task">
+            <a href="preview_business.html?page=on-site-task" style="color: inherit; text-decoration: none;"><span slot="title">外检任务管理<span class="menu-tooltip">外检任务管理</span></span></a>
+          </el-menu-item>
+        </el-submenu>
         <el-submenu index="record">
           <template slot="title">
             <i class="el-icon-edit-outline"></i>
@@ -487,7 +499,7 @@
                         >
                           追踪
                         </el-button>
-                        <span v-if="auditStage !== 'all'">
+                        <span v-if="auditStage !== 'all' && props.row.subType !== 'gas'">
                           <el-button
                             size="mini"
                             type="primary"
@@ -527,7 +539,7 @@
               <template slot-scope="scope">
                  <div style="display: flex; justify-content: center; gap: 8px;">
                     <el-button
-                      v-if="auditStage === 'to-audit'"
+                      v-if="auditStage === 'to-audit' && scope.row.subType !== 'gas'"
                       size="mini"
                       type="primary"
                       plain
@@ -536,13 +548,40 @@
                       批量{{ pageActionName }}
                     </el-button>
                     <el-button
-                      v-if="auditStage !== 'all' && activeMenu !== 'archive'"
+                      v-if="auditStage === 'to-audit' && scope.row.subType === 'gas'"
+                      size="mini"
+                      type="primary"
+                      plain
+                      @click="handleBatchAuditAction(scope.row, 'audit-pass')"
+                    >
+                      {{ pageActionName }}整单
+                    </el-button>
+                    <el-button
+                      v-if="auditStage !== 'all' && activeMenu !== 'archive' && scope.row.subType !== 'gas'"
                       size="mini"
                       type="danger"
                       plain
                       @click="handleBatchAuditAction(scope.row, 'reject')"
                     >
                       批量驳回
+                    </el-button>
+                    <el-button
+                      v-if="auditStage !== 'all' && activeMenu !== 'archive' && scope.row.subType === 'gas'"
+                      size="mini"
+                      type="danger"
+                      plain
+                      @click="handleBatchAuditAction(scope.row, 'reject')"
+                    >
+                      驳回整单
+                    </el-button>
+                    <el-button
+                      v-if="scope.row.subType === 'gas'"
+                      size="mini"
+                      type="text"
+                      icon="el-icon-document"
+                      @click="previewEntrustReport(scope.row)"
+                    >
+                      预览报告
                     </el-button>
                     <el-button
                       v-if="auditStage === 'all'"
@@ -586,6 +625,63 @@
           </el-card>
         </el-timeline-item>
       </el-timeline>
+    </el-dialog>
+
+    <!-- 委托单详情弹窗 -->
+    <el-dialog title="委托单详情" :visible.sync="entrustDetailVisible" width="60%">
+      <el-descriptions border column="2">
+         <el-descriptions-item label="委托单号">{{ currentEntrustDetail.no }}</el-descriptions-item>
+         <el-descriptions-item label="委托单位">{{ currentEntrustDetail.company }}</el-descriptions-item>
+         <el-descriptions-item label="业务类型">{{ currentEntrustDetail.subType === 'gas' ? '气瓶检测' : '安全阀校验' }}</el-descriptions-item>
+         <el-descriptions-item label="状态">{{ currentEntrustDetail.status || '进行中' }}</el-descriptions-item>
+      </el-descriptions>
+      <div slot="footer">
+         <el-button @click="entrustDetailVisible = false">关 闭</el-button>
+      </div>
+    </el-dialog>
+    
+    <!-- 气瓶报告预览弹窗 -->
+    <el-dialog
+      title="气瓶检验报告预览"
+      :visible.sync="reportPreviewVisible"
+      width="800px"
+      top="5vh"
+    >
+      <div class="a4-page-preview">
+         <h2 style="text-align: center;">气瓶定期检验报告</h2>
+         <div style="margin: 20px 0; font-size: 14px;">
+           <p><strong>委托单号：</strong> {{ currentReportEntrust.no }}</p>
+           <p><strong>委托单位：</strong> {{ currentReportEntrust.company }}</p>
+           <p><strong>报告编号：</strong> R-{{ currentReportEntrust.no }}-2024</p>
+           <p><strong>检验日期：</strong> 2024-01-20</p>
+         </div>
+         
+         <el-table :data="currentReportDevices" border size="mini">
+           <el-table-column label="序号" type="index" width="50"></el-table-column>
+           <el-table-column label="气瓶编号" prop="no"></el-table-column>
+           <el-table-column label="规格型号" prop="model"></el-table-column>
+           <el-table-column label="检验结论" prop="status">
+             <template slot-scope="scope">
+               {{ scope.row.status === '已提交' || scope.row.status === '已审核' || scope.row.status === '已批准' ? '合格' : '待定' }}
+             </template>
+           </el-table-column>
+         </el-table>
+         
+         <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+           <div>检验员：<span style="font-family: 'Kaushan Script', cursive;">张三</span></div>
+           <div>审核：<span v-if="activeMenu !== 'audit'">李四</span></div>
+           <div>批准：<span v-if="activeMenu === 'archive'">王五</span></div>
+         </div>
+      </div>
+      <div slot="footer">
+        <el-button @click="reportPreviewVisible = false">关 闭</el-button>
+        <el-button type="primary" @click="handleBatchAuditAction(currentReportEntrust, 'audit-pass')">
+          {{ pageActionName }}通过
+        </el-button>
+        <el-button type="danger" @click="handleBatchAuditAction(currentReportEntrust, 'reject')">
+          驳 回
+        </el-button>
+      </div>
     </el-dialog>
 
     <!-- 驳回原因弹窗 -->
@@ -908,11 +1004,18 @@
         dialogSubTypeVisible: false,
         dialogFormVisible: false,
         trackVisible: false,
-        trackItems: [],
-        
-        // 审核/驳回相关
-        dialogRejectVisible: false,
-        rejectReason: '',
+          trackItems: [],
+          
+          entrustDetailVisible: false,
+          currentEntrustDetail: {},
+          
+          reportPreviewVisible: false,
+          currentReportEntrust: {},
+          currentReportDevices: [],
+
+          // 驳回相关
+          dialogRejectVisible: false,
+          rejectReason: '',
         currentAuditDevice: null,
         currentAuditEntrust: null,
         
@@ -2034,6 +2137,15 @@
             this.dialogRejectVisible = false;
             this.dialogPreviewVisible = false; // 关闭预览弹窗
           }
+        },
+        showEntrustDetail(row) {
+          this.currentEntrustDetail = row;
+          this.entrustDetailVisible = true;
+        },
+        previewEntrustReport(row) {
+          this.currentReportEntrust = row;
+          this.currentReportDevices = row.devices || [];
+          this.reportPreviewVisible = true;
         },
         formatTime(date) {
            const y = date.getFullYear();
