@@ -231,6 +231,28 @@
       transform-origin: top center;
       /* 移除原有的 fixed height 和 overflow */
     }
+    /* 财务确认模式下禁用字段的置灰样式 */
+    .finance-disabled .el-input__inner,
+    .finance-disabled .el-textarea__inner {
+      background-color: #f5f7fa !important;
+      border-color: #e4e7ed !important;
+      color: #c0c4cc !important;
+      cursor: not-allowed !important;
+    }
+    .finance-disabled .el-select .el-input__inner {
+      background-color: #f5f7fa !important;
+    }
+    .finance-disabled .el-date-editor .el-input__inner {
+      background-color: #f5f7fa !important;
+    }
+    .finance-disabled .el-form-item__label {
+      color: #909399 !important;
+    }
+    /* 禁用状态下的输入框图标也置灰 */
+    .finance-disabled .el-input__suffix,
+    .finance-disabled .el-input__prefix {
+      color: #c0c4cc !important;
+    }
   </style>
 </head>
 <body>
@@ -519,7 +541,7 @@
         </div>
 
           <!-- 外检任务单弹窗 -->
-          <el-dialog :title="fromFinanceConfirm ? '财务确认 - 任务单详情' : '外检任务单'" :visible.sync="dialogOnSiteTaskVisible" width="1000px" append-to-body top="5vh">
+          <el-dialog :title="fromFinanceConfirm ? '财务确认 - 任务单详情' : '外检任务单'" :visible.sync="dialogOnSiteTaskVisible" width="1000px" append-to-body top="5vh" @close="resetFinanceConfirmFlag">
             <el-form :model="onSiteTaskForm" label-width="110px" size="small" border>
               
               <div class="section-header">基本信息</div>
@@ -530,33 +552,33 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="执行部门">
-                    <el-select v-model="onSiteTaskForm.dept" style="width: 100%;">
+                  <el-form-item label="执行部门" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-select v-model="onSiteTaskForm.dept" style="width: 100%;" :disabled="fromFinanceConfirm">
                       <el-option label="特种设备检测室" value="特种设备检测室"></el-option>
                       <el-option label="计量校准中心" value="计量校准中心"></el-option>
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="任务单位">
-                    <el-input v-model="onSiteTaskForm.unit"></el-input>
+                  <el-form-item label="任务单位" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-input v-model="onSiteTaskForm.unit" :disabled="fromFinanceConfirm"></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="检测地址">
-                    <el-input v-model="onSiteTaskForm.address"></el-input>
+                  <el-form-item label="检测地址" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-input v-model="onSiteTaskForm.address" :disabled="fromFinanceConfirm"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="6">
-                  <el-form-item label="公司联络员">
-                    <el-input v-model="onSiteTaskForm.liaison"></el-input>
+                  <el-form-item label="公司联络员" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-input v-model="onSiteTaskForm.liaison" :disabled="fromFinanceConfirm"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="6">
-                  <el-form-item label="联络员电话">
-                    <el-input v-model="onSiteTaskForm.liaisonPhone"></el-input>
+                  <el-form-item label="联络员电话" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-input v-model="onSiteTaskForm.liaisonPhone" :disabled="fromFinanceConfirm"></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -564,18 +586,18 @@
               <div class="section-header">检测内容</div>
               <el-row :gutter="20">
                 <el-col :span="8">
-                  <el-form-item label="检测器具名称">
-                    <el-input v-model="onSiteTaskForm.deviceName"></el-input>
+                  <el-form-item label="检测器具名称" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-input v-model="onSiteTaskForm.deviceName" :disabled="fromFinanceConfirm"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="器具数量">
-                    <el-input v-model="onSiteTaskForm.deviceCount" placeholder="预估数量"></el-input>
+                  <el-form-item label="器具数量" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-input v-model="onSiteTaskForm.deviceCount" placeholder="预估数量" :disabled="fromFinanceConfirm"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="检测方式">
-                    <el-select v-model="onSiteTaskForm.testMethod" style="width: 100%;">
+                  <el-form-item label="检测方式" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-select v-model="onSiteTaskForm.testMethod" style="width: 100%;" :disabled="fromFinanceConfirm">
                       <el-option label="现场检测" value="现场检测"></el-option>
                       <el-option label="带回检测" value="带回检测"></el-option>
                     </el-select>
@@ -586,25 +608,25 @@
               <div class="section-header">行程与车辆</div>
               <el-row :gutter="20">
                 <el-col :span="8">
-                  <el-form-item label="预计出发时间">
-                    <el-date-picker v-model="onSiteTaskForm.departureTime" type="datetime" style="width: 100%;"></el-date-picker>
+                  <el-form-item label="预计出发时间" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-date-picker v-model="onSiteTaskForm.departureTime" type="datetime" style="width: 100%;" :disabled="fromFinanceConfirm"></el-date-picker>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="预计完成时间">
-                    <el-date-picker v-model="onSiteTaskForm.completionTime" type="datetime" style="width: 100%;"></el-date-picker>
+                  <el-form-item label="预计完成时间" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-date-picker v-model="onSiteTaskForm.completionTime" type="datetime" style="width: 100%;" :disabled="fromFinanceConfirm"></el-date-picker>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="预计里程">
-                    <el-input v-model="onSiteTaskForm.mileage" placeholder="公里"></el-input>
+                  <el-form-item label="预计里程" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-input v-model="onSiteTaskForm.mileage" placeholder="公里" :disabled="fromFinanceConfirm"></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
               <el-row :gutter="20">
                 <el-col :span="8">
-                  <el-form-item label="车牌号">
-                    <el-select v-model="onSiteTaskForm.carPlate" placeholder="请选择车辆" style="width: 100%;">
+                  <el-form-item label="车牌号" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-select v-model="onSiteTaskForm.carPlate" placeholder="请选择车辆" style="width: 100%;" :disabled="fromFinanceConfirm">
                       <el-option
                         v-for="item in carList"
                         :key="item.plate"
@@ -615,8 +637,8 @@
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
-                  <el-form-item label="驾驶员">
-                    <el-select v-model="onSiteTaskForm.driver" placeholder="请选择驾驶员" style="width: 100%;">
+                  <el-form-item label="驾驶员" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-select v-model="onSiteTaskForm.driver" placeholder="请选择驾驶员" style="width: 100%;" :disabled="fromFinanceConfirm">
                       <el-option
                         v-for="item in specialStaff"
                         :key="item.name"
@@ -627,8 +649,8 @@
                   </el-form-item>
                 </el-col>
                  <el-col :span="8">
-                  <el-form-item label="派车人">
-                    <el-select v-model="onSiteTaskForm.carDispatcher" placeholder="请选择派车人" style="width: 100%;">
+                  <el-form-item label="派车人" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-select v-model="onSiteTaskForm.carDispatcher" placeholder="请选择派车人" style="width: 100%;" :disabled="fromFinanceConfirm">
                       <el-option
                         v-for="item in specialStaff"
                         :key="item.name"
@@ -659,15 +681,15 @@
               <div class="section-header">人员信息</div>
               <el-row :gutter="20">
                 <el-col :span="12">
-                  <el-form-item label="检测组长">
-                    <el-select v-model="onSiteTaskForm.leader" placeholder="请选择检测组长" style="width: 100%;">
+                  <el-form-item label="检测组长" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-select v-model="onSiteTaskForm.leader" placeholder="请选择检测组长" style="width: 100%;" :disabled="fromFinanceConfirm">
                       <el-option v-for="p in specialStaff" :key="p.name" :label="p.name" :value="p.name"></el-option>
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
-                  <el-form-item label="检测组员">
-                    <el-select v-model="onSiteTaskForm.members" multiple placeholder="请选择检测组员" style="width: 100%;">
+                  <el-form-item label="检测组员" :class="{'finance-disabled': fromFinanceConfirm}">
+                    <el-select v-model="onSiteTaskForm.members" multiple placeholder="请选择检测组员" style="width: 100%;" :disabled="fromFinanceConfirm">
                       <el-option v-for="p in specialStaff" :key="p.name" :label="p.name" :value="p.name"></el-option>
                     </el-select>
                   </el-form-item>
@@ -684,7 +706,7 @@
             </el-form>
             <div slot="footer" class="dialog-footer">
               <el-button @click="dialogOnSiteTaskVisible = false">关 闭</el-button>
-              <el-button v-if="!isTaskViewMode" type="primary" @click="submitOnSiteTask">保存</el-button>
+              <el-button v-if="!isTaskViewMode && !fromFinanceConfirm" type="primary" @click="submitOnSiteTask">保存</el-button>
               <el-button v-if="fromFinanceConfirm && onSiteTaskForm.status !== '已财务确认'" type="success" @click="financeConfirmInDetail">财务确认</el-button>
             </div>
           </el-dialog>
@@ -1569,7 +1591,7 @@
         activeTab: 'special',
         sidebarCollapsed: false,
         
-        lastUpdated: '2026-02-28 17:00:00',
+        lastUpdated: '2026-02-28 19:15:00',
         
         dialogTypeSelectVisible: false,
         entrustLevel: 1, // 1: 业务板块选择, 2: 资质属性选择
@@ -3094,6 +3116,11 @@
           this.viewTaskDetails(row.taskNo);
           // 设置标记，表示这是从财务确认进入的
           this.fromFinanceConfirm = true;
+          // 重置只读模式，允许编辑现金借款
+          this.isTaskViewMode = false;
+        },
+        resetFinanceConfirmFlag() {
+          this.fromFinanceConfirm = false;
         },
         financeConfirmInDetail() {
           this.$confirm('确认进行财务确认？确认后任务单将不可再进行任何修改操作。', '财务确认', {
