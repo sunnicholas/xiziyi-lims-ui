@@ -292,7 +292,7 @@
           </el-breadcrumb-item>
           <el-breadcrumb-item>
             现场检测
-            <span class="update-time">（更新时间：2026-02-28 17:00:00）</span>
+            <span class="update-time">（更新时间：2026-02-28 17:30:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -362,6 +362,9 @@
             <div class="sample-form">
               <el-form :model="sampleForm" label-width="120px" size="small">
                 <div class="sample-grid">
+                  <el-form-item label="出厂编号" required>
+                    <el-input v-model="sampleForm.factoryNo" placeholder="请输入出厂编号（唯一标识）"></el-input>
+                  </el-form-item>
                   <el-form-item label="样品编号" required>
                     <el-input v-model="sampleForm.sampleNo" readonly placeholder="系统自动生成">
                       <template slot="append">
@@ -413,6 +416,7 @@
                   </div>
                   <el-table :data="samples" border style="width: 100%" size="small">
                     <el-table-column type="selection" width="55" align="center"></el-table-column>
+                    <el-table-column label="出厂编号" prop="factoryNo" width="150"></el-table-column>
                     <el-table-column label="样品编号" prop="sampleNo" width="150"></el-table-column>
                     <el-table-column label="样品名称" prop="sampleName"></el-table-column>
                     <el-table-column label="规格型号" prop="model" width="150"></el-table-column>
@@ -568,6 +572,9 @@
     <el-dialog title="编辑样品" :visible.sync="dialogSampleVisible" width="600px" append-to-body>
       <el-form :model="editSampleForm" label-width="120px" size="small">
         <div class="sample-grid">
+          <el-form-item label="出厂编号" required>
+            <el-input v-model="editSampleForm.factoryNo" placeholder="请输入出厂编号（唯一标识）"></el-input>
+          </el-form-item>
           <el-form-item label="样品编号" required>
             <el-input v-model="editSampleForm.sampleNo" readonly></el-input>
           </el-form-item>
@@ -615,6 +622,7 @@
         
         // 样品表单
         sampleForm: {
+          factoryNo: '',
           sampleNo: '',
           sampleName: '',
           model: '',
@@ -762,6 +770,7 @@
               samples: [
                 {
                   id: 1,
+                  factoryNo: 'CC-2025-001',
                   sampleNo: 'SAMPLE-001',
                   sampleName: '安全阀',
                   model: 'A48Y-16C',
@@ -772,6 +781,7 @@
                 },
                 {
                   id: 2,
+                  factoryNo: 'CC-2025-002',
                   sampleNo: 'SAMPLE-002',
                   sampleName: '压力表',
                   model: 'Y-100',
@@ -851,6 +861,7 @@
         // 重置样品表单
         resetSampleForm() {
           this.sampleForm = {
+            factoryNo: '',
             sampleNo: '',
             sampleName: '',
             model: '',
@@ -863,6 +874,16 @@
         
         // 保存样品
         saveSample() {
+          if (!this.sampleForm.factoryNo) {
+            this.$message.warning('请输入出厂编号');
+            return;
+          }
+          // 检查出厂编号唯一性
+          const duplicateFactoryNo = this.samples.find(s => s.factoryNo === this.sampleForm.factoryNo);
+          if (duplicateFactoryNo) {
+            this.$message.warning('出厂编号已存在，请重新输入');
+            return;
+          }
           if (!this.sampleForm.sampleName) {
             this.$message.warning('请输入样品名称');
             return;
@@ -892,6 +913,12 @@
         
         // 更新样品
         updateSample() {
+          // 检查出�厂编号唯一性（排除当前编辑的样品）
+          const duplicateFactoryNo = this.samples.find(s => s.factoryNo === this.editSampleForm.factoryNo && s.id !== this.editSampleForm.id);
+          if (duplicateFactoryNo) {
+            this.$message.warning('出厂编号已存在，请重新输入');
+            return;
+          }
           const index = this.samples.findIndex(s => s.id === this.editSampleForm.id);
           if (index !== -1) {
             this.samples[index] = { ...this.editSampleForm };
