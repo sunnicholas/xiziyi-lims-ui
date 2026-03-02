@@ -252,15 +252,15 @@
             <span>现场委托<span class="menu-tooltip">现场委托</span></span>
           </template>
           <el-menu-item index="on-site-pre-entrust">
-            <span slot="title">预委托受理<span class="menu-tooltip">预委托受理</span></span>
+            <a href="preview_business.html?page=on-site-pre-entrust" style="color: inherit; text-decoration: none;"><span slot="title">预委托受理<span class="menu-tooltip">预委托受理</span></span></a>
           </el-menu-item>
           <el-menu-item index="on-site-task">
-            <span slot="title">外检任务管理<span class="menu-tooltip">外检任务管理</span></span>
+            <a href="preview_business.html?page=on-site-task" style="color: inherit; text-decoration: none;"><span slot="title">外检任务管理<span class="menu-tooltip">外检任务管理</span></span></a>
           </el-menu-item>
         </el-submenu>
-        <el-menu-item index="my-tasks">
+        <el-menu-item index="on-site-detection">
           <i class="el-icon-s-claim"></i>
-          <span slot="title">我的任务<span class="menu-tooltip">我的任务</span></span>
+          <span slot="title">现场检测<span class="menu-tooltip">现场检测</span></span>
         </el-menu-item>
         <el-submenu index="record">
           <template slot="title">
@@ -292,7 +292,7 @@
           </el-breadcrumb-item>
           <el-breadcrumb-item>
             现场检测
-            <span class="update-time">（更新时间：2026-02-28 15:45:00）</span>
+            <span class="update-time">（更新时间：2026-02-28 17:00:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -602,7 +602,7 @@
       el: '#app',
       data: {
         sidebarCollapsed: false,
-        activeMenu: 'my-tasks',
+        activeMenu: 'on-site-detection',
         activeRecordTab: 'original',
         
         // 当前任务信息
@@ -811,7 +811,7 @@
             'assign': 'preview_assign.html',
             'on-site-pre-entrust': 'preview_business.html?page=on-site-pre-entrust',
             'on-site-task': 'preview_business.html?page=on-site-task',
-            'my-tasks': 'preview_on_site_main.html',
+            'on-site-detection': 'preview_on_site_main.html',
             'record-list': 'preview_record.html',
             'audit': 'preview_audit.html',
             'approve': 'preview_audit.html',
