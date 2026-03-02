@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>西自仪 LIMS - 现场检测</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <style>
+    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f0f2f5; }
+    #app { display: flex; height: 100vh; overflow: hidden; }
+    
+    /* 侧边栏 */
+    .sidebar-container { width: 220px; background-color: #304156; color: #fff; display: flex; flex-direction: column; flex-shrink: 0; transition: width 0.3s ease-in-out; }
+    .sidebar-container.collapsed { width: 64px; }
+    .logo { height: 50px; line-height: 50px; text-align: center; font-size: 16px; font-weight: 600; background-color: #2b2f3a; color: #fff; border-bottom: 1px solid #1f2d3d; transition: all 0.3s ease-in-out; }
+    .sidebar-container.collapsed .logo { font-size: 12px; }
+    .el-menu { border-right: none; }
+    .sidebar-toggle { position: absolute; top: 50%; right: -10px; transform: translateY(-50%); width: 20px; height: 20px; background-color: #409EFF; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 100; transition: all 0.3s ease-in-out; }
+    .sidebar-toggle:hover { background-color: #66b1ff; }
+    .sidebar-container.collapsed .el-menu-item span,
+    .sidebar-container.collapsed .el-submenu__title span {
+      display: none;
+    }
+    .sidebar-container.collapsed .el-menu-item,
+    .sidebar-container.collapsed .el-submenu__title {
+      padding: 0 20px !important;
+      text-align: center;
+    }
+    .sidebar-container .el-menu-item,
+    .sidebar-container .el-submenu__title {
+      position: relative;
+    }
+    .sidebar-container.collapsed .el-menu-item .menu-tooltip,
+    .sidebar-container.collapsed .el-submenu__title .menu-tooltip {
+      display: block;
+    }
+    .menu-tooltip {
+      display: none;
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 1000;
+      margin-left: 8px;
+    }
+    .menu-tooltip::after {
+      content: '';
+      position: absolute;
+      right: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border-width: 4px;
+      border-style: solid;
+      border-color: transparent rgba(0, 0, 0, 0.8) transparent transparent;
+    }
+    .sidebar-container.collapsed .el-menu-item:hover .menu-tooltip,
+    .sidebar-container.collapsed .el-submenu__title:hover .menu-tooltip {
+      display: block;
+    }
+    
+    /* 主体区域 */
+    .main-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f0f2f5; }
+    .navbar { height: 50px; background: #fff; box-shadow: 0 1px 4px rgba(0,21,41,.08); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10; }
+    .navbar .update-time { margin-left: 8px; font-size: 12px; color: #909399; }
+    .app-main { flex: 1; padding: 20px; overflow-y: auto; }
+    .app-container { background: #fff; padding: 20px; border-radius: 4px; min-height: calc(100vh - 90px); box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
+    
+    /* 通用工具类 */
+    .mb8 { margin-bottom: 8px; }
+    .mt20 { margin-top: 20px; }
+    .text-center { text-align: center; }
+    
+    /* 工作台样式 */
+    .workbench-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .workbench-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+    }
+    .task-info {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .task-info-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .task-info-item .label {
+      color: #909399;
+      font-size: 14px;
+    }
+    .task-info-item .value {
+      color: #303133;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    /* 样品录入区域 */
+    .sample-entry-section {
+      margin-bottom: 30px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 15px;
+      padding-left: 10px;
+      border-left: 4px solid #409EFF;
+    }
+    .sample-form {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+    .sample-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    
+    /* 样品列表 */
+    .sample-list-section {
+      margin-bottom: 30px;
+    }
+    .sample-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .sample-list-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    /* 记录编写区域 */
+    .record-section {
+      margin-bottom: 30px;
+    }
+    .record-tabs {
+      margin-top: 20px;
+    }
+    .record-form {
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 4px;
+    }
+    
+    /* 检测进度 */
+    .progress-section {
+      margin-bottom: 30px;
+    }
+    .progress-card {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 4px;
+    }
+    .progress-info {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    .progress-item {
+      text-align: center;
+    }
+    .progress-item .number {
+      font-size: 24px;
+      font-weight: 600;
+      color: #409EFF;
+    }
+    .progress-item .label {
+      font-size: 14px;
+      color: #909399;
+      margin-top: 5px;
+    }
+    
+    /* 组长确认区域 */
+    .confirmation-section {
+      margin-bottom: 30px;
+    }
+    .confirmation-card {
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    
+    /* 响应式设计 */
+    @media screen and (max-width: 768px) {
+      .task-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+      .sample-grid {
+        grid-template-columns: 1fr;
+      }
+      .progress-info {
+        flex-direction: column;
+        gap: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" v-cloak>
+    <!-- 侧边栏 -->
+    <div class="sidebar-container" :class="{ collapsed: sidebarCollapsed }">
+      <div class="logo">西自仪 LIMS</div>
+      <div class="sidebar-toggle" @click="toggleSidebar">
+        <i :class="sidebarCollapsed ? 'el-icon-s-unfold' : 'el-icon-s-fold'"></i>
+      </div>
+      <el-menu
+        :default-active="activeMenu"
+        background-color="#304156"
+        text-color="#bfcbd9"
+        active-text-color="#409EFF"
+        @select="handleMenuSelect"
+      >
+        <el-menu-item index="business">
+          <i class="el-icon-s-order"></i>
+          <span slot="title">业务受理<span class="menu-tooltip">业务受理</span></span>
+        </el-menu-item>
+        <el-menu-item index="sample">
+          <i class="el-icon-box"></i>
+          <span slot="title">样品管理<span class="menu-tooltip">样品管理</span></span>
+        </el-menu-item>
+        <el-menu-item index="assign">
+          <i class="el-icon-s-custom"></i>
+          <span slot="title">任务分配<span class="menu-tooltip">任务分配</span></span>
+        </el-menu-item>
+        <el-submenu index="on-site-entrust">
+          <template slot="title">
+            <i class="el-icon-s-flag"></i>
+            <span>现场委托<span class="menu-tooltip">现场委托</span></span>
+          </template>
+          <el-menu-item index="on-site-pre-entrust">
+            <span slot="title">预委托受理<span class="menu-tooltip">预委托受理</span></span>
+          </el-menu-item>
+          <el-menu-item index="on-site-task">
+            <span slot="title">外检任务管理<span class="menu-tooltip">外检任务管理</span></span>
+          </el-menu-item>
+        </el-submenu>
+        <el-menu-item index="my-tasks">
+          <i class="el-icon-s-claim"></i>
+          <span slot="title">我的任务<span class="menu-tooltip">我的任务</span></span>
+        </el-menu-item>
+        <el-submenu index="record">
+          <template slot="title">
+            <i class="el-icon-edit-outline"></i>
+            <span>原始记录<span class="menu-tooltip">原始记录</span></span>
+          </template>
+          <el-menu-item index="record-list">记录列表</el-menu-item>
+          <el-menu-item index="record-entry" style="display:none">录入详情</el-menu-item>
+        </el-submenu>
+        <el-submenu index="audit-management">
+          <template slot="title">
+            <i class="el-icon-s-check"></i>
+            <span>审批管理<span class="menu-tooltip">审批管理</span></span>
+          </template>
+          <el-menu-item index="audit">特种设备审核</el-menu-item>
+          <el-menu-item index="approve">特种设备批准</el-menu-item>
+          <el-menu-item index="archive">特种设备归档</el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </div>
+
+    <!-- 主体内容 -->
+    <div class="main-container">
+      <div class="navbar">
+        <el-breadcrumb separator="/">
+          <el-breadcrumb-item>首页</el-breadcrumb-item>
+          <el-breadcrumb-item>
+            <a href="preview_on_site_main.html">现场检测</a>
+          </el-breadcrumb-item>
+          <el-breadcrumb-item>
+            现场检测
+            <span class="update-time">（更新时间：2026-02-28 15:45:00）</span>
+          </el-breadcrumb-item>
+        </el-breadcrumb>
+        <el-dropdown>
+          <span class="el-dropdown-link" style="cursor: pointer;">
+            <i class="el-icon-user-solid"></i> 检测员 <i class="el-icon-arrow-down el-icon--right"></i>
+          </span>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item>个人中心</el-dropdown-item>
+            <el-dropdown-item divided>退出登录</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+
+      <div class="app-main">
+        <div class="app-container">
+          <!-- 工作台头部 -->
+          <div class="workbench-header">
+            <div class="workbench-title">现场检测</div>
+            <div class="task-info">
+              <div class="task-info-item">
+                <span class="label">任务单编号：</span>
+                <span class="value">{{ currentTask.taskNo }}</span>
+              </div>
+              <div class="task-info-item">
+                <span class="label">任务单位：</span>
+                <span class="value">{{ currentTask.unit }}</span>
+              </div>
+              <div class="task-info-item">
+                <span class="label">检测地址：</span>
+                <span class="value">{{ currentTask.address }}</span>
+              </div>
+              <div class="task-info-item">
+                <span class="label">状态：</span>
+                <el-tag :type="getStatusType(currentTask.status)">{{ currentTask.status }}</el-tag>
+              </div>
+            </div>
+          </div>
+
+          <!-- 检测统计 -->
+          <div class="progress-section">
+            <div class="section-title">检测统计</div>
+            <div class="progress-card">
+              <div class="progress-info">
+                <div class="progress-item">
+                  <div class="number">{{ totalSamples }}</div>
+                  <div class="label">已登记检测样品总数</div>
+                </div>
+                <div class="progress-item">
+                  <div class="number">{{ personalSamples }}</div>
+                  <div class="label">个人登记样品总数</div>
+                </div>
+                <div class="progress-item">
+                  <div class="number">{{ completedReports }}</div>
+                  <div class="label">已完成检测报告数</div>
+                </div>
+                <div class="progress-item">
+                  <div class="number">{{ personalCompletedReports }}</div>
+                  <div class="label">个人已完成检测报告数</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 样品录入 -->
+          <div class="sample-entry-section">
+            <div class="section-title">样品录入</div>
+            <div class="sample-form">
+              <el-form :model="sampleForm" label-width="120px" size="small">
+                <div class="sample-grid">
+                  <el-form-item label="样品编号" required>
+                    <el-input v-model="sampleForm.sampleNo" readonly placeholder="系统自动生成">
+                      <template slot="append">
+                        <el-button icon="el-icon-refresh" @click="generateSampleNo" title="重新生成"></el-button>
+                      </template>
+                    </el-input>
+                  </el-form-item>
+                  <el-form-item label="样品名称" required>
+                    <el-input v-model="sampleForm.sampleName" placeholder="请输入样品名称"></el-input>
+                  </el-form-item>
+                  <el-form-item label="规格型号" required>
+                    <el-input v-model="sampleForm.model" placeholder="请输入规格型号"></el-input>
+                  </el-form-item>
+                  <el-form-item label="制造单位">
+                    <el-input v-model="sampleForm.manufacturer" placeholder="请输入制造单位"></el-input>
+                  </el-form-item>
+                  <el-form-item label="安装位置">
+                    <el-input v-model="sampleForm.installLocation" placeholder="请输入安装位置"></el-input>
+                  </el-form-item>
+                  <el-form-item label="备注">
+                    <el-input type="textarea" v-model="sampleForm.remark" :rows="2" placeholder="请输入备注信息"></el-input>
+                  </el-form-item>
+                </div>
+                <div style="text-align: right; margin-top: 20px;">
+                  <el-button @click="resetSampleForm">重置</el-button>
+                  <el-button type="primary" @click="saveSample">保存样品</el-button>
+                </div>
+              </el-form>
+            </div>
+          </div>
+
+          <!-- 样品列表 -->
+          <div class="sample-list-section">
+            <div class="sample-list-header">
+              <div class="section-title" style="margin-bottom: 0;">样品列表</div>
+              <div class="sample-list-actions">
+                <el-input v-model="sampleSearch" placeholder="搜索样品" size="small" style="width: 200px; margin-right: 10px;"></el-input>
+                <el-button type="primary" size="small" icon="el-icon-download">导出</el-button>
+              </div>
+            </div>
+            <div v-if="Object.keys(samplesByDay).length === 0">
+              <el-empty description="暂无样品数据"></el-empty>
+            </div>
+            <div v-else>
+              <div v-for="(samples, date) in samplesByDay" :key="date" style="margin-bottom: 20px;">
+                <el-card>
+                  <div slot="header" class="clearfix">
+                    <span style="font-weight: 600;">{{ date }}（共{{ samples.length }}个样品）</span>
+                  </div>
+                  <el-table :data="samples" border style="width: 100%" size="small">
+                    <el-table-column type="selection" width="55" align="center"></el-table-column>
+                    <el-table-column label="样品编号" prop="sampleNo" width="150"></el-table-column>
+                    <el-table-column label="样品名称" prop="sampleName"></el-table-column>
+                    <el-table-column label="规格型号" prop="model" width="150"></el-table-column>
+                    <el-table-column label="登记日期" prop="registerDate" width="120"></el-table-column>
+                    <el-table-column label="操作" width="180" align="center">
+                      <template slot-scope="scope">
+                        <el-button size="mini" type="primary" @click="editSample(scope.row)">编辑</el-button>
+                        <el-button size="mini" type="success" @click="openRecordEntry(scope.row)">记录</el-button>
+                        <el-button size="mini" type="text" @click="deleteSample(scope.row)" class="text-danger">删除</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </el-card>
+              </div>
+            </div>
+          </div>
+
+          <!-- 记录编写 -->
+          <div class="record-section">
+            <div class="section-title">记录编写</div>
+            <el-tabs v-model="activeRecordTab" class="record-tabs">
+              <el-tab-pane label="原始记录" name="original">
+                <div v-if="currentSample" class="record-form">
+                  <el-form :model="recordForm" label-width="120px" size="small">
+                    <el-form-item label="样品信息">
+                      <el-descriptions :column="3" border size="small">
+                        <el-descriptions-item label="样品编号">{{ currentSample.sampleNo }}</el-descriptions-item>
+                        <el-descriptions-item label="样品名称">{{ currentSample.sampleName }}</el-descriptions-item>
+                        <el-descriptions-item label="规格型号">{{ currentSample.model }}</el-descriptions-item>
+                      </el-descriptions>
+                    </el-form-item>
+                    <el-form-item label="环境条件">
+                      <el-row :gutter="20">
+                        <el-col :span="8">
+                          <el-form-item label="温度(℃)">
+                            <el-input v-model="recordForm.envTemperature" placeholder="请输入"></el-input>
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                          <el-form-item label="湿度(%RH)">
+                            <el-input v-model="recordForm.envHumidity" placeholder="请输入"></el-input>
+                          </el-form-item>
+                        </el-col>
+                        <el-col :span="8">
+                          <el-form-item label="大气压力(kPa)">
+                            <el-input v-model="recordForm.envPressure" placeholder="请输入"></el-input>
+                          </el-form-item>
+                        </el-col>
+                      </el-row>
+                    </el-form-item>
+                    <el-form-item label="检测数据">
+                      <el-table :data="recordForm.testData" border size="small">
+                        <el-table-column label="检测项目" prop="item" width="150"></el-table-column>
+                        <el-table-column label="标准值" prop="standardValue"></el-table-column>
+                        <el-table-column label="实测值" prop="measuredValue"></el-table-column>
+                        <el-table-column label="偏差" prop="deviation"></el-table-column>
+                        <el-table-column label="结论" prop="conclusion" width="100">
+                          <template slot-scope="scope">
+                            <el-select v-model="scope.row.conclusion" size="mini">
+                              <el-option label="合格" value="合格"></el-option>
+                              <el-option label="不合格" value="不合格"></el-option>
+                            </el-select>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                      <el-button type="primary" size="small" style="margin-top: 10px;" @click="addTestDataItem">添加检测项目</el-button>
+                    </el-form-item>
+                    <el-form-item label="检测结论">
+                      <el-radio-group v-model="recordForm.conclusion">
+                        <el-radio label="合格">合格</el-radio>
+                        <el-radio label="不合格">不合格</el-radio>
+                      </el-radio-group>
+                    </el-form-item>
+                    <el-form-item label="备注">
+                      <el-input type="textarea" v-model="recordForm.remark" :rows="3" placeholder="请输入备注信息"></el-input>
+                    </el-form-item>
+                    <el-form-item label="附件上传">
+                      <el-upload
+                        class="upload-demo"
+                        action="#"
+                        :on-preview="handlePreview"
+                        :on-remove="handleRemove"
+                        :file-list="fileList"
+                        list-type="picture"
+                        :auto-upload="false"
+                      >
+                        <el-button size="small" type="primary">点击上传</el-button>
+                        <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+                      </el-upload>
+                    </el-form-item>
+                    <div style="text-align: right; margin-top: 20px;">
+                      <el-button @click="resetRecordForm">重置</el-button>
+                      <el-button type="primary" @click="saveRecord">保存记录</el-button>
+                    </div>
+                  </el-form>
+                </div>
+                <div v-else class="record-form" style="text-align: center; padding: 40px;">
+                  <el-empty description="请先选择一个样品进行记录编写"></el-empty>
+                </div>
+              </el-tab-pane>
+              <el-tab-pane label="报告预览" name="report">
+                <div v-if="currentSample" class="record-form">
+                  <h3 style="text-align: center; margin-bottom: 20px;">检测报告</h3>
+                  <el-descriptions :column="2" border size="small">
+                    <el-descriptions-item label="报告编号">{{ reportForm.reportNo }}</el-descriptions-item>
+                    <el-descriptions-item label="登记日期">{{ reportForm.registerDate }}</el-descriptions-item>
+                    <el-descriptions-item label="样品编号">{{ currentSample.sampleNo }}</el-descriptions-item>
+                    <el-descriptions-item label="样品名称">{{ currentSample.sampleName }}</el-descriptions-item>
+                    <el-descriptions-item label="规格型号">{{ currentSample.model }}</el-descriptions-item>
+                    <el-descriptions-item label="制造单位">{{ currentSample.manufacturer }}</el-descriptions-item>
+                    <el-descriptions-item label="检测结论" :span="2">
+                      <el-tag :type="reportForm.conclusion === '合格' ? 'success' : 'danger'">{{ reportForm.conclusion }}</el-tag>
+                    </el-descriptions-item>
+                  </el-descriptions>
+                  <div style="margin-top: 20px;">
+                    <h4>检测数据</h4>
+                    <el-table :data="reportForm.testData" border size="small" style="margin-top: 10px;">
+                      <el-table-column label="检测项目" prop="item"></el-table-column>
+                      <el-table-column label="标准值" prop="standardValue"></el-table-column>
+                      <el-table-column label="实测值" prop="measuredValue"></el-table-column>
+                      <el-table-column label="偏差" prop="deviation"></el-table-column>
+                      <el-table-column label="结论" prop="conclusion"></el-table-column>
+                    </el-table>
+                  </div>
+                  <div style="text-align: right; margin-top: 40px;">
+                    <el-button type="primary" icon="el-icon-download">导出报告</el-button>
+                  </div>
+                </div>
+                <div v-else class="record-form" style="text-align: center; padding: 40px;">
+                  <el-empty description="请先选择一个样品进行报告预览"></el-empty>
+                </div>
+              </el-tab-pane>
+            </el-tabs>
+          </div>
+
+          <!-- 组长确认 -->
+          <div class="confirmation-section">
+            <div class="section-title">组长确认</div>
+            <div class="confirmation-card">
+              <el-alert title="检测任务完成确认" type="info" :closable="false" show-icon style="margin-bottom: 20px;"></el-alert>
+              <p style="margin-bottom: 20px;">当所有样品登记完成后，组长可以确认本次检测任务完成。</p>
+              <div style="display: flex; justify-content: center; gap: 20px;">
+                <el-button type="primary" size="large" :disabled="totalSamples === 0" @click="confirmTaskComplete">确认任务完成</el-button>
+                <el-button size="large" @click="cancelTask">取消任务</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 样品编辑弹窗 -->
+    <el-dialog title="编辑样品" :visible.sync="dialogSampleVisible" width="600px" append-to-body>
+      <el-form :model="editSampleForm" label-width="120px" size="small">
+        <div class="sample-grid">
+          <el-form-item label="样品编号" required>
+            <el-input v-model="editSampleForm.sampleNo" readonly></el-input>
+          </el-form-item>
+          <el-form-item label="样品名称" required>
+            <el-input v-model="editSampleForm.sampleName" placeholder="请输入样品名称"></el-input>
+          </el-form-item>
+          <el-form-item label="规格型号" required>
+            <el-input v-model="editSampleForm.model" placeholder="请输入规格型号"></el-input>
+          </el-form-item>
+          <el-form-item label="制造单位">
+            <el-input v-model="editSampleForm.manufacturer" placeholder="请输入制造单位"></el-input>
+          </el-form-item>
+          <el-form-item label="安装位置">
+            <el-input v-model="editSampleForm.installLocation" placeholder="请输入安装位置"></el-input>
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input type="textarea" v-model="editSampleForm.remark" :rows="2" placeholder="请输入备注信息"></el-input>
+          </el-form-item>
+        </div>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogSampleVisible = false">取消</el-button>
+        <el-button type="primary" @click="updateSample">保存</el-button>
+      </div>
+    </el-dialog>
+  </div>
+
+  <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        sidebarCollapsed: false,
+        activeMenu: 'my-tasks',
+        activeRecordTab: 'original',
+        
+        // 当前任务信息
+        currentTask: {
+          taskNo: '',
+          unit: '',
+          address: '',
+          status: ''
+        },
+        
+        // 样品表单
+        sampleForm: {
+          sampleNo: '',
+          sampleName: '',
+          model: '',
+          manufacturer: '',
+          installLocation: '',
+          remark: ''
+        },
+        
+        // 样品列表
+        samples: [],
+        
+        // 搜索关键词
+        sampleSearch: '',
+        
+        // 当前选中的样品
+        currentSample: null,
+        
+        // 记录表单
+        recordForm: {
+          envTemperature: '',
+          envHumidity: '',
+          envPressure: '',
+          testData: [
+            {
+              item: '外观检查',
+              standardValue: '无损伤',
+              measuredValue: '',
+              deviation: '',
+              conclusion: '合格'
+            },
+            {
+              item: '压力测试',
+              standardValue: '1.6MPa',
+              measuredValue: '',
+              deviation: '',
+              conclusion: '合格'
+            }
+          ],
+          conclusion: '合格',
+          remark: ''
+        },
+        
+        // 报告表单
+        reportForm: {
+          reportNo: 'REPORT-20260228-001',
+          registerDate: '2026-02-28',
+          conclusion: '合格',
+          testData: [
+            {
+              item: '外观检查',
+              standardValue: '无损伤',
+              measuredValue: '无损伤',
+              deviation: '0',
+              conclusion: '合格'
+            },
+            {
+              item: '压力测试',
+              standardValue: '1.6MPa',
+              measuredValue: '1.58MPa',
+              deviation: '-0.02MPa',
+              conclusion: '合格'
+            }
+          ]
+        },
+        
+        // 文件列表
+        fileList: [],
+        
+        // 编辑样品弹窗
+        dialogSampleVisible: false,
+        editSampleForm: {}
+      },
+      computed: {
+        // 过滤后的样品列表
+        filteredSamples() {
+          if (!this.sampleSearch) {
+            return this.samples;
+          }
+          return this.samples.filter(sample => {
+            return sample.sampleNo.includes(this.sampleSearch) ||
+                   sample.sampleName.includes(this.sampleSearch) ||
+                   sample.model.includes(this.sampleSearch);
+          });
+        },
+        
+        // 已登记检测样品总数
+        totalSamples() {
+          return this.samples.length;
+        },
+        
+        // 个人登记样品总数（当前登录用户）
+        personalSamples() {
+          return this.samples.length;
+        },
+        
+        // 已完成检测报告数
+        completedReports() {
+          return this.samples.filter(sample => sample.hasReport).length;
+        },
+        
+        // 个人已完成检测报告数
+        personalCompletedReports() {
+          return this.samples.filter(sample => sample.hasReport).length;
+        },
+        
+        // 按天分组的样品
+        samplesByDay() {
+          const grouped = {};
+          this.filteredSamples.forEach(sample => {
+            const date = sample.registerDate;
+            if (!grouped[date]) {
+              grouped[date] = [];
+            }
+            grouped[date].push(sample);
+          });
+          return grouped;
+        }
+      },
+      created() {
+        // 获取URL参数中的任务编号
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskNo = urlParams.get('taskNo');
+        
+        if (taskNo) {
+          // 根据任务编号加载任务信息
+          this.loadTaskInfo(taskNo);
+        } else {
+          // 如果没有任务编号，跳转到我的任务页面
+          window.location.href = 'preview_on_site_main.html';
+        }
+        
+        // 自动生成样品编号
+        this.generateSampleNo();
+      },
+      methods: {
+        // 加载任务信息
+        loadTaskInfo(taskNo) {
+          // 模拟从服务器加载任务信息
+          const taskData = {
+            'TASK-20260228-001': {
+              taskNo: 'TASK-20260228-001',
+              unit: '西安某工厂',
+              address: '西安市高新区科技二路',
+              status: '进行中',
+              samples: [
+                {
+                  id: 1,
+                  sampleNo: 'SAMPLE-001',
+                  sampleName: '安全阀',
+                  model: 'A48Y-16C',
+                  manufacturer: '上海阀门厂',
+                  installLocation: '一号车间',
+                  registerDate: '2026-02-28',
+                  remark: ''
+                },
+                {
+                  id: 2,
+                  sampleNo: 'SAMPLE-002',
+                  sampleName: '压力表',
+                  model: 'Y-100',
+                  manufacturer: '西安仪表厂',
+                  installLocation: '二号车间',
+                  registerDate: '2026-02-28',
+                  remark: ''
+                }
+              ]
+            }
+          };
+          
+          if (taskData[taskNo]) {
+            this.currentTask = {
+              taskNo: taskData[taskNo].taskNo,
+              unit: taskData[taskNo].unit,
+              address: taskData[taskNo].address,
+              status: taskData[taskNo].status
+            };
+            this.samples = taskData[taskNo].samples || [];
+          }
+        },
+        
+        // 切换侧边栏
+        toggleSidebar() {
+          this.sidebarCollapsed = !this.sidebarCollapsed;
+        },
+        
+        // 处理菜单选择
+        handleMenuSelect(index) {
+          if (this.sidebarCollapsed) {
+            this.sidebarCollapsed = false;
+          }
+          const map = {
+            'business': 'preview_business.html',
+            'sample': 'preview_sample.html',
+            'assign': 'preview_assign.html',
+            'on-site-pre-entrust': 'preview_business.html?page=on-site-pre-entrust',
+            'on-site-task': 'preview_business.html?page=on-site-task',
+            'my-tasks': 'preview_on_site_main.html',
+            'record-list': 'preview_record.html',
+            'audit': 'preview_audit.html',
+            'approve': 'preview_audit.html',
+            'archive': 'preview_archive.html'
+          };
+          if (map[index]) {
+            window.location.href = map[index];
+          }
+        },
+        
+        // 获取状态类型
+        getStatusType(status) {
+          switch (status) {
+            case '待检测':
+              return 'info';
+            case '检测中':
+              return 'warning';
+            case '已完成':
+              return 'success';
+            default:
+              return 'info';
+          }
+        },
+        
+        // 生成样品编号
+        generateSampleNo() {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateStr = `${year}${month}${day}`;
+          const count = this.samples.filter(s => s.sampleNo && s.sampleNo.includes(dateStr)).length + 1;
+          const seq = String(count).padStart(3, '0');
+          this.sampleForm.sampleNo = `SPL-${dateStr}-${seq}`;
+        },
+        
+        // 重置样品表单
+        resetSampleForm() {
+          this.sampleForm = {
+            sampleNo: '',
+            sampleName: '',
+            model: '',
+            manufacturer: '',
+            installLocation: '',
+            remark: ''
+          };
+          this.generateSampleNo();
+        },
+        
+        // 保存样品
+        saveSample() {
+          if (!this.sampleForm.sampleName) {
+            this.$message.warning('请输入样品名称');
+            return;
+          }
+          if (!this.sampleForm.model) {
+            this.$message.warning('请输入规格型号');
+            return;
+          }
+          const today = new Date();
+          const registerDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          const newSample = {
+            id: this.samples.length + 1,
+            ...this.sampleForm,
+            registerDate: registerDate,
+            hasReport: false
+          };
+          this.samples.push(newSample);
+          this.resetSampleForm();
+          this.$message.success('样品保存成功');
+        },
+        
+        // 编辑样品
+        editSample(sample) {
+          this.editSampleForm = { ...sample };
+          this.dialogSampleVisible = true;
+        },
+        
+        // 更新样品
+        updateSample() {
+          const index = this.samples.findIndex(s => s.id === this.editSampleForm.id);
+          if (index !== -1) {
+            this.samples[index] = { ...this.editSampleForm };
+            this.dialogSampleVisible = false;
+            this.$message.success('样品更新成功');
+          }
+        },
+        
+        // 删除样品
+        deleteSample(sample) {
+          this.$confirm('确定要删除这个样品吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            const index = this.samples.findIndex(s => s.id === sample.id);
+            if (index !== -1) {
+              this.samples.splice(index, 1);
+              this.$message.success('样品删除成功');
+            }
+          }).catch(() => {
+            // 取消删除
+          });
+        },
+        
+        // 打开记录录入
+        openRecordEntry(sample) {
+          this.currentSample = sample;
+          this.activeRecordTab = 'original';
+        },
+        
+        // 添加检测数据项
+        addTestDataItem() {
+          this.recordForm.testData.push({
+            item: '',
+            standardValue: '',
+            measuredValue: '',
+            deviation: '',
+            conclusion: '合格'
+          });
+        },
+        
+        // 重置记录表单
+        resetRecordForm() {
+          this.recordForm = {
+            envTemperature: '',
+            envHumidity: '',
+            envPressure: '',
+            testData: [
+              {
+                item: '外观检查',
+                standardValue: '无损伤',
+                measuredValue: '',
+                deviation: '',
+                conclusion: '合格'
+              },
+              {
+                item: '压力测试',
+                standardValue: '1.6MPa',
+                measuredValue: '',
+                deviation: '',
+                conclusion: '合格'
+              }
+            ],
+            conclusion: '合格',
+            remark: ''
+          };
+        },
+        
+        // 保存记录
+        saveRecord() {
+          this.$message.success('记录保存成功');
+        },
+        
+        // 处理文件预览
+        handlePreview(file) {
+          console.log('预览文件:', file);
+        },
+        
+        // 处理文件删除
+        handleRemove(file, fileList) {
+          console.log('删除文件:', file);
+        },
+        
+        // 确认任务完成
+        confirmTaskComplete() {
+          this.$confirm('确定要确认任务完成吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.currentTask.status = '已完成';
+            this.$message.success('任务已确认完成');
+          }).catch(() => {
+            // 取消确认
+          });
+        },
+        
+        // 取消任务
+        cancelTask() {
+          this.$confirm('确定要取消任务吗？', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            this.currentTask.status = '已取消';
+            this.$message.success('任务已取消');
+          }).catch(() => {
+            // 取消操作
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>

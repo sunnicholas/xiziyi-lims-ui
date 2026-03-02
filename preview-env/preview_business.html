@@ -4,8 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>西自仪 LIMS - 业务受理与特种设备流程</title>
+  <!-- 预加载关键资源 -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
   <!-- 引入样式 -->
-  <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.15.14/lib/theme-chalk/index.css">
   <style>
     body { margin: 0; padding: 0; font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif; background-color: #f0f2f5; }
     #app { display: flex; height: 100vh; overflow: hidden; }
@@ -262,13 +265,17 @@
             <i class="el-icon-s-flag"></i>
             <span>现场委托<span class="menu-tooltip">现场委托</span></span>
           </template>
-          <el-menu-item index="on-site-pre-entrust" @click="activeMenu = 'on-site-pre-entrust'">
+          <el-menu-item index="on-site-pre-entrust">
             <span slot="title">预委托受理<span class="menu-tooltip">预委托受理</span></span>
           </el-menu-item>
-          <el-menu-item index="on-site-task" @click="activeMenu = 'on-site-task'">
+          <el-menu-item index="on-site-task">
             <span slot="title">外检任务管理<span class="menu-tooltip">外检任务管理</span></span>
           </el-menu-item>
         </el-submenu>
+        <el-menu-item index="on-site-detection">
+          <i class="el-icon-s-claim"></i>
+          <span slot="title">现场检测<span class="menu-tooltip">现场检测</span></span>
+        </el-menu-item>
         <el-submenu index="record">
           <template slot="title">
             <i class="el-icon-edit-outline"></i>
@@ -463,7 +470,6 @@
 
           <!-- 工具栏 -->
           <el-row :gutter="10" class="mb8">
-            <el-col :span="1.5"><el-button type="primary" icon="el-icon-plus" size="mini" @click="addOnSiteTask">新增任务</el-button></el-col>
             <el-col :span="1.5"><el-button type="warning" plain icon="el-icon-download" size="mini" @click="exportOnSiteTask">导出</el-button></el-col>
           </el-row>
 
@@ -525,7 +531,7 @@
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="执行部门">
-                    <el-select v-model="onSiteTaskForm.dept" style="width: 100%;" :disabled="fromFinanceConfirm">
+                    <el-select v-model="onSiteTaskForm.dept" style="width: 100%;">
                       <el-option label="特种设备检测室" value="特种设备检测室"></el-option>
                       <el-option label="计量校准中心" value="计量校准中心"></el-option>
                     </el-select>
@@ -533,24 +539,24 @@
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="任务单位">
-                    <el-input v-model="onSiteTaskForm.unit" :disabled="fromFinanceConfirm"></el-input>
+                    <el-input v-model="onSiteTaskForm.unit"></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="检测地址">
-                    <el-input v-model="onSiteTaskForm.address" :disabled="fromFinanceConfirm"></el-input>
+                    <el-input v-model="onSiteTaskForm.address"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="6">
                   <el-form-item label="公司联络员">
-                    <el-input v-model="onSiteTaskForm.liaison" :disabled="fromFinanceConfirm"></el-input>
+                    <el-input v-model="onSiteTaskForm.liaison"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="6">
                   <el-form-item label="联络员电话">
-                    <el-input v-model="onSiteTaskForm.liaisonPhone" :disabled="fromFinanceConfirm"></el-input>
+                    <el-input v-model="onSiteTaskForm.liaisonPhone"></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
@@ -559,17 +565,17 @@
               <el-row :gutter="20">
                 <el-col :span="8">
                   <el-form-item label="检测器具名称">
-                    <el-input v-model="onSiteTaskForm.deviceName" :disabled="fromFinanceConfirm"></el-input>
+                    <el-input v-model="onSiteTaskForm.deviceName"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="器具数量">
-                    <el-input v-model="onSiteTaskForm.deviceCount" placeholder="预估数量" :disabled="fromFinanceConfirm"></el-input>
+                    <el-input v-model="onSiteTaskForm.deviceCount" placeholder="预估数量"></el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="检测方式">
-                    <el-select v-model="onSiteTaskForm.testMethod" style="width: 100%;" :disabled="fromFinanceConfirm">
+                    <el-select v-model="onSiteTaskForm.testMethod" style="width: 100%;">
                       <el-option label="现场检测" value="现场检测"></el-option>
                       <el-option label="带回检测" value="带回检测"></el-option>
                     </el-select>
@@ -581,24 +587,24 @@
               <el-row :gutter="20">
                 <el-col :span="8">
                   <el-form-item label="预计出发时间">
-                    <el-date-picker v-model="onSiteTaskForm.departureTime" type="datetime" style="width: 100%;" :disabled="fromFinanceConfirm"></el-date-picker>
+                    <el-date-picker v-model="onSiteTaskForm.departureTime" type="datetime" style="width: 100%;"></el-date-picker>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="预计完成时间">
-                    <el-date-picker v-model="onSiteTaskForm.completionTime" type="datetime" style="width: 100%;" :disabled="fromFinanceConfirm"></el-date-picker>
+                    <el-date-picker v-model="onSiteTaskForm.completionTime" type="datetime" style="width: 100%;"></el-date-picker>
                   </el-form-item>
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="预计里程">
-                    <el-input v-model="onSiteTaskForm.mileage" placeholder="公里" :disabled="fromFinanceConfirm"></el-input>
+                    <el-input v-model="onSiteTaskForm.mileage" placeholder="公里"></el-input>
                   </el-form-item>
                 </el-col>
               </el-row>
               <el-row :gutter="20">
                 <el-col :span="8">
                   <el-form-item label="车牌号">
-                    <el-select v-model="onSiteTaskForm.carPlate" placeholder="请选择车辆" style="width: 100%;" :disabled="fromFinanceConfirm">
+                    <el-select v-model="onSiteTaskForm.carPlate" placeholder="请选择车辆" style="width: 100%;">
                       <el-option
                         v-for="item in carList"
                         :key="item.plate"
@@ -610,7 +616,7 @@
                 </el-col>
                 <el-col :span="8">
                   <el-form-item label="驾驶员">
-                    <el-select v-model="onSiteTaskForm.driver" placeholder="请选择驾驶员" style="width: 100%;" :disabled="fromFinanceConfirm">
+                    <el-select v-model="onSiteTaskForm.driver" placeholder="请选择驾驶员" style="width: 100%;">
                       <el-option
                         v-for="item in specialStaff"
                         :key="item.name"
@@ -622,7 +628,7 @@
                 </el-col>
                  <el-col :span="8">
                   <el-form-item label="派车人">
-                    <el-select v-model="onSiteTaskForm.carDispatcher" placeholder="请选择派车人" style="width: 100%;" :disabled="fromFinanceConfirm">
+                    <el-select v-model="onSiteTaskForm.carDispatcher" placeholder="请选择派车人" style="width: 100%;">
                       <el-option
                         v-for="item in specialStaff"
                         :key="item.name"
@@ -638,7 +644,7 @@
               <el-row :gutter="20">
                 <el-col :span="8">
                   <el-form-item label="现金借款">
-                    <el-input v-model="onSiteTaskForm.cashAdvance" type="number">
+                    <el-input v-model="onSiteTaskForm.cashAdvance" type="number" :disabled="!isFinanceEditable">
                       <template slot="append">元</template>
                     </el-input>
                   </el-form-item>
@@ -652,9 +658,16 @@
 
               <div class="section-header">人员信息</div>
               <el-row :gutter="20">
-                <el-col :span="24">
-                  <el-form-item label="检测人员">
-                    <el-select v-model="onSiteTaskForm.inspectors" multiple placeholder="请选择检测人员" style="width: 100%;" :disabled="fromFinanceConfirm">
+                <el-col :span="12">
+                  <el-form-item label="检测组长">
+                    <el-select v-model="onSiteTaskForm.leader" placeholder="请选择检测组长" style="width: 100%;">
+                      <el-option v-for="p in specialStaff" :key="p.name" :label="p.name" :value="p.name"></el-option>
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="检测组员">
+                    <el-select v-model="onSiteTaskForm.members" multiple placeholder="请选择检测组员" style="width: 100%;">
                       <el-option v-for="p in specialStaff" :key="p.name" :label="p.name" :value="p.name"></el-option>
                     </el-select>
                   </el-form-item>
@@ -671,8 +684,8 @@
             </el-form>
             <div slot="footer" class="dialog-footer">
               <el-button @click="dialogOnSiteTaskVisible = false">关 闭</el-button>
-              <el-button v-if="!isTaskViewMode && onSiteTaskForm.status !== '已财务确认'" type="primary" @click="submitOnSiteTask">保存并派单</el-button>
-              <el-button v-if="fromFinanceConfirm && onSiteTaskForm.status !== '已财务确认'" type="primary" @click="financeConfirmInDetail">财务确认</el-button>
+              <el-button v-if="!isTaskViewMode" type="primary" @click="submitOnSiteTask">保存</el-button>
+              <el-button v-if="fromFinanceConfirm && onSiteTaskForm.status !== '已财务确认'" type="success" @click="financeConfirmInDetail">财务确认</el-button>
             </div>
           </el-dialog>
 
@@ -1556,7 +1569,7 @@
         activeTab: 'special',
         sidebarCollapsed: false,
         
-        lastUpdated: '2026-02-28 10:15:00',
+        lastUpdated: '2026-02-28 16:30:00',
         
         dialogTypeSelectVisible: false,
         entrustLevel: 1, // 1: 业务板块选择, 2: 资质属性选择
@@ -1922,7 +1935,8 @@
            address: '',
            deviceType: '',
            deviceCount: '',
-           inspectors: [],
+           leader: '',
+           members: [],
            departureTime: '',
            vehicle: '',
            driver: '',
@@ -2046,7 +2060,8 @@
            contact2: '',
            contact2Phone: '',
            address: '',
-           inspectors: [],
+           leader: '',
+           members: [],
            manager: '', // 负责人
            deviceAdmin: '', // 设备管理员
            techManager: '', // 技术负责人
@@ -2080,6 +2095,12 @@
         }
       },
       computed: {
+        isFinanceEditable() {
+          if (this.onSiteTaskForm.status === '已财务确认') {
+            return false;
+          }
+          return this.fromFinanceConfirm;
+        },
         currentQualifications() {
           return this.qualificationOptions[this.selectedBusinessModule] || []
         },
@@ -2741,6 +2762,9 @@
             'business': 'preview_business.html',
             'sample': 'preview_sample.html',
             'assign': 'preview_assign.html',
+            'on-site-pre-entrust': 'preview_business.html?page=on-site-pre-entrust',
+            'on-site-task': 'preview_business.html?page=on-site-task',
+            'on-site-detection': 'preview_on_site_main.html',
             'record-list': 'preview_record.html',
             'record-entry': 'preview_record.html',
             'audit': 'preview_audit.html#audit',
@@ -2963,11 +2987,13 @@
             return;
           }
           const index = this.onSiteTaskList.findIndex(t => t.taskNo === this.onSiteTaskForm.taskNo);
+          const members = Array.isArray(this.onSiteTaskForm.members) ? this.onSiteTaskForm.members.join(', ') : this.onSiteTaskForm.members;
+          const allInspectors = this.onSiteTaskForm.leader + (members ? ', ' + members : '');
           const taskData = {
             ...this.onSiteTaskForm,
             // Keep existing status if updating, else default to '待出发'
             status: index !== -1 ? this.onSiteTaskList[index].status : '待出发',
-            inspectors: Array.isArray(this.onSiteTaskForm.inspectors) ? this.onSiteTaskForm.inspectors.join(', ') : this.onSiteTaskForm.inspectors
+            inspectors: allInspectors
           };
           
           if (index !== -1) {
@@ -2985,11 +3011,14 @@
             return;
           }
           this.onSiteTaskForm = { ...row };
-          // Convert string inspectors back to array for select component
-          if (typeof row.inspectors === 'string') {
-              this.onSiteTaskForm.inspectors = row.inspectors.split(', ').filter(i => i);
-          } else if (!row.inspectors) {
-              this.onSiteTaskForm.inspectors = [];
+          // Parse inspectors string to leader and members
+          if (typeof row.inspectors === 'string' && row.inspectors) {
+            const inspectorArr = row.inspectors.split(', ').filter(i => i);
+            this.onSiteTaskForm.leader = inspectorArr[0] || '';
+            this.onSiteTaskForm.members = inspectorArr.slice(1);
+          } else {
+            this.onSiteTaskForm.leader = '';
+            this.onSiteTaskForm.members = [];
           }
           this.isTaskViewMode = false;
           this.dialogOnSiteTaskVisible = true;
@@ -3124,11 +3153,14 @@
           if (task) {
             this.onSiteTaskForm = { ...task };
             this.isTaskViewMode = true;
-            // Convert string inspectors back to array for select component
-            if (typeof task.inspectors === 'string') {
-                this.onSiteTaskForm.inspectors = task.inspectors.split(', ').filter(i => i);
-            } else if (!task.inspectors) {
-                this.onSiteTaskForm.inspectors = [];
+            // Parse inspectors string to leader and members
+            if (typeof task.inspectors === 'string' && task.inspectors) {
+              const inspectorArr = task.inspectors.split(', ').filter(i => i);
+              this.onSiteTaskForm.leader = inspectorArr[0] || '';
+              this.onSiteTaskForm.members = inspectorArr.slice(1);
+            } else {
+              this.onSiteTaskForm.leader = '';
+              this.onSiteTaskForm.members = [];
             }
             this.dialogOnSiteTaskVisible = true;
           } else {
