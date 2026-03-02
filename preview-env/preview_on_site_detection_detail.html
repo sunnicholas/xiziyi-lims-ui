@@ -292,7 +292,7 @@
           </el-breadcrumb-item>
           <el-breadcrumb-item>
             现场检测
-            <span class="update-time">（更新时间：2026-02-28 17:30:00）</span>
+            <span class="update-time">（更新时间：2026-02-28 18:30:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -356,57 +356,18 @@
             </div>
           </div>
 
-          <!-- 样品录入 -->
-          <div class="sample-entry-section">
-            <div class="section-title">样品录入</div>
-            <div class="sample-form">
-              <el-form :model="sampleForm" label-width="120px" size="small">
-                <div class="sample-grid">
-                  <el-form-item label="出厂编号" required>
-                    <el-input v-model="sampleForm.factoryNo" placeholder="请输入出厂编号（唯一标识）"></el-input>
-                  </el-form-item>
-                  <el-form-item label="样品编号" required>
-                    <el-input v-model="sampleForm.sampleNo" readonly placeholder="系统自动生成">
-                      <template slot="append">
-                        <el-button icon="el-icon-refresh" @click="generateSampleNo" title="重新生成"></el-button>
-                      </template>
-                    </el-input>
-                  </el-form-item>
-                  <el-form-item label="样品名称" required>
-                    <el-input v-model="sampleForm.sampleName" placeholder="请输入样品名称"></el-input>
-                  </el-form-item>
-                  <el-form-item label="规格型号" required>
-                    <el-input v-model="sampleForm.model" placeholder="请输入规格型号"></el-input>
-                  </el-form-item>
-                  <el-form-item label="制造单位">
-                    <el-input v-model="sampleForm.manufacturer" placeholder="请输入制造单位"></el-input>
-                  </el-form-item>
-                  <el-form-item label="安装位置">
-                    <el-input v-model="sampleForm.installLocation" placeholder="请输入安装位置"></el-input>
-                  </el-form-item>
-                  <el-form-item label="备注">
-                    <el-input type="textarea" v-model="sampleForm.remark" :rows="2" placeholder="请输入备注信息"></el-input>
-                  </el-form-item>
-                </div>
-                <div style="text-align: right; margin-top: 20px;">
-                  <el-button @click="resetSampleForm">重置</el-button>
-                  <el-button type="primary" @click="saveSample">保存样品</el-button>
-                </div>
-              </el-form>
-            </div>
-          </div>
-
           <!-- 样品列表 -->
           <div class="sample-list-section">
             <div class="sample-list-header">
               <div class="section-title" style="margin-bottom: 0;">样品列表</div>
               <div class="sample-list-actions">
-                <el-input v-model="sampleSearch" placeholder="搜索样品" size="small" style="width: 200px; margin-right: 10px;"></el-input>
-                <el-button type="primary" size="small" icon="el-icon-download">导出</el-button>
+                <el-button type="primary" size="small" icon="el-icon-plus" @click="openBatchSampleDialog">样品录入</el-button>
+                <el-input v-model="sampleSearch" placeholder="搜索样品" size="small" style="width: 200px; margin-left: 10px;"></el-input>
+                <el-button type="warning" size="small" icon="el-icon-download" style="margin-left: 10px;">导出</el-button>
               </div>
             </div>
             <div v-if="Object.keys(samplesByDay).length === 0">
-              <el-empty description="暂无样品数据"></el-empty>
+              <el-empty description="暂无样品数据，点击"样品录入"按钮添加"></el-empty>
             </div>
             <div v-else>
               <div v-for="(samples, date) in samplesByDay" :key="date" style="margin-bottom: 20px;">
@@ -434,124 +395,6 @@
             </div>
           </div>
 
-          <!-- 记录编写 -->
-          <div class="record-section">
-            <div class="section-title">记录编写</div>
-            <el-tabs v-model="activeRecordTab" class="record-tabs">
-              <el-tab-pane label="原始记录" name="original">
-                <div v-if="currentSample" class="record-form">
-                  <el-form :model="recordForm" label-width="120px" size="small">
-                    <el-form-item label="样品信息">
-                      <el-descriptions :column="3" border size="small">
-                        <el-descriptions-item label="样品编号">{{ currentSample.sampleNo }}</el-descriptions-item>
-                        <el-descriptions-item label="样品名称">{{ currentSample.sampleName }}</el-descriptions-item>
-                        <el-descriptions-item label="规格型号">{{ currentSample.model }}</el-descriptions-item>
-                      </el-descriptions>
-                    </el-form-item>
-                    <el-form-item label="环境条件">
-                      <el-row :gutter="20">
-                        <el-col :span="8">
-                          <el-form-item label="温度(℃)">
-                            <el-input v-model="recordForm.envTemperature" placeholder="请输入"></el-input>
-                          </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                          <el-form-item label="湿度(%RH)">
-                            <el-input v-model="recordForm.envHumidity" placeholder="请输入"></el-input>
-                          </el-form-item>
-                        </el-col>
-                        <el-col :span="8">
-                          <el-form-item label="大气压力(kPa)">
-                            <el-input v-model="recordForm.envPressure" placeholder="请输入"></el-input>
-                          </el-form-item>
-                        </el-col>
-                      </el-row>
-                    </el-form-item>
-                    <el-form-item label="检测数据">
-                      <el-table :data="recordForm.testData" border size="small">
-                        <el-table-column label="检测项目" prop="item" width="150"></el-table-column>
-                        <el-table-column label="标准值" prop="standardValue"></el-table-column>
-                        <el-table-column label="实测值" prop="measuredValue"></el-table-column>
-                        <el-table-column label="偏差" prop="deviation"></el-table-column>
-                        <el-table-column label="结论" prop="conclusion" width="100">
-                          <template slot-scope="scope">
-                            <el-select v-model="scope.row.conclusion" size="mini">
-                              <el-option label="合格" value="合格"></el-option>
-                              <el-option label="不合格" value="不合格"></el-option>
-                            </el-select>
-                          </template>
-                        </el-table-column>
-                      </el-table>
-                      <el-button type="primary" size="small" style="margin-top: 10px;" @click="addTestDataItem">添加检测项目</el-button>
-                    </el-form-item>
-                    <el-form-item label="检测结论">
-                      <el-radio-group v-model="recordForm.conclusion">
-                        <el-radio label="合格">合格</el-radio>
-                        <el-radio label="不合格">不合格</el-radio>
-                      </el-radio-group>
-                    </el-form-item>
-                    <el-form-item label="备注">
-                      <el-input type="textarea" v-model="recordForm.remark" :rows="3" placeholder="请输入备注信息"></el-input>
-                    </el-form-item>
-                    <el-form-item label="附件上传">
-                      <el-upload
-                        class="upload-demo"
-                        action="#"
-                        :on-preview="handlePreview"
-                        :on-remove="handleRemove"
-                        :file-list="fileList"
-                        list-type="picture"
-                        :auto-upload="false"
-                      >
-                        <el-button size="small" type="primary">点击上传</el-button>
-                        <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-                      </el-upload>
-                    </el-form-item>
-                    <div style="text-align: right; margin-top: 20px;">
-                      <el-button @click="resetRecordForm">重置</el-button>
-                      <el-button type="primary" @click="saveRecord">保存记录</el-button>
-                    </div>
-                  </el-form>
-                </div>
-                <div v-else class="record-form" style="text-align: center; padding: 40px;">
-                  <el-empty description="请先选择一个样品进行记录编写"></el-empty>
-                </div>
-              </el-tab-pane>
-              <el-tab-pane label="报告预览" name="report">
-                <div v-if="currentSample" class="record-form">
-                  <h3 style="text-align: center; margin-bottom: 20px;">检测报告</h3>
-                  <el-descriptions :column="2" border size="small">
-                    <el-descriptions-item label="报告编号">{{ reportForm.reportNo }}</el-descriptions-item>
-                    <el-descriptions-item label="登记日期">{{ reportForm.registerDate }}</el-descriptions-item>
-                    <el-descriptions-item label="样品编号">{{ currentSample.sampleNo }}</el-descriptions-item>
-                    <el-descriptions-item label="样品名称">{{ currentSample.sampleName }}</el-descriptions-item>
-                    <el-descriptions-item label="规格型号">{{ currentSample.model }}</el-descriptions-item>
-                    <el-descriptions-item label="制造单位">{{ currentSample.manufacturer }}</el-descriptions-item>
-                    <el-descriptions-item label="检测结论" :span="2">
-                      <el-tag :type="reportForm.conclusion === '合格' ? 'success' : 'danger'">{{ reportForm.conclusion }}</el-tag>
-                    </el-descriptions-item>
-                  </el-descriptions>
-                  <div style="margin-top: 20px;">
-                    <h4>检测数据</h4>
-                    <el-table :data="reportForm.testData" border size="small" style="margin-top: 10px;">
-                      <el-table-column label="检测项目" prop="item"></el-table-column>
-                      <el-table-column label="标准值" prop="standardValue"></el-table-column>
-                      <el-table-column label="实测值" prop="measuredValue"></el-table-column>
-                      <el-table-column label="偏差" prop="deviation"></el-table-column>
-                      <el-table-column label="结论" prop="conclusion"></el-table-column>
-                    </el-table>
-                  </div>
-                  <div style="text-align: right; margin-top: 40px;">
-                    <el-button type="primary" icon="el-icon-download">导出报告</el-button>
-                  </div>
-                </div>
-                <div v-else class="record-form" style="text-align: center; padding: 40px;">
-                  <el-empty description="请先选择一个样品进行报告预览"></el-empty>
-                </div>
-              </el-tab-pane>
-            </el-tabs>
-          </div>
-
           <!-- 组长确认 -->
           <div class="confirmation-section">
             <div class="section-title">组长确认</div>
@@ -567,6 +410,101 @@
         </div>
       </div>
     </div>
+
+    <!-- 批量录入样品弹窗 -->
+    <el-dialog title="批量录入样品" :visible.sync="dialogBatchSampleVisible" width="95%" top="2vh" append-to-body>
+      <div style="margin-bottom: 15px;">
+        <el-button type="primary" size="small" icon="el-icon-plus" @click="addBatchSampleRow">添加一行</el-button>
+        <el-button type="success" size="small" icon="el-icon-document-copy" @click="copyLastRow">复制最后一行</el-button>
+        <el-button type="warning" size="small" icon="el-icon-document-copy" @click="copySelectedRows">复制选中行</el-button>
+        <el-button type="danger" size="small" icon="el-icon-delete" @click="removeSelectedBatchRows">删除选中行</el-button>
+        <span style="margin-left: 20px; color: #909399;">提示：可直接在表格中编辑内容，出厂编号不可重复</span>
+      </div>
+      <el-table :data="batchSampleList" border style="width: 100%" size="small" max-height="500" @selection-change="handleBatchSelectionChange">
+        <el-table-column type="selection" width="50" align="center"></el-table-column>
+        <el-table-column type="index" label="序号" width="60" align="center"></el-table-column>
+        <el-table-column label="出厂编号" width="150" required>
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.factoryNo" size="small" placeholder="必填，唯一"></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="样品编号" width="150">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.sampleNo" size="small" readonly placeholder="自动生成"></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="样品名称" min-width="150" required>
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.sampleName" size="small" placeholder="请输入样品名称"></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="规格型号" width="150" required>
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.model" size="small" placeholder="请输入规格型号"></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="制造单位" width="150">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.manufacturer" size="small" placeholder="请输入制造单位"></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="安装位置" width="150">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.installLocation" size="small" placeholder="请输入安装位置"></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="备注" width="150">
+          <template slot-scope="scope">
+            <el-input v-model="scope.row.remark" size="small" placeholder="请输入备注"></el-input>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100" align="center">
+          <template slot-scope="scope">
+            <el-button size="mini" type="text" @click="copySingleRow(scope.row, scope.$index)" icon="el-icon-document-copy" title="复制此行"></el-button>
+            <el-button size="mini" type="text" @click="removeBatchRow(scope.$index)" class="text-danger" icon="el-icon-delete" title="删除"></el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogBatchSampleVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveBatchSamples">保存全部</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 单个录入样品弹窗 -->
+    <el-dialog title="单个录入样品" :visible.sync="dialogSingleSampleVisible" width="600px" append-to-body>
+      <el-form :model="singleSampleForm" label-width="120px" size="small">
+        <el-form-item label="出厂编号" required>
+          <el-input v-model="singleSampleForm.factoryNo" placeholder="请输入出厂编号（唯一标识）"></el-input>
+        </el-form-item>
+        <el-form-item label="样品编号" required>
+          <el-input v-model="singleSampleForm.sampleNo" readonly placeholder="系统自动生成">
+            <template slot="append">
+              <el-button icon="el-icon-refresh" @click="generateSingleSampleNo" title="重新生成"></el-button>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="样品名称" required>
+          <el-input v-model="singleSampleForm.sampleName" placeholder="请输入样品名称"></el-input>
+        </el-form-item>
+        <el-form-item label="规格型号" required>
+          <el-input v-model="singleSampleForm.model" placeholder="请输入规格型号"></el-input>
+        </el-form-item>
+        <el-form-item label="制造单位">
+          <el-input v-model="singleSampleForm.manufacturer" placeholder="请输入制造单位"></el-input>
+        </el-form-item>
+        <el-form-item label="安装位置">
+          <el-input v-model="singleSampleForm.installLocation" placeholder="请输入安装位置"></el-input>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input type="textarea" v-model="singleSampleForm.remark" :rows="2" placeholder="请输入备注信息"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogSingleSampleVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveSingleSample">保存</el-button>
+      </div>
+    </el-dialog>
 
     <!-- 样品编辑弹窗 -->
     <el-dialog title="编辑样品" :visible.sync="dialogSampleVisible" width="600px" append-to-body>
@@ -600,6 +538,107 @@
         <el-button type="primary" @click="updateSample">保存</el-button>
       </div>
     </el-dialog>
+
+    <!-- 记录编写弹窗 -->
+    <el-dialog title="原始记录编写" :visible.sync="dialogRecordVisible" width="90%" top="3vh" append-to-body>
+      <div v-if="currentRecordSample">
+        <el-alert title="说明" type="info" :closable="false" show-icon style="margin-bottom: 20px;">
+          <template slot="title">
+            <span style="font-size: 14px;">参考现上送检原始记录编写：选择模版后进行编辑</span>
+          </template>
+        </el-alert>
+        <el-form :model="recordForm" label-width="120px" size="small">
+          <el-form-item label="样品信息">
+            <el-descriptions :column="4" border size="small">
+              <el-descriptions-item label="出厂编号">{{ currentRecordSample.factoryNo }}</el-descriptions-item>
+              <el-descriptions-item label="样品编号">{{ currentRecordSample.sampleNo }}</el-descriptions-item>
+              <el-descriptions-item label="样品名称">{{ currentRecordSample.sampleName }}</el-descriptions-item>
+              <el-descriptions-item label="规格型号">{{ currentRecordSample.model }}</el-descriptions-item>
+            </el-descriptions>
+          </el-form-item>
+          <el-form-item label="选择模版">
+            <el-select v-model="recordForm.template" placeholder="请选择原始记录模版" style="width: 300px;">
+              <el-option label="安全阀检测记录" value="safety-valve"></el-option>
+              <el-option label="压力表检测记录" value="pressure-gauge"></el-option>
+              <el-option label="通用检测记录" value="general"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="环境条件">
+            <el-row :gutter="20">
+              <el-col :span="8">
+                <el-form-item label="温度(℃)">
+                  <el-input v-model="recordForm.envTemperature" placeholder="请输入"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="湿度(%RH)">
+                  <el-input v-model="recordForm.envHumidity" placeholder="请输入"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="大气压力(kPa)">
+                  <el-input v-model="recordForm.envPressure" placeholder="请输入"></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item label="检测数据">
+            <el-table :data="recordForm.testData" border size="small">
+              <el-table-column label="检测项目" prop="item" width="150">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.item" size="small"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column label="标准值" prop="standardValue">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.standardValue" size="small"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column label="实测值" prop="measuredValue">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.measuredValue" size="small"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column label="偏差" prop="deviation">
+                <template slot-scope="scope">
+                  <el-input v-model="scope.row.deviation" size="small"></el-input>
+                </template>
+              </el-table-column>
+              <el-table-column label="结论" prop="conclusion" width="120">
+                <template slot-scope="scope">
+                  <el-select v-model="scope.row.conclusion" size="small">
+                    <el-option label="合格" value="合格"></el-option>
+                    <el-option label="不合格" value="不合格"></el-option>
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="80" align="center">
+                <template slot-scope="scope">
+                  <el-button size="mini" type="text" @click="removeTestDataItem(scope.$index)" class="text-danger" icon="el-icon-delete"></el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-button type="primary" size="small" style="margin-top: 10px;" icon="el-icon-plus" @click="addTestDataItem">添加检测项目</el-button>
+          </el-form-item>
+          <el-form-item label="检测结论">
+            <el-radio-group v-model="recordForm.conclusion">
+              <el-radio label="合格">合格</el-radio>
+              <el-radio label="不合格">不合格</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input type="textarea" v-model="recordForm.remark" :rows="3" placeholder="请输入备注信息"></el-input>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div v-else>
+        <el-empty description="请选择一个样品进行记录编写"></el-empty>
+      </div>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogRecordVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveRecord">保存记录</el-button>
+      </div>
+    </el-dialog>
   </div>
 
   <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
@@ -628,6 +667,36 @@
           model: '',
           manufacturer: '',
           installLocation: '',
+          remark: ''
+        },
+        
+        // 批量录入弹窗
+        dialogBatchSampleVisible: false,
+        batchSampleList: [],
+        selectedBatchRows: [],
+        
+        // 单个录入弹窗
+        dialogSingleSampleVisible: false,
+        singleSampleForm: {
+          factoryNo: '',
+          sampleNo: '',
+          sampleName: '',
+          model: '',
+          manufacturer: '',
+          installLocation: '',
+          remark: ''
+        },
+        
+        // 记录编写弹窗
+        dialogRecordVisible: false,
+        currentRecordSample: null,
+        recordForm: {
+          template: '',
+          envTemperature: '',
+          envHumidity: '',
+          envPressure: '',
+          testData: [],
+          conclusion: '合格',
           remark: ''
         },
         
@@ -846,6 +915,212 @@
           }
         },
         
+        // 打开批量录入弹窗
+        openBatchSampleDialog() {
+          this.batchSampleList = [];
+          this.addBatchSampleRow();
+          this.dialogBatchSampleVisible = true;
+        },
+        
+        // 打开单个录入弹窗
+        openSingleSampleDialog() {
+          this.singleSampleForm = {
+            factoryNo: '',
+            sampleNo: '',
+            sampleName: '',
+            model: '',
+            manufacturer: '',
+            installLocation: '',
+            remark: ''
+          };
+          this.generateSingleSampleNo();
+          this.dialogSingleSampleVisible = true;
+        },
+        
+        // 添加批量录入行
+        addBatchSampleRow() {
+          const newRow = {
+            factoryNo: '',
+            sampleNo: this.generateNewSampleNo(),
+            sampleName: '',
+            model: '',
+            manufacturer: '',
+            installLocation: '',
+            remark: ''
+          };
+          this.batchSampleList.push(newRow);
+        },
+        
+        // 生成新的样品编号
+        generateNewSampleNo() {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateStr = `${year}${month}${day}`;
+          const count = this.samples.filter(s => s.sampleNo && s.sampleNo.includes(dateStr)).length + this.batchSampleList.length + 1;
+          const seq = String(count).padStart(3, '0');
+          return `SPL-${dateStr}-${seq}`;
+        },
+        
+        // 复制最后一行
+        copyLastRow() {
+          if (this.batchSampleList.length === 0) {
+            this.$message.warning('没有可复制的行');
+            return;
+          }
+          const lastRow = this.batchSampleList[this.batchSampleList.length - 1];
+          const newRow = {
+            ...lastRow,
+            factoryNo: '',
+            sampleNo: this.generateNewSampleNo()
+          };
+          this.batchSampleList.push(newRow);
+          this.$message.success('已复制最后一行');
+        },
+        
+        // 复制选中行
+        copySelectedRows() {
+          if (this.selectedBatchRows.length === 0) {
+            this.$message.warning('请先选择要复制的行');
+            return;
+          }
+          this.selectedBatchRows.forEach(row => {
+            const newRow = {
+              ...row,
+              factoryNo: '',
+              sampleNo: this.generateNewSampleNo()
+            };
+            this.batchSampleList.push(newRow);
+          });
+          this.$message.success(`已复制${this.selectedBatchRows.length}行`);
+        },
+        
+        // 复制单行
+        copySingleRow(row, index) {
+          const newRow = {
+            ...row,
+            factoryNo: '',
+            sampleNo: this.generateNewSampleNo()
+          };
+          this.batchSampleList.splice(index + 1, 0, newRow);
+          this.$message.success('已复制此行');
+        },
+        
+        // 删除批量录入行
+        removeBatchRow(index) {
+          this.batchSampleList.splice(index, 1);
+        },
+        
+        // 删除选中的批量录入行
+        removeSelectedBatchRows() {
+          if (this.selectedBatchRows.length === 0) {
+            this.$message.warning('请先选择要删除的行');
+            return;
+          }
+          this.batchSampleList = this.batchSampleList.filter(row => !this.selectedBatchRows.includes(row));
+          this.selectedBatchRows = [];
+          this.$message.success('已删除选中行');
+        },
+        
+        // 批量选择变化
+        handleBatchSelectionChange(selection) {
+          this.selectedBatchRows = selection;
+        },
+        
+        // 保存批量样品
+        saveBatchSamples() {
+          // 校验
+          for (let i = 0; i < this.batchSampleList.length; i++) {
+            const row = this.batchSampleList[i];
+            if (!row.factoryNo) {
+              this.$message.warning(`第${i + 1}行出厂编号不能为空`);
+              return;
+            }
+            if (!row.sampleName) {
+              this.$message.warning(`第${i + 1}行样品名称不能为空`);
+              return;
+            }
+            if (!row.model) {
+              this.$message.warning(`第${i + 1}行规格型号不能为空`);
+              return;
+            }
+          }
+          // 检查出�厂编号唯一性
+          const factoryNos = this.batchSampleList.map(r => r.factoryNo);
+          const duplicates = factoryNos.filter((item, index) => factoryNos.indexOf(item) !== index);
+          if (duplicates.length > 0) {
+            this.$message.warning(`出厂编号重复：${[...new Set(duplicates)].join(', ')}`);
+            return;
+          }
+          // 检查与已有样品的重复
+          for (const row of this.batchSampleList) {
+            const existing = this.samples.find(s => s.factoryNo === row.factoryNo);
+            if (existing) {
+              this.$message.warning(`出厂编号已存在：${row.factoryNo}`);
+              return;
+            }
+          }
+          // 保存
+          const today = new Date();
+          const registerDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          this.batchSampleList.forEach(row => {
+            this.samples.push({
+              id: this.samples.length + 1,
+              ...row,
+              registerDate: registerDate,
+              hasReport: false
+            });
+          });
+          this.dialogBatchSampleVisible = false;
+          this.$message.success(`成功保存${this.batchSampleList.length}个样品`);
+        },
+        
+        // 生成单个样品编号
+        generateSingleSampleNo() {
+          const today = new Date();
+          const year = today.getFullYear();
+          const month = String(today.getMonth() + 1).padStart(2, '0');
+          const day = String(today.getDate()).padStart(2, '0');
+          const dateStr = `${year}${month}${day}`;
+          const count = this.samples.filter(s => s.sampleNo && s.sampleNo.includes(dateStr)).length + 1;
+          const seq = String(count).padStart(3, '0');
+          this.singleSampleForm.sampleNo = `SPL-${dateStr}-${seq}`;
+        },
+        
+        // 保存单个样品
+        saveSingleSample() {
+          if (!this.singleSampleForm.factoryNo) {
+            this.$message.warning('请输入出厂编号');
+            return;
+          }
+          const duplicateFactoryNo = this.samples.find(s => s.factoryNo === this.singleSampleForm.factoryNo);
+          if (duplicateFactoryNo) {
+            this.$message.warning('出厂编号已存在，请重新输入');
+            return;
+          }
+          if (!this.singleSampleForm.sampleName) {
+            this.$message.warning('请输入样品名称');
+            return;
+          }
+          if (!this.singleSampleForm.model) {
+            this.$message.warning('请输入规格型号');
+            return;
+          }
+          const today = new Date();
+          const registerDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          const newSample = {
+            id: this.samples.length + 1,
+            ...this.singleSampleForm,
+            registerDate: registerDate,
+            hasReport: false
+          };
+          this.samples.push(newSample);
+          this.dialogSingleSampleVisible = false;
+          this.$message.success('样品保存成功');
+        },
+        
+        // 前往原始记录编写
         // 生成样品编号
         generateSampleNo() {
           const today = new Date();
@@ -946,8 +1221,25 @@
         
         // 打开记录录入
         openRecordEntry(sample) {
-          this.currentSample = sample;
-          this.activeRecordTab = 'original';
+          this.currentRecordSample = sample;
+          this.recordForm = {
+            template: '',
+            envTemperature: '',
+            envHumidity: '',
+            envPressure: '',
+            testData: [
+              {
+                item: '',
+                standardValue: '',
+                measuredValue: '',
+                deviation: '',
+                conclusion: '合格'
+              }
+            ],
+            conclusion: '合格',
+            remark: ''
+          };
+          this.dialogRecordVisible = true;
         },
         
         // 添加检测数据项
@@ -959,6 +1251,17 @@
             deviation: '',
             conclusion: '合格'
           });
+        },
+        
+        // 删除检测数据项
+        removeTestDataItem(index) {
+          this.recordForm.testData.splice(index, 1);
+        },
+        
+        // 保存记录
+        saveRecord() {
+          this.$message.success('记录保存成功');
+          this.dialogRecordVisible = false;
         },
         
         // 重置记录表单
