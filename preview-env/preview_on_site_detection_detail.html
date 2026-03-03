@@ -291,9 +291,9 @@
             <a href="preview_on_site_main.html">现场检测</a>
           </el-breadcrumb-item>
           <el-breadcrumb-item>
-            现场检测
-            <span class="update-time">（更新时间：2026-02-28 18:30:00）</span>
-          </el-breadcrumb-item>
+              现场检测
+              <span class="update-time">（更新时间：2026-02-28 21:15:00）</span>
+            </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
           <span class="el-dropdown-link" style="cursor: pointer;">
@@ -384,9 +384,9 @@
                     <el-table-column label="登记日期" prop="registerDate" width="120"></el-table-column>
                     <el-table-column label="操作" width="180" align="center">
                       <template slot-scope="scope">
-                        <el-button size="mini" type="primary" @click="editSample(scope.row)">编辑</el-button>
+                        <el-button size="mini" type="primary" @click="editSample(scope.row)" :disabled="isSampleConfirmed">编辑</el-button>
                         <el-button size="mini" type="success" @click="openRecordEntry(scope.row)">记录</el-button>
-                        <el-button size="mini" type="text" @click="deleteSample(scope.row)" class="text-danger">删除</el-button>
+                        <el-button size="mini" type="text" @click="deleteSample(scope.row)" class="text-danger" :disabled="isSampleConfirmed">删除</el-button>
                       </template>
                     </el-table-column>
                   </el-table>
@@ -399,11 +399,47 @@
           <div class="confirmation-section">
             <div class="section-title">组长确认</div>
             <div class="confirmation-card">
-              <el-alert title="检测任务完成确认" type="info" :closable="false" show-icon style="margin-bottom: 20px;"></el-alert>
-              <p style="margin-bottom: 20px;">当所有样品登记完成后，组长可以确认本次检测任务完成。</p>
-              <div style="display: flex; justify-content: center; gap: 20px;">
-                <el-button type="primary" size="large" :disabled="totalSamples === 0" @click="confirmTaskComplete">确认任务完成</el-button>
-                <el-button size="large" @click="cancelTask">取消任务</el-button>
+              <el-alert title="样品登记完成确认" type="info" :closable="false" show-icon style="margin-bottom: 20px;"></el-alert>
+              <p style="margin-bottom: 20px;">当所有样品登记完成后，组长可以确认本次样品登记完成。</p>
+              <p style="margin-bottom: 20px; color: #E6A23C;"><i class="el-icon-warning"></i> 确认完成前，请先上传客户确认单（图片格式）。</p>
+              
+              <!-- 客户确认单上传区域 -->
+              <div style="margin-bottom: 20px; padding: 20px; background: #fafafa; border-radius: 4px;">
+                <div style="margin-bottom: 10px; font-weight: 600;">客户确认单：</div>
+                <el-upload
+                  action="#"
+                  list-type="picture-card"
+                  :auto-upload="false"
+                  :on-change="handleConfirmFileChange"
+                  :on-remove="handleConfirmFileRemove"
+                  :file-list="confirmFileList"
+                  accept="image/*"
+                  :limit="5"
+                  :disabled="isSampleConfirmed"
+                >
+                  <i class="el-icon-plus"></i>
+                </el-upload>
+                <div style="margin-top: 10px; color: #909399; font-size: 12px;">
+                  支持 jpg/png 格式，最多上传5张图片
+                </div>
+              </div>
+              
+              <!-- 备注填写区域 -->
+              <div style="margin-bottom: 20px; padding: 20px; background: #fafafa; border-radius: 4px;">
+                <div style="margin-bottom: 10px; font-weight: 600;">备注信息：</div>
+                <el-input
+                  type="textarea"
+                  v-model="confirmRemark"
+                  :rows="3"
+                  placeholder="请填写任务完成备注（选填），如特殊情况说明、客户反馈等"
+                  maxlength="500"
+                  show-word-limit
+                  :disabled="isSampleConfirmed"
+                ></el-input>
+              </div>
+              
+              <div style="display: flex; justify-content: center;">
+                <el-button type="primary" size="large" :disabled="totalSamples === 0 || confirmFileList.length === 0 || isSampleConfirmed" @click="confirmTaskComplete">确认样品登记完成</el-button>
               </div>
             </div>
           </div>
@@ -706,6 +742,12 @@
         // 搜索关键词
         sampleSearch: '',
         
+        // 客户确认单文件列表
+        confirmFileList: [],
+        
+        // 任务完成备注
+        confirmRemark: '',
+        
         // 当前选中的样品
         currentSample: null,
         
@@ -765,6 +807,11 @@
         editSampleForm: {}
       },
       computed: {
+        // 样品是否已确认（任务完成后禁止编辑删除）
+        isSampleConfirmed() {
+          return this.currentTask && this.currentTask.status === '已完成';
+        },
+        
         // 过滤后的样品列表
         filteredSamples() {
           if (!this.sampleSearch) {
@@ -1308,16 +1355,41 @@
         
         // 确认任务完成
         confirmTaskComplete() {
-          this.$confirm('确定要确认任务完成吗？', '提示', {
+          if (this.confirmFileList.length === 0) {
+            this.$message.warning('请先上传客户确认单');
+            return;
+          }
+          this.$confirm('确定要确认任务完成吗？确认后将无法修改样品信息。', '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning'
           }).then(() => {
             this.currentTask.status = '已完成';
-            this.$message.success('任务已确认完成');
+            this.currentTask.confirmFiles = this.confirmFileList.map(f => f.name || f.url);
+            this.currentTask.confirmRemark = this.confirmRemark;
+            this.$message.success('任务已确认完成，客户确认单已保存');
           }).catch(() => {
             // 取消确认
           });
+        },
+        handleConfirmFileChange(file, fileList) {
+          const isImage = file.raw.type.indexOf('image/') === 0;
+          const isLt5M = file.size / 1024 / 1024 < 5;
+          
+          if (!isImage) {
+            this.$message.error('只能上传图片格式文件!');
+            fileList.pop();
+            return;
+          }
+          if (!isLt5M) {
+            this.$message.error('图片大小不能超过 5MB!');
+            fileList.pop();
+            return;
+          }
+          this.confirmFileList = fileList;
+        },
+        handleConfirmFileRemove(file, fileList) {
+          this.confirmFileList = fileList;
         },
         
         // 取消任务

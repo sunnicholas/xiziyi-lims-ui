@@ -148,9 +148,6 @@
       border-radius: 8px;
       text-align: center;
     }
-    .stat-card.pending {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
     .stat-card.in-progress {
       background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     }
@@ -246,7 +243,7 @@
           <el-breadcrumb-item>首页</el-breadcrumb-item>
           <el-breadcrumb-item>
             现场检测
-            <span class="update-time">（更新时间：2026-02-28 17:00:00）</span>
+            <span class="update-time">（更新时间：2026-02-28 21:00:00）</span>
           </el-breadcrumb-item>
         </el-breadcrumb>
         <el-dropdown>
@@ -268,10 +265,6 @@
               <div class="number">{{ totalTasks }}</div>
               <div class="label">总任务数</div>
             </div>
-            <div class="stat-card pending">
-              <div class="number">{{ pendingTasks }}</div>
-              <div class="label">待出发</div>
-            </div>
             <div class="stat-card in-progress">
               <div class="number">{{ inProgressTasks }}</div>
               <div class="label">进行中</div>
@@ -288,12 +281,28 @@
               <el-form-item label="任务单号">
                 <el-input v-model="searchForm.taskNo" placeholder="请输入任务单号" clearable></el-input>
               </el-form-item>
+              <el-form-item label="委托单号">
+                <el-input v-model="searchForm.entrustNo" placeholder="请输入委托单号" clearable></el-input>
+              </el-form-item>
               <el-form-item label="任务单位">
                 <el-input v-model="searchForm.unit" placeholder="请输入任务单位" clearable></el-input>
               </el-form-item>
+              <el-form-item label="人员名称">
+                <el-input v-model="searchForm.inspector" placeholder="请输入检测人员名称" clearable></el-input>
+              </el-form-item>
+              <el-form-item label="任务日期">
+                <el-date-picker
+                  v-model="searchForm.dateRange"
+                  type="daterange"
+                  range-separator="至"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                  value-format="yyyy-MM-dd"
+                  style="width: 240px;"
+                ></el-date-picker>
+              </el-form-item>
               <el-form-item label="任务状态">
                 <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-                  <el-option label="待出发" value="待出发"></el-option>
                   <el-option label="进行中" value="进行中"></el-option>
                   <el-option label="已完成" value="已完成"></el-option>
                 </el-select>
@@ -311,7 +320,7 @@
               <div class="task-card-header">
                 <div class="task-card-title">
                   <i class="el-icon-document"></i>
-                  {{ task.taskNo }}
+                  {{ task.taskNo }}<span v-if="task.entrustNo"> / {{ task.entrustNo }}</span>
                 </div>
                 <el-tag :type="getStatusType(task.status)">{{ task.status }}</el-tag>
               </div>
@@ -331,6 +340,10 @@
                 <div class="task-info-item">
                   <span class="label">器具数量</span>
                   <span class="value">{{ task.deviceCount }}</span>
+                </div>
+                <div class="task-info-item">
+                  <span class="label">检测组人员</span>
+                  <span class="value">{{ task.inspectors || '-' }}</span>
                 </div>
                 <div class="task-info-item">
                   <span class="label">出发时间</span>
@@ -404,7 +417,10 @@
         // 搜索表单
         searchForm: {
           taskNo: '',
+          entrustNo: '',
           unit: '',
+          inspector: '',
+          dateRange: null,
           status: ''
         },
         
@@ -412,6 +428,7 @@
         tasks: [
           {
             taskNo: 'TASK-20260228-001',
+            entrustNo: 'ENT-20260227-001',
             unit: '西安某工厂',
             address: '西安市高新区科技二路',
             deviceName: '安全阀',
@@ -426,6 +443,7 @@
           },
           {
             taskNo: 'TASK-20260227-002',
+            entrustNo: 'ENT-20260226-002',
             unit: '宝鸡某公司',
             address: '宝鸡市金台区某路',
             deviceName: '压力表',
@@ -440,6 +458,7 @@
           },
           {
             taskNo: 'TASK-20260229-001',
+            entrustNo: 'ENT-20260228-003',
             unit: '咸阳某企业',
             address: '咸阳市秦都区某街',
             deviceName: '气瓶',
@@ -466,8 +485,20 @@
             if (this.searchForm.taskNo && !task.taskNo.includes(this.searchForm.taskNo)) {
               match = false;
             }
+            if (this.searchForm.entrustNo && !task.entrustNo.includes(this.searchForm.entrustNo)) {
+              match = false;
+            }
             if (this.searchForm.unit && !task.unit.includes(this.searchForm.unit)) {
               match = false;
+            }
+            if (this.searchForm.inspector && task.inspectors && !task.inspectors.includes(this.searchForm.inspector)) {
+              match = false;
+            }
+            if (this.searchForm.dateRange && this.searchForm.dateRange.length === 2) {
+              const taskDate = task.departureTime ? task.departureTime.split(' ')[0] : '';
+              if (taskDate < this.searchForm.dateRange[0] || taskDate > this.searchForm.dateRange[1]) {
+                match = false;
+              }
             }
             if (this.searchForm.status && task.status !== this.searchForm.status) {
               match = false;
@@ -482,13 +513,9 @@
         },
         
         // 待出发任务数
-        pendingTasks() {
-          return this.tasks.filter(task => task.status === '待出发').length;
-        },
-        
-        // 进行中任务数
+        // 进行中任务数（包含待出发和进行中状态）
         inProgressTasks() {
-          return this.tasks.filter(task => task.status === '进行中').length;
+          return this.tasks.filter(task => task.status === '进行中' || task.status === '待出发' || task.status === '已财务确认').length;
         },
         
         // 已完成任务数
@@ -547,7 +574,10 @@
         resetSearch() {
           this.searchForm = {
             taskNo: '',
+            entrustNo: '',
             unit: '',
+            inspector: '',
+            dateRange: null,
             status: ''
           };
         },
