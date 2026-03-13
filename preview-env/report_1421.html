@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>检测报告预览</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #07c160;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        .company-name {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .report-title {
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            opacity: 0.9;
+        }
+        .file-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 50px;
+            width: 100%;
+        }
+        .pdf-icon-container {
+            width: 70px;
+            height: 90px;
+            background-color: #ff4d4f;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        /* PDF fold effect */
+        .pdf-icon-container::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(to bottom left, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.05) 50%);
+            border-bottom-left-radius: 4px;
+        }
+        
+        .file-name {
+            font-size: 17px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            text-align: center;
+            word-break: break-all;
+            padding: 0 20px;
+        }
+        .file-size {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+        }
+        .download-icon {
+            margin-left: 4px;
+            font-size: 12px;
+        }
+        .view-btn {
+            background-color: #fff;
+            color: #07c160;
+            border: none;
+            border-radius: 4px;
+            width: 180px;
+            height: 44px;
+            line-height: 44px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+        .view-btn:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        .info-list {
+            width: 100%;
+            max-width: 340px; /* Constrain width for better readability */
+            font-size: 15px;
+            line-height: 1.8;
+            align-self: center;
+        }
+        .info-item {
+            display: flex;
+            margin-bottom: 8px;
+            align-items: flex-start;
+        }
+        .info-label {
+            min-width: 80px; /* Fixed width for alignment */
+            opacity: 0.9;
+            flex-shrink: 0;
+        }
+        .info-value {
+            flex: 1;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">西安西自仪检测技术有限公司</div>
+        <div class="report-title">检测报告</div>
+    </div>
+
+    <div class="file-section">
+        <div class="pdf-icon-container">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Abstract PDF content lines -->
+                <path d="M7 14H14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 10H17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 18H12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <!-- Outline -->
+                <path d="M15 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V7L15 2Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+        </div>
+        <div class="file-name">XZYJC20260001421.pdf</div>
+        <div class="file-size">3.1 M <span class="download-icon">↓</span></div>
+        <a href="./files/XZYJC20260001421.pdf" class="view-btn" target="_blank">查 看</a>
+    </div>
+
+    <div class="info-list">
+        <div class="info-item">
+            <span class="info-label">报告编号：</span>
+            <span class="info-value">XZYJC20260001421</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">委托单位：</span>
+            <span class="info-value">延安富友工贸有限责任公司</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">样品名称：</span>
+            <span class="info-value">安全阀</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">样品数量：</span>
+            <span class="info-value">14件</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">检验项目：</span>
+            <span class="info-value">壁厚检测、磁粉检测</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">签发日期：</span>
+            <span class="info-value">2026年03月02日</span>
+        </div>
+    </div>
+</body>
+</html>
