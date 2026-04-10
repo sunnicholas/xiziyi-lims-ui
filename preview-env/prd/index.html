@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>西自仪 LIMS - 需求文档中心</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" onerror="this.onerror=null;this.href='https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css';">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+      background-color: #f5f5f7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      padding: 40px 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+      position: relative;
+    }
+    .header h1 {
+      color: #1d1d1f;
+      font-size: 32px;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .header p {
+      color: #86868b;
+      font-size: 18px;
+    }
+    .back-to-home {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      text-decoration: none;
+      color: #0066cc;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+    }
+    .back-to-home:hover {
+      text-decoration: underline;
+    }
+    .prd-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .prd-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+      border: 1px solid #e5e5e7;
+      position: relative;
+      overflow: hidden;
+    }
+    /* 区分化样式：使用紫色调代表需求/文档 */
+    .prd-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background-color: #5856d6; /* iOS Purple */
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .prd-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+      border-color: #5856d6;
+    }
+    .prd-card:hover::before {
+      opacity: 1;
+    }
+    .prd-card .icon {
+      font-size: 32px;
+      color: #5856d6;
+      margin-bottom: 20px;
+      background: #f0f0f7;
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+    .prd-card .title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1d1d1f;
+      margin-bottom: 12px;
+    }
+    .prd-card .meta {
+      font-size: 13px;
+      color: #86868b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+    }
+    .prd-card .meta i {
+      margin-right: 6px;
+    }
+    .prd-card .desc {
+      font-size: 15px;
+      color: #48484a;
+      line-height: 1.6;
+      flex: 1;
+    }
+    .prd-card .status-tag {
+      margin-top: 20px;
+    }
+    .footer {
+      margin-top: auto;
+      padding: 40px;
+      color: #86868b;
+      font-size: 13px;
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .header {
+        margin-top: 40px;
+      }
+      .back-to-home {
+        position: static;
+        transform: none;
+        margin-bottom: 20px;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <div class="header">
+      <a href="../index.html" class="back-to-home">
+        <i class="el-icon-back"></i> 返回系统首页
+      </a>
+      <h1>需求文档中心</h1>
+      <p>PRD Repository & Requirement Specifications</p>
+    </div>
+
+    <div class="prd-grid">
+      <!-- 证书查询模块 -->
+      <a href="certificate_query.html" class="prd-card">
+        <div class="icon"><i class="el-icon-document"></i></div>
+        <div class="title">证书查询功能</div>
+        <div class="meta">
+          <span><i class="el-icon-time"></i> 创建时间: 2026-04-10</span>
+        </div>
+        <div class="desc">
+          提供 20+ 个维度的复合筛选条件，支持证书在线预览与数据导出功能，解决历史数据追溯难题。
+        </div>
+        <div class="status-tag">
+          <el-tag size="small" effect="plain" type="info">已评审</el-tag>
+          <el-tag size="small" effect="plain" type="primary">可开发</el-tag>
+        </div>
+      </a>
+
+      <!-- 更多需求占位 (示例) -->
+      <div class="prd-card" style="opacity: 0.6; cursor: not-allowed;">
+        <div class="icon"><i class="el-icon-lock"></i></div>
+        <div class="title">数据驾驶舱 (待定)</div>
+        <div class="meta">
+          <span><i class="el-icon-time"></i> 预计时间: 2026-05</span>
+        </div>
+        <div class="desc">
+          实验室运营数据可视化，包含业务量、合格率等核心指标的实时监控与分析。
+        </div>
+        <div class="status-tag">
+          <el-tag size="small" effect="plain" type="info">待规划</el-tag>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    西自仪 LIMS 产品设计规范 &copy; 2026 | 文档中心
+  </div>
+
+  <!-- 引入 JS -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js" onerror="this.onerror=null;this.src='https://unpkg.com/vue@2.6.14/dist/vue.js';"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.js" onerror="this.onerror=null;this.src='https://unpkg.com/element-ui@2.15.14/lib/index.js';"></script>
+  <script>
+    new Vue({
+      el: '#app'
+    })
+  </script>
+</body>
+</html>

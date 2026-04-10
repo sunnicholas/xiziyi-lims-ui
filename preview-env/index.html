@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>西自仪 LIMS - 项目入口导航</title>
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" onerror="this.onerror=null;this.href='https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css';">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+      background-color: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1200px;
+      width: 100%;
+      padding: 40px 20px;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+    .header h1 {
+      color: #303133;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    .header p {
+      color: #909399;
+      font-size: 16px;
+    }
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .nav-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      box-sizing: border-box;
+      border: 1px solid transparent;
+    }
+    .nav-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 24px 0 rgba(0,0,0,0.15);
+      border-color: #409EFF;
+    }
+    .nav-card .icon {
+      font-size: 32px;
+      color: #409EFF;
+      margin-bottom: 16px;
+    }
+    .nav-card .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+      margin-bottom: 8px;
+    }
+    .nav-card .desc {
+      font-size: 14px;
+      color: #606266;
+      line-height: 1.5;
+      flex: 1;
+    }
+    .nav-card .tag {
+      margin-top: 16px;
+      display: inline-block;
+    }
+    .footer {
+      margin-top: auto;
+      padding: 30px;
+      color: #909399;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <div class="header">
+      <h1>西自仪 LIMS 项目预览入口</h1>
+      <p>点击下方卡片进入对应的功能模块预览页面</p>
+    </div>
+
+    <div class="nav-grid">
+      <!-- 核心业务 -->
+      <a href="preview_business.html" class="nav-card">
+        <div class="icon"><i class="el-icon-s-cooperation"></i></div>
+        <div class="title">业务受理中心</div>
+        <div class="desc">核心业务流程入口，包含委托受理、任务分配等。</div>
+        <div class="tag"><el-tag size="small">核心模块</el-tag></div>
+      </a>
+
+      <a href="preview_record.html" class="nav-card">
+        <div class="icon"><i class="el-icon-document"></i></div>
+        <div class="title">原始记录管理</div>
+        <div class="desc">实验原始数据录入、编辑与保存。</div>
+        <div class="tag"><el-tag size="small" type="success">数据录入</el-tag></div>
+      </a>
+
+      <a href="preview_report.html" class="nav-card">
+        <div class="icon"><i class="el-icon-printer"></i></div>
+        <div class="title">检测报告预览</div>
+        <div class="desc">生成的检测报告在线预览及样式校对。</div>
+        <div class="tag"><el-tag size="small" type="warning">报告输出</el-tag></div>
+      </a>
+
+      <a href="preview_sample.html" class="nav-card">
+        <div class="icon"><i class="el-icon-box"></i></div>
+        <div class="title">样品管理</div>
+        <div class="desc">样品接收、流转、存储及处置全生命周期管理。</div>
+        <div class="tag"><el-tag size="small" type="info">样品管理</el-tag></div>
+      </a>
+
+      <a href="preview_audit.html" class="nav-card">
+        <div class="icon"><i class="el-icon-s-check"></i></div>
+        <div class="title">审批中心</div>
+        <div class="desc">业务单据、报告等的多级在线审批流程。</div>
+        <div class="tag"><el-tag size="small" type="danger">审核流程</el-tag></div>
+      </a>
+
+      <!-- 临时任务/特定报告 -->
+      <a href="report_1321.html" class="nav-card">
+        <div class="icon"><i class="el-icon-search"></i></div>
+        <div class="title">报告查询 (1321)</div>
+        <div class="desc">高压管汇检测报告预览 (XZYJC20260001321)。</div>
+        <div class="tag"><el-tag size="small" type="info">扫码查询</el-tag></div>
+      </a>
+
+      <a href="report_1421.html" class="nav-card">
+        <div class="icon"><i class="el-icon-search"></i></div>
+        <div class="title">报告查询 (1421)</div>
+        <div class="desc">安全阀检测报告预览 (XZYJC20260001421)。</div>
+        <div class="tag"><el-tag size="small" type="info">扫码查询</el-tag></div>
+      </a>
+
+      <!-- 其他 -->
+      <a href="preview_v2.html" class="nav-card">
+        <div class="icon"><i class="el-icon-refresh"></i></div>
+        <div class="title">业务受理 V2</div>
+        <div class="desc">业务受理模块的更新版本预览。</div>
+        <div class="tag"><el-tag size="small">新版本</el-tag></div>
+      </a>
+
+      <a href="preview_on_site_main.html" class="nav-card">
+        <div class="icon"><i class="el-icon-location-outline"></i></div>
+        <div class="title">现场检测入口</div>
+        <div class="desc">现场检测移动端业务流预览。</div>
+        <div class="tag"><el-tag size="small" type="success">移动端</el-tag></div>
+      </a>
+
+      <a href="prd/index.html" class="nav-card">
+        <div class="icon"><i class="el-icon-document-copy"></i></div>
+        <div class="title">需求文档预览 (PRD)</div>
+        <div class="desc">证书查询功能需求规格说明书网页版。</div>
+        <div class="tag"><el-tag size="small" type="primary">需求方案</el-tag></div>
+      </a>
+    </div>
+
+    <div class="footer">
+      西自仪 LIMS 原型系统 &copy; 2026 | 更新时间: 2026-04-10
+    </div>
+  </div>
+
+  <!-- 引入 JS -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js" onerror="this.onerror=null;this.src='https://unpkg.com/vue@2.6.14/dist/vue.js';"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.js" onerror="this.onerror=null;this.src='https://unpkg.com/element-ui@2.15.14/lib/index.js';"></script>
+  <script>
+    new Vue({
+      el: '#app'
+    })
+  </script>
+</body>
+</html>

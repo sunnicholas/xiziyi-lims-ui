@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>证书查询功能 PRD 预览 - 西自仪 LIMS</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" onerror="this.onerror=null;this.href='https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css';">
+    <style>
+        body {
+            background-color: #f4f7f9;
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+            color: #333;
+        }
+        .prd-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 40px 60px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #303133;
+            border-bottom: 2px solid #409EFF;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        h2 {
+            color: #409EFF;
+            border-left: 4px solid #409EFF;
+            padding-left: 15px;
+            margin-top: 40px;
+            background: #f0f9eb;
+            padding: 10px 15px;
+            border-radius: 0 4px 4px 0;
+        }
+        h3 {
+            color: #606266;
+            margin-top: 25px;
+        }
+        p, li {
+            line-height: 1.8;
+            color: #606266;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ebeef5;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        th {
+            background-color: #fafafa;
+            color: #909399;
+            font-weight: 600;
+        }
+        tr:hover {
+            background-color: #f5f7fa;
+        }
+        .tag-must { background: #fef0f0; color: #f56c6c; padding: 2px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #fde2e2; }
+        .tag-should { background: #fdf6ec; color: #e6a23c; padding: 2px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #faecd8; }
+        .tag-could { background: #f0f9eb; color: #67c23a; padding: 2px 8px; border-radius: 4px; font-size: 12px; border: 1px solid #e1f3d8; }
+        .risk-box {
+            background: #fff7f7;
+            border: 1px solid #ffdada;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .back-link {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            text-decoration: none;
+            color: #409EFF;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+        @media (max-width: 768px) {
+            .prd-container {
+                margin: 0;
+                padding: 20px;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="./index.html" class="back-link">← 返回需求入口</a>
+    <div class="prd-container">
+        <h1>西自仪 LIMS - 证书查询功能需求规格说明书 (PRD)</h1>
+
+        <h2>1. 需求概述</h2>
+        <h3>1.1 背景与目标</h3>
+        <p>在系统中新增“证书查询”功能。该功能旨在通过多维度的筛选条件，帮助用户快速定位历史检定证书，并支持结果预览与数据导出。</p>
+ 
+        <h3>1.2 目标用户</h3>
+        <ul>
+            <li><strong>内部管理员/业务员</strong>：进行日常业务对账、历史数据追溯。</li>
+            <li><strong>检定/核验人员</strong>：查看自己负责的证书记录。</li>
+            <li><strong>外部委托单位</strong>：通过特定权限或扫码查询本单位证书情况。</li>
+        </ul>
+
+        <h2>2. 业务流程与功能清单</h2>
+        <h3>2.1 核心功能清单 (MoSCoW)</h3>
+        <ul>
+            <li><span class="tag-must">Must (必须做)</span>
+                <ul>
+                    <li>[F01] 多维复合查询：支持 20+ 个关键字段的组合筛选。</li>
+                    <li>[F02] 数据列表展示：结构化展示查询结果。</li>
+                    <li>[F03] 证书在线预览：点击编号可直接查看证书 HTML/PDF。</li>
+                    <li>[F04] 数据导出：支持将查询结果导出为 Excel。</li>
+                </ul>
+            </li>
+            <li><span class="tag-should">Should (应该做)</span>
+                <ul>
+                    <li>[F05] 快捷检索：支持关键字模糊匹配（如器具名称、编号）。</li>
+                    <li>[F06] 权限控制：不同角色仅能查询其权限范围内的证书。</li>
+                    <li>[F07] 批量下载：勾选多条记录一键打包下载。</li>
+                </ul>
+            </li>
+            <li><span class="tag-could">Could (可以做)</span>
+                <ul>
+                    <li>[F08] 客户扫码查询：支持外部委托单位通过二维码查询证书信息。</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h2>3. 详细需求定义</h2>
+        <h3>3.1 查询字段定义 (20+ 维度)</h3>
+        <p>查询区域应采用“展开/收起”式布局，默认显示常用项，点击展开显示全部：</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>字段分类</th>
+                    <th>字段名称</th>
+                    <th>控件类型</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>业务关联</strong></td>
+                    <td>业务员、受理人、证书单位</td>
+                    <td>下拉/搜索</td>
+                    <td>需关联系统用户表/单位表</td>
+                </tr>
+                <tr>
+                    <td><strong>日期时间</strong></td>
+                    <td>委托日期、检定日期</td>
+                    <td>日期区间</td>
+                    <td>支持开始-结束日期筛选</td>
+                </tr>
+                <tr>
+                    <td><strong>状态/类型</strong></td>
+                    <td>委托状态、签名状态、证书类型</td>
+                    <td>下拉单选</td>
+                    <td>状态流转需与系统一致</td>
+                </tr>
+                <tr>
+                    <td><strong>人员角色</strong></td>
+                    <td>检定员、核验员、批准人</td>
+                    <td>下拉/搜索</td>
+                    <td>需关联系统人员库</td>
+                </tr>
+                <tr>
+                    <td><strong>设备信息</strong></td>
+                    <td>计量器具名称、型号/规格、出厂编号、生产厂家、检定依据、检定结论、计量器具、检定地点</td>
+                    <td>输入框/下拉</td>
+                    <td>支持模糊匹配</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>3.2 列表展示字段 (表格)</h3>
+        <p>结果页面表格应包含以下核心列：</p>
+        <ol>
+            <li>序号 (Index)</li>
+            <li>证书编号 (带链接，可点击预览)</li>
+            <li>计量器具名称</li>
+            <li>型号/规格</li>
+            <li>证书单位</li>
+            <li>委托日期 / 检定日期</li>
+            <li>检定员 / 核验员 / 批准人</li>
+            <li>量程 (新增隐性需求)</li>
+            <li>仪器状态 (退检/已出证)</li>
+            <li>操作 (预览、下载)</li>
+        </ol>
+
+        <h2>4. 隐性需求补充 (系统稳健性)</h2>
+        <ul>
+            <li><strong>数据安全</strong>：外部查询需增加鉴权（如单位代码验证），防止数据泄露。</li>
+            <li><strong>性能优化</strong>：多字段组合查询需对数据库关键字段建立索引，查询响应时间控制在 2s 内。</li>
+            <li><strong>异常处理</strong>：网络超时提示、加载中动画、导出失败提示。</li>
+        </ul>
+
+    </div>
+</body>
+</html>
