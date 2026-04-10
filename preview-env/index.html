@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>西自仪 LIMS - 综合入口中心</title>
+  <!-- 预加载关键资源 -->
+  <link rel="preload" href="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js" as="script">
+  <link rel="preload" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js" as="script">
+  <link rel="preload" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" as="style">
+  
   <!-- 引入样式 -->
   <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" onerror="this.onerror=null;this.href='https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css';">
   <style>
@@ -14,6 +19,12 @@
       --text-main: #303133;
       --text-secondary: #606266;
     }
+    
+    /* 解决 Vue 挂载前的闪烁问题 */
+    [v-cloak] {
+      display: none !important;
+    }
+
     body {
       margin: 0;
       padding: 0;
@@ -87,7 +98,7 @@
       flex: 1;
       display: flex;
       overflow: hidden;
-      background: #000; /* 背景黑，突出推拉感 */
+      background: var(--bg-color); /* 改回背景色，避免黑色区域 */
     }
 
     /* 板块容器 - 改为 Flex 布局实现推拉 */
@@ -95,6 +106,7 @@
       display: flex;
       width: 100%;
       height: 100%;
+      background: var(--bg-color);
     }
 
     .panel {
@@ -103,6 +115,7 @@
       overflow: hidden;
       position: relative;
       display: flex;
+      background: #fff; /* 给面板默认白底，防止透出背景 */
     }
 
     /* 激活状态：占用全部宽度 */
@@ -114,12 +127,12 @@
     /* 压缩状态：占用极窄宽度 */
     .panel.compressed {
       flex: 0 0 60px;
-      opacity: 0.6;
+      opacity: 0.8;
       cursor: pointer;
-      filter: grayscale(0.5);
+      filter: grayscale(0.2);
     }
     .panel.compressed:hover {
-      opacity: 0.9;
+      opacity: 1;
       filter: grayscale(0);
     }
 
@@ -130,12 +143,13 @@
       left: 50%;
       transform: translate(-50%, -50%) rotate(180deg);
       writing-mode: vertical-rl;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
       color: #fff;
       letter-spacing: 4px;
       pointer-events: none;
       white-space: nowrap;
+      z-index: 10;
     }
 
     /* 设计板块样式 */
@@ -143,7 +157,7 @@
       background: #f0f2f5;
     }
     .design-panel.compressed {
-      background: var(--primary-color);
+      background: var(--primary-color) !important;
     }
     
     .side-nav {
@@ -155,10 +169,16 @@
       flex-shrink: 0;
       transition: opacity 0.3s;
     }
+    /* 初始加载状态优化：直接控制 DOM 的可见性，减少渲染负担 */
     .panel.compressed .side-nav,
     .panel.compressed .content-area {
-      opacity: 0;
-      pointer-events: none;
+      display: none;
+    }
+    .panel.active .side-nav {
+      display: flex;
+    }
+    .panel.active .content-area {
+      display: grid; /* 修复：激活时恢复 Grid 布局，确保卡片形状正确 */
     }
     .side-nav .nav-group {
       padding: 20px 0;
@@ -286,16 +306,40 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
+    /* 初始加载骨架屏效果 */
+    .loading-placeholder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: var(--primary-color);
+    }
+    .loading-placeholder i {
+      font-size: 40px;
+      animation: rotating 2s linear infinite;
+    }
+    @keyframes rotating {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body>
   <div id="app">
-    <!-- 顶部固定导航 -->
-    <header class="top-header">
+    <div class="loading-placeholder" v-if="!isReady">
+      <i class="el-icon-loading"></i>
+      <p style="margin-top: 10px; font-size: 14px;">系统加载中...</p>
+    </div>
+
+    <!-- 顶部固定导航 - 移除 v-cloak 以即时显示 -->
+    <header class="top-header" v-show="isReady">
       <div class="logo-area">
         <h1>西自仪 LIMS 综合中心</h1>
       </div>
-      <div class="category-switch">
+      <!-- 只有交互部分保留 v-cloak 或简单处理 -->
+      <div class="category-switch" v-cloak>
         <div 
           class="switch-btn design-btn" 
           :class="{active: currentCategory === 'design'}"
@@ -318,8 +362,8 @@
       </div>
     </header>
 
-    <!-- 主体 -->
-    <main class="main-wrapper">
+    <!-- 主体 - 保留 v-cloak 避免布局跳动 -->
+    <main class="main-wrapper" v-show="isReady">
       <div class="panel-container">
         
         <!-- 板块 1: 设计视图 -->
@@ -465,14 +509,18 @@
   </div>
 
   <!-- 引入 JS -->
-  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js" onerror="this.onerror=null;this.src='https://unpkg.com/vue@2.6.14/dist/vue.js';"></script>
-  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.js" onerror="this.onerror=null;this.src='https://unpkg.com/element-ui@2.15.14/lib/index.js';"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/vue@2.6.14/dist/vue.min.js';"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/element-ui@2.15.14/lib/index.js';"></script>
   <script>
     new Vue({
       el: '#app',
       data: {
+        isReady: false,
         currentCategory: 'design', // 'design' | 'prd'
         activeDesignGroup: 'core'  // 'core' | 'mobile' | 'query'
+      },
+      mounted() {
+        this.isReady = true;
       }
     })
   </script>
