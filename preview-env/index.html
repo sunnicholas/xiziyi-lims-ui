@@ -358,8 +358,8 @@
         </div>
       </div>
       <div class="user-info">
-        <el-tag size="small" type="info">2026-04-10 19:30:00</el-tag>
-      </div>
+                <el-tag size="small" type="info">2026-04-28 16:00:00</el-tag>
+              </div>
     </header>
 
     <!-- 主体 - 保留 v-cloak 避免布局跳动 -->
@@ -388,6 +388,14 @@
               >
                 <i class="el-icon-s-management"></i>
                 <span>核心业务流</span>
+              </div>
+              <div 
+                class="nav-item" 
+                :class="{active: activeDesignGroup === 'certificate'}"
+                @click.stop="activeDesignGroup = 'certificate'"
+              >
+                <i class="el-icon-tickets"></i>
+                <span>证书查询</span>
               </div>
               <div 
                 class="nav-item" 
@@ -439,6 +447,11 @@
                 <div class="card-title">审批中心</div>
                 <div class="card-desc">多级并行/串行审批流配置，支持移动端快速审核。</div>
               </a>
+              <a href="preview_certificate_query.html" class="link-card" key="cert">
+                <div class="card-icon"><i class="el-icon-tickets"></i></div>
+                <div class="card-title">证书查询</div>
+                <div class="card-desc">支持 20+ 维度复合查询，包含业务员、证书单位、检定员、计量器具等字段。</div>
+              </a>
               <a href="preview_v2.html" class="link-card" key="v2">
                 <div class="card-icon"><i class="el-icon-refresh"></i></div>
                 <div class="card-title">业务受理 V2</div>
@@ -454,7 +467,20 @@
               </a>
             </template>
 
+            <template v-if="activeDesignGroup === 'certificate'">
+              <a href="preview_certificate_query.html" class="link-card" key="cert-main">
+                <div class="card-icon"><i class="el-icon-tickets"></i></div>
+                <div class="card-title">证书查询</div>
+                <div class="card-desc">支持 20+ 维度查询，预览、打印、归档一体化管理，每份证书实时显示状态。</div>
+              </a>
+            </template>
+
             <template v-if="activeDesignGroup === 'query'">
+              <a href="preview_certificate_query.html" class="link-card" key="cert-query">
+                <div class="card-icon"><i class="el-icon-tickets"></i></div>
+                <div class="card-title">证书查询</div>
+                <div class="card-desc">多维度复合查询，支持 20+ 关键字段组合筛选，在线预览与批量导出。</div>
+              </a>
               <a href="report_1321.html" class="link-card" key="q1321">
                 <div class="card-icon"><i class="el-icon-postcard"></i></div>
                 <div class="card-title">报告 1321 查询</div>

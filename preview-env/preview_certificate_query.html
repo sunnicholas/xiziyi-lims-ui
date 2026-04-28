@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>证书查询 - 西自仪 LIMS</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" onerror="this.onerror=null;this.href='https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css';">
+    <style>
+        :root {
+            --primary-color: #409EFF;
+            --success-color: #67C23A;
+            --warning-color: #E6A23C;
+            --danger-color: #F56C6C;
+            --info-color: #909399;
+            --bg-color: #f0f2f5;
+            --text-main: #303133;
+            --text-secondary: #606266;
+            --border-color: #DCDFE6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        [v-cloak] {
+            display: none !important;
+        }
+
+        .app-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 200px;
+            background: #fff;
+            border-right: 1px solid #e6e6e6;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #e6e6e6;
+            background: linear-gradient(135deg, var(--primary-color), #66b1ff);
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            padding: 0 16px;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 8px 0;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .menu-item i {
+            margin-right: 12px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background: #ecf5ff;
+            color: var(--primary-color);
+        }
+
+        .menu-item.active {
+            background: #ecf5ff;
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+        }
+
+        .menu-group-title {
+            padding: 8px 20px;
+            font-size: 12px;
+            color: #909399;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 200px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-navbar {
+            height: 60px;
+            background: #fff;
+            border-bottom: 1px solid #e6e6e6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .navbar-breadcrumb {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .navbar-breadcrumb .separator {
+            margin: 0 8px;
+            color: #c0c4cc;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .update-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: #f4f4f5;
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+
+        .page-container {
+            flex: 1;
+            display: flex;
+            padding: 24px;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .left-panel {
+            width: 360px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #ebeef5;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header i {
+            color: var(--primary-color);
+        }
+
+        .entrust-search {
+            padding: 16px 20px;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .entrust-search-item {
+            margin-bottom: 12px;
+        }
+
+        .entrust-search-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .entrust-search-item label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .entrust-search-item .el-input {
+            width: 100%;
+        }
+
+        .entrust-search-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .entrust-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .entrust-card {
+            padding: 12px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            margin-bottom: 8px;
+            background: #fafafa;
+        }
+
+        .entrust-card:hover {
+            background: #ecf5ff;
+        }
+
+        .entrust-card.active {
+            background: #ecf5ff;
+            border-color: var(--primary-color);
+        }
+
+        .entrust-no {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .entrust-client {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .entrust-count {
+            display: inline-block;
+            font-size: 11px;
+            color: #fff;
+            background: var(--primary-color);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .entrust-status {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+            background: #fdf6ec;
+            color: var(--warning-color);
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .search-panel {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            margin-bottom: 16px;
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+        }
+
+        .search-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-item label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .search-item .el-input,
+        .search-item .el-select,
+        .search-item .el-date-editor {
+            width: 100%;
+        }
+
+        .search-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #ebeef5;
+        }
+
+        .data-table-panel {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            display: flex;
+            flex-direction: column;
+            min-height: 400px;
+        }
+
+        .table-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .table-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .table-title i {
+            color: var(--primary-color);
+        }
+
+        .table-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-left: 12px;
+            font-weight: normal;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .el-table {
+            flex: 1;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .el-table::before {
+            display: none;
+        }
+
+        .el-table th {
+            background-color: #fafafa;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            padding: 8px 6px;
+        }
+
+        .el-table td {
+            color: var(--text-main);
+            font-size: 13px;
+            padding: 8px 6px;
+        }
+
+        .certificate-link {
+            color: var(--primary-color);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .certificate-link:hover {
+            text-decoration: underline;
+        }
+
+        .status-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .status-tag.success {
+            background: #f0f9eb;
+            color: var(--success-color);
+        }
+
+        .status-tag.warning {
+            background: #fdf6ec;
+            color: var(--warning-color);
+        }
+
+        .status-tag.danger {
+            background: #fef0f0;
+            color: var(--danger-color);
+        }
+
+        .action-btn {
+            padding: 3px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: var(--primary-color);
+            transition: all 0.2s;
+            margin-right: 4px;
+        }
+
+        .action-btn:hover {
+            background: #ecf5ff;
+        }
+
+        .action-btn.success {
+            color: var(--success-color);
+        }
+
+        .table-pagination {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #ebeef5;
+        }
+
+        .preview-dialog .el-dialog {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .preview-dialog .el-dialog__header {
+            background: linear-gradient(135deg, var(--primary-color), #66b1ff);
+            color: #fff;
+            padding: 16px 24px;
+        }
+
+        .preview-dialog .el-dialog__title {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .preview-dialog .el-dialog__headerbtn .el-dialog__close {
+            color: #fff;
+        }
+
+        .preview-content {
+            padding: 24px;
+        }
+
+        .preview-card {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .preview-section {
+            margin-bottom: 20px;
+        }
+
+        .preview-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .preview-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .preview-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-item label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .preview-item span {
+            font-size: 13px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        @media (max-width: 1400px) {
+            .search-row {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .search-row {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .left-panel {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .page-container {
+                flex-direction: column;
+            }
+            .left-panel {
+                width: 100%;
+                max-height: 300px;
+            }
+            .search-row {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .search-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <div class="app-wrapper">
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <i class="el-icon-s-management" style="margin-right: 8px;"></i>
+                    <span>西自仪 LIMS</span>
+                </div>
+                <nav class="sidebar-menu">
+                    <div class="menu-group-title">业务受理</div>
+                    <a href="preview_business.html" class="menu-item">
+                        <i class="el-icon-s-cooperation"></i>
+                        <span>业务受理中心</span>
+                    </a>
+                    <a href="preview_record.html" class="menu-item">
+                        <i class="el-icon-document"></i>
+                        <span>原始记录管理</span>
+                    </a>
+                    <a href="preview_report.html" class="menu-item">
+                        <i class="el-icon-printer"></i>
+                        <span>检测报告</span>
+                    </a>
+                    <div class="menu-group-title">业务管理</div>
+                    <a href="preview_sample.html" class="menu-item">
+                        <i class="el-icon-box"></i>
+                        <span>样品管理</span>
+                    </a>
+                    <a href="preview_audit.html" class="menu-item">
+                        <i class="el-icon-s-check"></i>
+                        <span>审批中心</span>
+                    </a>
+                    <a href="preview_certificate_query.html" class="menu-item active">
+                        <i class="el-icon-tickets"></i>
+                        <span>证书查询</span>
+                    </a>
+                    <div class="menu-group-title">系统</div>
+                    <a href="index.html" class="menu-item">
+                        <i class="el-icon-s-home"></i>
+                        <span>返回首页</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <main class="main-content">
+                <header class="top-navbar">
+                    <div class="navbar-breadcrumb">
+                        <span>首页</span>
+                        <span class="separator">/</span>
+                        <span>证书管理</span>
+                        <span class="separator">/</span>
+                        <span style="color: var(--primary-color);">证书查询</span>
+                    </div>
+                    <div class="navbar-right">
+                        <span class="update-time">更新时间：2026-04-28 17:00:00</span>
+                    </div>
+                </header>
+
+                <div class="page-container">
+                    <div class="left-panel">
+                        <div class="panel-header">
+                            <i class="el-icon-folder"></i>
+                            <span>委托单列表</span>
+                            <span style="font-size: 12px; font-weight: normal; color: var(--text-secondary); margin-left: auto;">{{ entrustList.length }} 条</span>
+                        </div>
+                        <div class="entrust-search">
+                            <div class="entrust-search-item">
+                                <label>委托单号</label>
+                                <el-input v-model="entrustSearch.entrustNo" placeholder="请输入委托单号" clearable></el-input>
+                            </div>
+                            <div class="entrust-search-item">
+                                <label>委托单位</label>
+                                <el-input v-model="entrustSearch.clientName" placeholder="请输入委托单位" clearable></el-input>
+                            </div>
+                            <div class="entrust-search-actions">
+                                <el-button size="small" @click="resetEntrustSearch">重置</el-button>
+                                <el-button size="small" type="primary" @click="searchEntrust">查询</el-button>
+                            </div>
+                        </div>
+                        <div class="entrust-list">
+                            <div 
+                                v-for="item in filteredEntrustList" 
+                                :key="item.entrustNo"
+                                class="entrust-card"
+                                :class="{active: selectedEntrust && selectedEntrust.entrustNo === item.entrustNo}"
+                                @click="selectEntrust(item)"
+                            >
+                                <div class="entrust-no">{{ item.entrustNo }}
+                                    <span class="entrust-count">{{ item.certCount }}份证书</span>
+                                    <span class="entrust-status">{{ item.status }}</span>
+                                </div>
+                                <div class="entrust-client">{{ item.clientName }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="right-panel">
+                        <div class="search-panel">
+                            <div class="search-row">
+                                <div class="search-item">
+                                    <label>业务员</label>
+                                    <el-select v-model="searchForm.salesman" placeholder="请选择业务员" clearable filterable>
+                                        <el-option label="钱多多" value="qianduoduo"></el-option>
+                                        <el-option label="孙美丽" value="sunmeili"></el-option>
+                                        <el-option label="周杰" value="zhoujie"></el-option>
+                                    </el-select>
+                                </div>
+                                <div class="search-item">
+                                    <label>证书单位</label>
+                                    <el-input v-model="searchForm.certUnit" placeholder="证书单位" clearable></el-input>
+                                </div>
+                                <div class="search-item">
+                                    <label>证书编号</label>
+                                    <el-input v-model="searchForm.certNo" placeholder="证书编号" clearable></el-input>
+                                </div>
+                                <div class="search-item">
+                                    <label>计量器具名称</label>
+                                    <el-input v-model="searchForm.deviceName" placeholder="器具名称" clearable></el-input>
+                                </div>
+                                <div class="search-item">
+                                    <label>型号/规格</label>
+                                    <el-input v-model="searchForm.specification" placeholder="型号规格" clearable></el-input>
+                                </div>
+                                <div class="search-item">
+                                    <label>检定结论</label>
+                                    <el-select v-model="searchForm.conclusion" placeholder="检定结论" clearable>
+                                        <el-option label="合格" value="qualified"></el-option>
+                                        <el-option label="不合格" value="unqualified"></el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <div class="search-actions">
+                                <el-button size="small" @click="resetSearch">重置</el-button>
+                                <el-button size="small" type="primary" @click="handleSearch" icon="el-icon-search">查询</el-button>
+                            </div>
+                        </div>
+
+                        <div class="data-table-panel">
+                            <div class="table-header">
+                                <div class="table-title">
+                                    <i class="el-icon-tickets"></i>
+                                    证书列表
+                                    <span class="table-info">共找到 <span style="color: var(--primary-color); font-weight: 600;">{{ filteredTableData.length }}</span> 条记录</span>
+                                    <span v-if="selectedEntrust" class="table-info" style="color: var(--primary-color);">
+                                        | 当前委托单: {{ selectedEntrust.entrustNo }}
+                                    </span>
+                                </div>
+                                <div class="table-actions">
+                                    <el-button size="small" @click="clearEntrust" v-if="selectedEntrust" icon="el-icon-delete">清除委托单筛选</el-button>
+                                    <el-button size="small" @click="handleBatchPrint" :disabled="selectedRows.length === 0" icon="el-icon-printer">批量打印</el-button>
+                                    <el-button size="small" type="success" @click="handleExport" icon="el-icon-document">导出Excel</el-button>
+                                </div>
+                            </div>
+
+                            <el-table :data="filteredTableData" style="width: 100%" stripe @selection-change="handleSelectionChange">
+                                <el-table-column type="selection" width="45"></el-table-column>
+                                <el-table-column type="index" label="序号" width="50" align="center"></el-table-column>
+                                <el-table-column prop="certNo" label="证书编号" width="140">
+                                    <template slot-scope="scope">
+                                        <span class="certificate-link" @click="handlePreview(scope.row)">{{ scope.row.certNo }}</span>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="deviceName" label="计量器具名称" min-width="100"></el-table-column>
+                                <el-table-column prop="specification" label="型号/规格" width="90"></el-table-column>
+                                <el-table-column prop="factoryNo" label="出厂编号" width="80"></el-table-column>
+                                <el-table-column prop="manufacturer" label="生产厂家" width="90"></el-table-column>
+                                <el-table-column prop="certUnit" label="证书单位" width="100"></el-table-column>
+                                <el-table-column prop="verifier" label="检定员" width="60"></el-table-column>
+                                <el-table-column prop="conclusion" label="结论" width="60" align="center">
+                                    <template slot-scope="scope">
+                                        <el-tag size="small" :type="scope.row.conclusion === '合格' ? 'success' : 'danger'">{{ scope.row.conclusion }}</el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="printStatus" label="打印状态" width="70" align="center">
+                                    <template slot-scope="scope">
+                                        <span class="status-tag" :class="scope.row.printStatus === '已打印' ? 'success' : 'warning'">{{ scope.row.printStatus }}</span>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="archiveStatus" label="归档状态" width="70" align="center">
+                                    <template slot-scope="scope">
+                                        <span class="status-tag" :class="scope.row.archiveStatus === '已归档' ? 'success' : 'warning'">{{ scope.row.archiveStatus }}</span>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column label="操作" width="140" fixed="right">
+                                    <template slot-scope="scope">
+                                        <button class="action-btn" @click="handlePreview(scope.row)">
+                                            <i class="el-icon-view"></i> 预览
+                                        </button>
+                                        <button v-if="scope.row.printStatus !== '已打印'" class="action-btn" @click="handlePrint(scope.row)">
+                                            <i class="el-icon-printer"></i> 打印
+                                        </button>
+                                        <button v-else class="action-btn success" disabled style="opacity: 0.6;">
+                                            <i class="el-icon-printer"></i> 已打印
+                                        </button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+
+                            <div class="table-pagination">
+                                <el-pagination
+                                    @size-change="handleSizeChange"
+                                    @current-change="handleCurrentChange"
+                                    :current-page="pagination.page"
+                                    :page-sizes="[10, 20, 50, 100]"
+                                    :page-size="pagination.pageSize"
+                                    layout="total, sizes, prev, pager, next, jumper"
+                                    :total="pagination.total">
+                                </el-pagination>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <el-dialog title="证书预览" :visible.sync="previewDialogVisible" width="60%" class="preview-dialog">
+            <div class="preview-content">
+                <div class="preview-card" v-if="currentPreviewRow">
+                    <div class="preview-section">
+                        <div class="preview-section-title">基本信息</div>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <label>证书编号</label>
+                                <span>{{ currentPreviewRow.certNo }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>证书类型</label>
+                                <span>{{ currentPreviewRow.certType }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>证书单位</label>
+                                <span>{{ currentPreviewRow.certUnit }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>委托日期</label>
+                                <span>{{ currentPreviewRow.entrustDate }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-section-title">设备信息</div>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <label>计量器具名称</label>
+                                <span>{{ currentPreviewRow.deviceName }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>型号/规格</label>
+                                <span>{{ currentPreviewRow.specification }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>出厂编号</label>
+                                <span>{{ currentPreviewRow.factoryNo }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>生产厂家</label>
+                                <span>{{ currentPreviewRow.manufacturer }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>测量范围</label>
+                                <span>{{ currentPreviewRow.measureRange }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>检定依据</label>
+                                <span>{{ currentPreviewRow.standard }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>检定结论</label>
+                                <span>{{ currentPreviewRow.conclusion }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-section-title">人员信息</div>
+                        <div class="preview-grid">
+                            <div class="preview-item">
+                                <label>检定员</label>
+                                <span>{{ currentPreviewRow.verifier }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>核验员</label>
+                                <span>{{ currentPreviewRow.reviewer }}</span>
+                            </div>
+                            <div class="preview-item">
+                                <label>批准人</label>
+                                <span>{{ currentPreviewRow.approver }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span slot="footer" class="dialog-footer">
+                <el-button @click="previewDialogVisible = false">关 闭</el-button>
+                <el-button type="primary" @click="handleDownload(currentPreviewRow)" icon="el-icon-download">下载证书</el-button>
+            </span>
+        </el-dialog>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/vue@2.6.14/dist/vue.min.js';"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js" onerror="this.onerror=null;this.src='https://unpkg.com/element-ui@2.15.14/lib/index.js';"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                entrustSearch: {
+                    entrustNo: '',
+                    clientName: ''
+                },
+                entrustList: [
+                    { entrustNo: 'JZ202604240002', clientName: '陕西三维煤研检测技术有限公司', certCount: 12, status: '委托待审核', salesman: '钱多多' },
+                    { entrustNo: 'JZ202604280001', clientName: '测试客户', certCount: 2, status: '委托待审核', salesman: '孙美丽' },
+                    { entrustNo: 'JZ202604280002', clientName: '中石油西部管道公司', certCount: 8, status: '已受理', salesman: '钱多多' },
+                    { entrustNo: 'JZ202604280003', clientName: '新疆油田分公司', certCount: 5, status: '已完成', salesman: '孙美丽' },
+                    { entrustNo: 'JZ202604280004', clientName: '塔里木油田', certCount: 3, status: '已完成', salesman: '周杰' }
+                ],
+                selectedEntrust: null,
+                searchForm: {
+                    salesman: '',
+                    certUnit: '',
+                    certNo: '',
+                    deviceName: '',
+                    specification: '',
+                    conclusion: ''
+                },
+                tableData: [
+                    {
+                        certNo: 'XZYJC20260001321',
+                        deviceName: '压力变送器',
+                        specification: '0-1.6MPa',
+                        factoryNo: 'PT2024001',
+                        manufacturer: '西门子',
+                        certUnit: '中石油西部管道公司',
+                        salesman: '钱多多',
+                        verifier: '张伟',
+                        reviewer: '陈晓东',
+                        approver: '孙建华',
+                        standard: 'JJG 882-2019',
+                        conclusion: '合格',
+                        measureRange: '0~1.6MPa',
+                        certType: '检定证书',
+                        entrustDate: '2026-03-10',
+                        entrustNo: 'JZ202604280002',
+                        printStatus: '已打印',
+                        archiveStatus: '已归档'
+                    },
+                    {
+                        certNo: 'XZYJC20260001322',
+                        deviceName: '温度变送器',
+                        specification: 'PT100 -50~200°C',
+                        factoryNo: 'TT2024002',
+                        manufacturer: '德国久茂',
+                        certUnit: '中石油西部管道公司',
+                        salesman: '钱多多',
+                        verifier: '李娜',
+                        reviewer: '刘芳',
+                        approver: '孙建华',
+                        standard: 'JJG 161-2009',
+                        conclusion: '合格',
+                        measureRange: '-50~200°C',
+                        certType: '校准证书',
+                        entrustDate: '2026-03-10',
+                        entrustNo: 'JZ202604280002',
+                        printStatus: '已打印',
+                        archiveStatus: '已归档'
+                    },
+                    {
+                        certNo: 'XZYJC20260001421',
+                        deviceName: '安全阀',
+                        specification: 'DN50 PN4.0',
+                        factoryNo: 'SV2024012',
+                        manufacturer: '无锡安全阀厂',
+                        certUnit: '新疆油田分公司',
+                        salesman: '孙美丽',
+                        verifier: '李娜',
+                        reviewer: '刘芳',
+                        approver: '孙建华',
+                        standard: 'TSG ZF001-2006',
+                        conclusion: '合格',
+                        measureRange: '0.5~2.0MPa',
+                        certType: '检定证书',
+                        entrustDate: '2026-03-12',
+                        entrustNo: 'JZ202604280003',
+                        printStatus: '未打印',
+                        archiveStatus: '待归档'
+                    },
+                    {
+                        certNo: 'XZYJC20260001532',
+                        deviceName: '热电偶',
+                        specification: 'K型 0-1000°C',
+                        factoryNo: 'TC2024088',
+                        manufacturer: '上海自动化仪表',
+                        certUnit: '塔里木油田',
+                        salesman: '钱多多',
+                        verifier: '王强',
+                        reviewer: '陈晓东',
+                        approver: '吴磊',
+                        standard: 'JJG 351-2019',
+                        conclusion: '不合格',
+                        measureRange: '0~1000°C',
+                        certType: '检定证书',
+                        entrustDate: '2026-03-15',
+                        entrustNo: 'JZ202604280004',
+                        printStatus: '未打印',
+                        archiveStatus: '待归档'
+                    },
+                    {
+                        certNo: 'XZYJC20260001678',
+                        deviceName: '压力表',
+                        specification: '0-10MPa',
+                        factoryNo: 'PG2024115',
+                        manufacturer: '西安仪表厂',
+                        certUnit: '中石油西部管道公司',
+                        salesman: '周杰',
+                        verifier: '赵敏',
+                        reviewer: '周杰',
+                        approver: '孙建华',
+                        standard: 'JJG 52-2013',
+                        conclusion: '合格',
+                        measureRange: '0~10MPa',
+                        certType: '检定证书',
+                        entrustDate: '2026-03-18',
+                        entrustNo: 'JZ202604280002',
+                        printStatus: '已打印',
+                        archiveStatus: '已归档'
+                    },
+                    {
+                        certNo: 'XZYJC202604240001',
+                        deviceName: '燃气表',
+                        specification: 'G6',
+                        factoryNo: 'RG2024001',
+                        manufacturer: '陕西燃气仪表厂',
+                        certUnit: '陕西三维煤研检测技术有限公司',
+                        salesman: '钱多多',
+                        verifier: '张伟',
+                        reviewer: '陈晓东',
+                        approver: '孙建华',
+                        standard: 'JJG 577-2012',
+                        conclusion: '合格',
+                        measureRange: '0~6m³/h',
+                        certType: '检定证书',
+                        entrustDate: '2026-04-24',
+                        entrustNo: 'JZ202604240002',
+                        printStatus: '未打印',
+                        archiveStatus: '待归档'
+                    },
+                    {
+                        certNo: 'XZYJC202604240002',
+                        deviceName: '燃气表',
+                        specification: 'G10',
+                        factoryNo: 'RG2024002',
+                        manufacturer: '陕西燃气仪表厂',
+                        certUnit: '陕西三维煤研检测技术有限公司',
+                        salesman: '钱多多',
+                        verifier: '张伟',
+                        reviewer: '陈晓东',
+                        approver: '孙建华',
+                        standard: 'JJG 577-2012',
+                        conclusion: '合格',
+                        measureRange: '0~10m³/h',
+                        certType: '检定证书',
+                        entrustDate: '2026-04-24',
+                        entrustNo: 'JZ202604240002',
+                        printStatus: '未打印',
+                        archiveStatus: '待归档'
+                    },
+                    {
+                        certNo: 'XZYJC202604280001',
+                        deviceName: '压力表',
+                        specification: '0-2.5MPa',
+                        factoryNo: 'PG2024201',
+                        manufacturer: '西安仪表厂',
+                        certUnit: '测试客户',
+                        salesman: '孙美丽',
+                        verifier: '李娜',
+                        reviewer: '刘芳',
+                        approver: '吴磊',
+                        standard: 'JJG 52-2013',
+                        conclusion: '合格',
+                        measureRange: '0~2.5MPa',
+                        certType: '检定证书',
+                        entrustDate: '2026-04-28',
+                        entrustNo: 'JZ202604280001',
+                        printStatus: '未打印',
+                        archiveStatus: '待归档'
+                    }
+                ],
+                pagination: {
+                    page: 1,
+                    pageSize: 10,
+                    total: 8
+                },
+                selectedRows: [],
+                previewDialogVisible: false,
+                currentPreviewRow: null
+            },
+            computed: {
+                filteredEntrustList() {
+                    let data = [...this.entrustList];
+                    if (this.searchForm.salesman) {
+                        const salesmanMap = {
+                            'qianduoduo': '钱多多',
+                            'sunmeili': '孙美丽',
+                            'zhoujie': '周杰'
+                        };
+                        data = data.filter(item => item.salesman === salesmanMap[this.searchForm.salesman]);
+                    }
+                    if (this.entrustSearch.entrustNo) {
+                        data = data.filter(item => item.entrustNo.includes(this.entrustSearch.entrustNo));
+                    }
+                    if (this.entrustSearch.clientName) {
+                        data = data.filter(item => item.clientName.includes(this.entrustSearch.clientName));
+                    }
+                    return data;
+                },
+                filteredTableData() {
+                    let data = [...this.tableData];
+                    
+                    if (this.selectedEntrust) {
+                        data = data.filter(item => item.entrustNo === this.selectedEntrust.entrustNo);
+                    }
+                    
+                    if (this.searchForm.salesman) {
+                        data = data.filter(item => item.salesman === this.searchForm.salesman);
+                    }
+                    if (this.searchForm.certUnit) {
+                        data = data.filter(item => item.certUnit.includes(this.searchForm.certUnit));
+                    }
+                    if (this.searchForm.certNo) {
+                        data = data.filter(item => item.certNo.includes(this.searchForm.certNo));
+                    }
+                    if (this.searchForm.deviceName) {
+                        data = data.filter(item => item.deviceName.includes(this.searchForm.deviceName));
+                    }
+                    if (this.searchForm.specification) {
+                        data = data.filter(item => item.specification.includes(this.searchForm.specification));
+                    }
+                    if (this.searchForm.conclusion) {
+                        data = data.filter(item => item.conclusion === (this.searchForm.conclusion === 'qualified' ? '合格' : '不合格'));
+                    }
+                    
+                    this.pagination.total = data.length;
+                    return data;
+                }
+            },
+            methods: {
+                resetEntrustSearch() {
+                    this.entrustSearch.entrustNo = '';
+                    this.entrustSearch.clientName = '';
+                    this.$message.success('委托单筛选已重置');
+                },
+                searchEntrust() {
+                    this.$message.success('查询成功');
+                },
+                selectEntrust(item) {
+                    this.selectedEntrust = item;
+                },
+                clearEntrust() {
+                    this.selectedEntrust = null;
+                    this.$message.success('已清除委托单筛选');
+                },
+                resetSearch() {
+                    Object.keys(this.searchForm).forEach(key => {
+                        this.searchForm[key] = '';
+                    });
+                    this.$message.success('筛选条件已重置');
+                },
+                handleSearch() {
+                    this.$message.success('查询成功');
+                },
+                handleSelectionChange(val) {
+                    this.selectedRows = val;
+                },
+                handleSizeChange(val) {
+                    this.pagination.pageSize = val;
+                },
+                handleCurrentChange(val) {
+                    this.pagination.page = val;
+                },
+                handlePreview(row) {
+                    this.currentPreviewRow = row;
+                    this.previewDialogVisible = true;
+                },
+                handlePrint(row) {
+                    row.printStatus = '已打印';
+                    this.$message.success(`证书 ${row.certNo} 已打印`);
+                },
+                handleBatchPrint() {
+                    if (this.selectedRows.length === 0) {
+                        this.$message.warning('请先选择要打印的证书');
+                        return;
+                    }
+                    this.selectedRows.forEach(row => {
+                        row.printStatus = '已打印';
+                    });
+                    this.$message.success(`已批量打印 ${this.selectedRows.length} 份证书`);
+                },
+                handleDownload(row) {
+                    this.$message.success(`正在下载证书: ${row.certNo}`);
+                },
+                handleExport() {
+                    this.$message.success('正在导出 Excel 文件');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
