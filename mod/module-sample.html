@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>样品管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #0284c7, #0ea5e9); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #0369a1; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #0284c7; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>🧪 样品管理</h1>
+    <div style="font-size:14px;opacity:0.85;">样品库管理 + 委托样品信息 (CRM关联)</div>
+</div>
+
+<div class="card">
+    <h2>1. 样品库管理</h2>
+    <p>API：<code>xiziyi-lims-web/src/api/sample/sampleLibraryInfo.js</code></p>
+    <p>前端页面：<code>views/sample/sampleLibraryInfo/index.vue</code></p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/sampleLibraryInfo/list</span><span class="api-desc">样品列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/sampleLibraryInfo/{id}</span><span class="api-desc">样品详情</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/sampleLibraryInfo</span><span class="api-desc">新增样品</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/sampleLibraryInfo/importData</span><span class="api-desc">导入样品</span></div>
+
+    <h3>核心数据表：<code>ms_sample_info</code></h3>
+    <div class="code-box">-- 样品信息查询
+SELECT si.*, et.entrust_no, cc.customer_name
+FROM ms_sample_info si
+LEFT JOIN ms_entrust_task et ON si.entrust_id = et.id
+LEFT JOIN crm_customer cc ON si.customer_id = cc.id
+WHERE si.del_flag = '0'
+    <if test="entrustId != null">AND si.entrust_id = #{entrustId}</if>
+    <if test="sampleName != null">AND si.sample_name LIKE CONCAT('%',#{sampleName},'%')</if>
+ORDER BY si.create_time DESC</div>
+</div>
+
+<div class="card">
+    <h2>2. CRM 委托下的样品信息</h2>
+    <p>在委托登记时，样品信息也会同步到 CRM 模块：</p>
+    <p>API：<code>/crm/crmSampleDetail/list</code> → CrmSampleInfo 相关表</p>
+    <table>
+        <tr><th>表名</th><th>说明</th></tr>
+        <tr><td><code>crm_sample_info</code></td><td>CRM样品信息</td></tr>
+        <tr><td><code>crm_sample_detail</code></td><td>CRM样品明细</td></tr>
+        <tr><td><code>crm_register_task</code></td><td>CRM登记任务（流转卡相关）</td></tr>
+    </table>
+</div>
+</div>
+</body>
+</html>

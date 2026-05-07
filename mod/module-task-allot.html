@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>任务分配</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #059669, #0891b2); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .header .flow { margin-top: 12px; font-size: 14px; opacity: 0.85; background: rgba(255,255,255,0.15); padding: 8px 20px; border-radius: 20px; display: inline-block; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #065f46; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #059669; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; }
+        .method-post { background: #3b82f6; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #d1fae5; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+        .tag-blue { background: #dbeafe; color: #1e40af; }
+        .tag-green { background: #d1fae5; color: #065f46; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📋 任务分配</h1>
+    <div class="flow">上一环节：业务流转 → 任务分配（分配检测人员 + 分发样品）→ 下一环节：记录编制</div>
+</div>
+
+<div class="card">
+    <h2>1. 模块概述</h2>
+    <p>委托单审核通过并经过业务流转后，由检测部部长或科室主任将检测任务<strong>分配到具体的检测员</strong>（分配样品和检测项目），检测员确认流转后开始做实验。</p>
+    
+    <div class="info-box">
+        <strong>📌 涉及角色：</strong>检测部部长/科室主任（分配任务）、检测员（确认流转）<br>
+        <strong>📌 权限标识前缀：</strong> <code>measure:testTaskInfo</code><br>
+        <strong>📌 前端页面：</strong> <code>xiziyi-lims-web/src/views/taskallot/testTaskInfo/index.vue</code>
+    </div>
+</div>
+
+<div class="card">
+    <h2>2. 前端实现</h2>
+    <p>API 封装文件：<code>xiziyi-lims-web/src/api/taskallot/testTaskInfo.js</code></p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskInfo/list</span><span class="api-desc">任务分配列表（分页）</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskInfo/{taskId}</span><span class="api-desc">任务详情</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/testTaskInfo</span><span class="api-desc">确认流转</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/testTaskInfo/batchAllot</span><span class="api-desc">批量任务分配</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msSpecialTestTask/taskList</span><span class="api-desc">特种设备任务列表</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msSpecialTestTask/updateInstructBook</span><span class="api-desc">更新指令书</span></div>
+</div>
+
+<div class="card">
+    <h2>3. 后端实现</h2>
+    
+    <h3>3.1 Controller: TestTaskInfoController</h3>
+    <p>文件：<code>xzy-admin/src/main/java/com/xzy/web/controller/measure/TestTaskInfoController.java</code></p>
+    <p>@RequestMapping：<code>/measure/testTaskInfo</code></p>
+    
+    <h3>3.2 核心方法</h3>
+    <table>
+        <tr><th>方法</th><th>HTTP方法+路径</th><th>传参</th><th>说明</th></tr>
+        <tr>
+            <td>list()</td>
+            <td>GET /list</td>
+            <td>TestTaskInfo（查询条件）</td>
+            <td>查询所有待分配的检测项目列表</td>
+        </tr>
+        <tr>
+            <td>batchAllot()</td>
+            <td>POST /batchAllot</td>
+            <td>@RequestBody TestTaskAllotDto<br>
+            {entrustId, templateClassifyId,<br>userId(检测员ID), taskIds[]}</td>
+            <td><strong>核心：批量分配任务</strong><br>将选中的检测项目分配给指定检测员，创建 test_task_allot 记录</td>
+        </tr>
+        <tr>
+            <td>add()</td>
+            <td>POST /</td>
+            <td>@RequestBody TestTaskInfoDto</td>
+            <td>确认流转（检测员确认收到任务）</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>4. 核心SQL</h2>
+    <div class="code-box">-- 查询待分配的检测任务
+SELECT ti.*, et.entrust_no, si.sample_name, mi.item_name
+FROM test_task_info ti
+LEFT JOIN ms_entrust_task et ON ti.entrust_id = et.id
+LEFT JOIN ms_sample_info si ON ti.sample_id = si.id
+LEFT JOIN bas_meterage_item mi ON ti.item_id = mi.id
+WHERE ti.allot_status = '0'  -- 未分配
+ORDER BY ti.create_time DESC
+
+-- 批量任务分配
+INSERT INTO test_task_allot (allot_id, entrust_id, template_classify_id, user_id, task_id, create_time)
+VALUES (?, ?, ?, ?, ?, sysdate())</div>
+</div>
+
+<div class="card">
+    <h2>5. 核心数据表</h2>
+    <table>
+        <tr><th>表名</th><th>说明</th><th>核心字段</th></tr>
+        <tr><td><code>test_task_info</code></td><td>检测任务信息表（每个检测项目一行）</td><td>task_id(主键), entrust_id(委托ID), sample_id(样品ID), item_id(检测项目), allot_status(分配状态:0未分配/1已分配), flow_status(流转状态)</td></tr>
+        <tr><td><code>test_task_allot</code></td><td><strong>任务分配表（核心）</strong></td><td>allot_id(主键), entrust_id, template_classify_id(模板分类), user_id(分配给谁), task_id(任务ID) → 这条记录就是后续编制、出证书的基础！</td></tr>
+    </table>
+
+    <div class="info-box">
+        <strong>💡 关键理解：</strong>任务分配是整个流程的枢纽。分配后产生 <code>test_task_allot</code> 记录，后续的记录编制和证书编制都是围绕 <code>allot_id</code> 进行的。
+    </div>
+</div>
+
+</div>
+</body>
+</html>

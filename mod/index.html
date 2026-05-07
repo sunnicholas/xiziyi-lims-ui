@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西自仪云检测一体化平台 - 项目全景文档</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
+        .app { display: flex; height: 100vh; }
+        
+        .sidebar { width: 280px; background: #1e293b; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #334155; }
+        .sidebar-header { padding: 20px; background: linear-gradient(135deg, #667eea, #764ba2); }
+        .sidebar-header h1 { font-size: 18px; color: white; }
+        .sidebar-header p { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+        
+        .nav-section { padding: 12px 20px 4px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .nav-item { display: flex; align-items: center; padding: 10px 20px; cursor: pointer; font-size: 14px; transition: all 0.2s; border-left: 3px solid transparent; color: #cbd5e1; text-decoration: none; }
+        .nav-item:hover { background: #334155; border-left-color: #667eea; color: white; }
+        .nav-item.active { background: #334155; border-left-color: #667eea; color: white; font-weight: 600; }
+        .nav-icon { margin-right: 10px; font-size: 16px; width: 20px; text-align: center; }
+        
+        .main { flex: 1; display: flex; flex-direction: column; }
+        .main iframe { flex: 1; border: none; background: white; }
+
+        .footer { text-align: center; padding: 8px; font-size: 11px; color: #64748b; background: #1e293b; }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>🏭 西自仪云检测一体化平台</h1>
+                <p>LIMS 系统项目全景文档 v3.8.9</p>
+            </div>
+
+            <div class="nav-section">📋 核心业务流程</div>
+            <a class="nav-item active" href="module-entrust.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📝</span> 委托登记下单
+            </a>
+            <a class="nav-item" href="module-task-allot.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📋</span> 任务分配
+            </a>
+            <a class="nav-item" href="module-record-compile.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📄</span> 记录编制
+            </a>
+            <a class="nav-item" href="module-cert-compile.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📜</span> 证书编制
+            </a>
+            <a class="nav-item" href="module-cert-merge.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔗</span> 合证管理
+            </a>
+            <a class="nav-item" href="module-print.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🖨️</span> 证书/标签打印
+            </a>
+            <a class="nav-item" href="module-review.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">✅</span> 审核管理
+            </a>
+
+            <div class="nav-section">🏗️ 扩展业务模块</div>
+            <a class="nav-item" href="module-scene-entrust.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🏗️</span> 现场委托检测
+            </a>
+            <a class="nav-item" href="module-template.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📐</span> 模板管理（核心）
+            </a>
+            <a class="nav-item" href="module-sample.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🧪</span> 样品管理
+            </a>
+            <a class="nav-item" href="module-quality.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">⚙️</span> 质量管理
+            </a>
+            <a class="nav-item" href="module-crm.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">👥</span> 客户管理(CRM)
+            </a>
+            <a class="nav-item" href="module-basics.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📊</span> 基础数据管理
+            </a>
+            <a class="nav-item" href="module-website.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🌐</span> 官网管理
+            </a>
+
+            <div class="nav-section">📖 系统架构</div>
+            <a class="nav-item" href="module-architecture.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🏛️</span> 系统架构总览
+            </a>
+            <a class="nav-item" href="module-file-ops.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📁</span> 文件操作详解
+            </a>
+        </div>
+
+        <div class="main">
+            <iframe name="contentFrame" src="module-entrust.html"></iframe>
+            <div class="footer">© 2026 西自仪云检测一体化平台 | 项目文档 | 最后更新 2026-04-29</div>
+        </div>
+    </div>
+
+    <script>
+        function setActive(el) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+        }
+    </script>
+</body>
+</html>

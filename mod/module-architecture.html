@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>系统架构总览</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #0f172a, #1e293b); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #0f172a; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #0f172a; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .info-box { background: #f1f5f9; border-left: 4px solid #0f172a; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .dir-tree { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.8; overflow-x: auto; }
+        .dir-tree .folder { color: #dcdcaa; }
+        .dir-tree .file { color: #9cdcfe; }
+        .dir-tree .hl { color: #4ec9b0; font-weight: bold; }
+        .dir-tree .comment { color: #6a9955; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+        .tag-blue { background: #dbeafe; color: #1e40af; } .tag-green { background: #d1fae5; color: #065f46; } .tag-purple { background: #ede9fe; color: #5b21b6; }
+        .tag-red { background: #fce7f3; color: #9d174d; } .tag-yellow { background: #fef3c7; color: #92400e; } .tag-gray { background: #f1f5f9; color: #475569; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>🏛️ 系统架构总览</h1>
+    <div style="font-size:14px;opacity:0.85;">技术栈 | 项目结构 | 模块依赖 | 配置说明 | 启动流程</div>
+</div>
+
+<div class="card">
+    <h2>1. 技术栈</h2>
+    <table>
+        <tr><th>层级</th><th>技术</th><th>版本</th></tr>
+        <tr><td>框架</td><td>Spring Boot</td><td>2.5.x</td></tr>
+        <tr><td>ORM</td><td>MyBatis + MyBatis-Plus</td><td>—</td></tr>
+        <tr><td>数据库</td><td>MySQL 8.x</td><td>—</td></tr>
+        <tr><td>连接池</td><td>Druid</td><td>—</td></tr>
+        <tr><td>缓存</td><td>Redis</td><td>—</td></tr>
+        <tr><td>安全</td><td>Spring Security + JWT</td><td>—</td></tr>
+        <tr><td>文档</td><td>Swagger (Knife4j)</td><td>—</td></tr>
+        <tr><td>前端</td><td>Vue 2.x + Element UI</td><td>—</td></tr>
+        <tr><td>在线编辑</td><td>PageOffice</td><td>—</td></tr>
+        <tr><td>Word操作</td><td>Aspose.Words 15.8.0</td><td>—</td></tr>
+        <tr><td>Excel操作</td><td>Spire.Xls</td><td>—</td></tr>
+        <tr><td>定时任务</td><td>Quartz</td><td>—</td></tr>
+        <tr><td>工具</td><td>Lombok, Hutool</td><td>—</td></tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>2. Maven 模块依赖关系</h2>
+    <div class="code-box" style="font-size: 14px; line-height: 2.2;">
+<span class="hl">xzy-admin</span> (启动模块 + Controller层)
+  ├─→ <span class="hl">xzy-system</span> (系统管理模块)
+  │     └─→ <span class="hl">xzy-common</span> (通用工具模块)
+  │
+  ├─→ <span class="hl">xzy-measure</span> (计量业务模块)
+  │     ├─→ xzy-common
+  │     └─→ xzy-basics (基础数据模块)
+  │           └─→ xzy-common
+  │
+  ├─→ <span class="hl">xzy-quality</span> (质量管理模块) ──→ xzy-common
+  ├─→ <span class="hl">xzy-crm</span> (客户管理模块) ──→ xzy-common
+  ├─→ <span class="hl">xzy-basics</span> (基础数据模块) ──→ xzy-common
+  ├─→ <span class="hl">xzy-quartz</span> (定时任务模块) ──→ xzy-common
+  ├─→ <span class="hl">xzy-generator</span> (代码生成器) ──→ xzy-common
+  └─→ <span class="hl">xzy-framework</span> (框架核心) ──→ xzy-common
+    </div>
+
+    <h3>关键理解</h3>
+    <div class="info-box">
+        <strong>💡 xzy-admin 是启动模块：</strong>包含 <code>LimsApplication.java</code> (启动类) 和所有 Controller。<br>
+        <strong>💡 业务模块不含 Controller：</strong>xzy-measure、xzy-crm 等只含 Domain/Mapper/Service，Controller 统一在 xzy-admin。<br>
+        <strong>💡 xzy-common 是基础层：</strong>BaseEntity、AjaxResult、工具类等通用内容。
+    </div>
+</div>
+
+<div class="card">
+    <h2>3. 包命名规则</h2>
+    <table>
+        <tr><th>包路径</th><th>内容</th><th>示例</th></tr>
+        <tr><td><code>com.xzy.system.domain</code></td><td>系统模块实体类</td><td>SysDept, SysUser, SysRole</td></tr>
+        <tr><td><code>com.xzy.system.mapper</code></td><td>系统模块 Mapper</td><td>SysDeptMapper, SysUserMapper</td></tr>
+        <tr><td><code>com.xzy.system.service</code></td><td>系统模块 Service接口</td><td>ISysDeptService, ISysUserService</td></tr>
+        <tr><td><code>com.xzy.system.service.impl</code></td><td>系统模块 Service实现</td><td>SysDeptServiceImpl</td></tr>
+        <tr><td><code>com.xzy.measure.domain</code></td><td>计量模块实体</td><td>MsEntrustTask, TestTaskAllot</td></tr>
+        <tr><td><code>com.xzy.measure.dto</code></td><td>计量模块 DTO</td><td>EntrustDto, TaskDto, InstructDto</td></tr>
+        <tr><td><code>com.xzy.measure.vo</code></td><td>计量模块 VO</td><td>TaskInfoVo, CretTotalVo</td></tr>
+        <tr><td><code>com.xzy.web.controller.system</code></td><td>系统模块Controller</td><td>SysDeptController</td></tr>
+        <tr><td><code>com.xzy.web.controller.measure</code></td><td>计量模块Controller</td><td>MsEntrustTaskController</td></tr>
+        <tr><td><code>com.xzy.common.core.domain</code></td><td>通用实体</td><td>BaseEntity, AjaxResult</td></tr>
+        <tr><td><code>com.xzy.common.utils</code></td><td>通用工具</td><td>DateUtils, StringUtils</td></tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>4. 核心配置说明 (application.yml)</h2>
+    <table>
+        <tr><th>配置项</th><th>值</th><th>说明</th></tr>
+        <tr><td>server.port</td><td>30001</td><td>后端服务端口</td></tr>
+        <tr><td>server.servlet.context-path</td><td>/xzy-api</td><td>所有接口URL前缀</td></tr>
+        <tr><td>xzy.profile</td><td>/Users/sunnicholas/lims/uploadPath</td><td><strong>文件存储根目录</strong></td></tr>
+        <tr><td>mybatis-plus.mapper-locations</td><td>classpath*:mapper/**/*Mapper.xml</td><td>XML扫描路径</td></tr>
+        <tr><td>mybatis-plus.typeAliasesPackage</td><td>com.xzy.**.domain</td><td>实体类别名扫描</td></tr>
+        <tr><td>spring.redis.host</td><td>127.0.0.1</td><td>Redis地址</td></tr>
+    </table>
+
+    <h3>数据源配置 (application-druid.yml)</h3>
+    <div class="code-box">datasource:
+    master:
+        url: jdbc:mysql://127.0.0.1:3306/lims?useUnicode=true&characterEncoding=utf8
+        username: root
+        password: 123456
+    → 数据库名: lims
+    → 本地开发: password=123456
+    → 线上部署: password=Xiziyi@88</div>
+</div>
+
+<div class="card">
+    <h2>5. 启动流程</h2>
+    <div class="code-box">1. 启动 MySQL (localhost:3306, db: lims)
+2. 启动 Redis (localhost:6379)  
+3. cd xiziyi-lims-service/
+4. mvn clean package -DskipTests
+   或: mvn spring-boot:run -pl xzy-admin
+5. 启动前端 (xiziyi-lims-web/)
+   npm install && npm run dev
+6. 访问: http://localhost:30001/xzy-api
+   Swagger: http://localhost:30001/xzy-api/doc.html</div>
+</div>
+
+<div class="card">
+    <h2>6. 完整业务流程数据表关系图</h2>
+    <table>
+        <tr><th>环节</th><th>主表</th><th>关联表</th><th>状态流转</th></tr>
+        <tr>
+            <td>1. 委托登记</td>
+            <td><code>ms_entrust_task</code></td>
+            <td><code>crm_customer</code>, <code>ms_sample_info</code></td>
+            <td>10→20→30(审核)→60</td>
+        </tr>
+        <tr>
+            <td>2. 业务流转</td>
+            <td><code>ms_entrust_flow</code></td>
+            <td><code>ms_entrust_task</code></td>
+            <td>按部门流转</td>
+        </tr>
+        <tr>
+            <td>3. 任务分配</td>
+            <td><code>test_task_info</code></td>
+            <td><code>ms_sample_info</code>, <code>bas_meterage_item</code></td>
+            <td>allot_status: 0→1</td>
+        </tr>
+        <tr>
+            <td>4. 任务分发</td>
+            <td><code>test_task_allot</code></td>
+            <td><code>test_task_info</code>, <code>sys_user</code></td>
+            <td>生成allot记录</td>
+        </tr>
+        <tr>
+            <td>5. 记录编制</td>
+            <td><code>test_task_allot</code></td>
+            <td><code>ms_template_child</code></td>
+            <td>record_status: 1→2→3</td>
+        </tr>
+        <tr>
+            <td>6. 证书编制</td>
+            <td><code>test_task_allot</code></td>
+            <td><code>ms_template_info</code></td>
+            <td>cert_status: 1→2→3→4</td>
+        </tr>
+        <tr>
+            <td>7. 合证(可选)</td>
+            <td><code>merge_task_info</code></td>
+            <td><code>test_task_allot</code></td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>8. 审核</td>
+            <td><code>test_task_allot</code></td>
+            <td><code>ms_entrust_record</code></td>
+            <td>audit_status变更</td>
+        </tr>
+        <tr>
+            <td>9. 打印发放</td>
+            <td><code>test_task_allot</code></td>
+            <td>—</td>
+            <td>print_status变更</td>
+        </tr>
+    </table>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>现场委托检测</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #b45309, #d97706); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #9a3412; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #d97706; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; } .method-put { background: #f59e0b; } .method-delete { background: #ef4444; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; word-break: break-all; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #fffbeb; border-left: 4px solid #d97706; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>🏗️ 现场委托检测</h1>
+    <div style="font-size:14px;opacity:0.85;">外检业务：现场委托登记 → 外检任务管理 → 现场检测 → 现场审核</div>
+</div>
+
+<div class="card">
+    <h2>1. 流程概览</h2>
+    <p>现场检测（外检）是针对大型设备、在线设备无法送检时的业务模式。检测员携带设备到客户现场进行检测。</p>
+    <table>
+        <tr><th>环节</th><th>前端页面</th><th>API文件</th></tr>
+        <tr><td>外检委托登记</td><td><code>views/sceneEntrust/externalInspectionTask/index.vue</code></td><td><code>api/sceneEntrust/index.js</code></td></tr>
+        <tr><td>外检预受理</td><td><code>views/sceneEntrust/preAcceptance/index.vue</code></td><td>—</td></tr>
+        <tr><td>现场检测任务</td><td><code>views/siteDetection/index.vue</code></td><td><code>api/siteDetection/index.js</code></td></tr>
+        <tr><td>现场审核</td><td><code>views/siteaudit/</code></td><td>—</td></tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>2. 外检委托登记接口</h2>
+    <p>来自：<code>api/sceneEntrust/index.js</code>，baseUrl = <code>/measure/msOuterTask</code></p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msOuterTask/list</span><span class="api-desc">外检委托列表</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msOuterTask</span><span class="api-desc">新增外检委托</span></div>
+    <div class="api-item"><span class="api-method method-put">PUT</span><span class="api-url">/measure/msOuterTask</span><span class="api-desc">修改外检委托</span></div>
+    <div class="api-item"><span class="api-method method-delete">DELETE</span><span class="api-url">/measure/msOuterTask/{id}</span><span class="api-desc">删除外检委托</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msOuterTask/{id}</span><span class="api-desc">外检委托详情</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msOuterTaskAllot/list</span><span class="api-desc">分配任务列表</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msOuterTaskAllot/allocateTask</span><span class="api-desc">分配任务</span></div>
+
+    <p>相关 Controller：<code>MsOuterTaskAllotController.java</code></p>
+</div>
+
+<div class="card">
+    <h2>3. 现场检测接口</h2>
+    <p>来自：<code>api/siteDetection/index.js</code>（约20个接口）</p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/siteDetectionTask/list</span><span class="api-desc">任务列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/siteDetectionTask/{id}</span><span class="api-desc">任务详情</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/siteDetectionTask</span><span class="api-desc">新增任务</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/siteDetectionTask/departureConfirm</span><span class="api-desc">出发确认</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/siteDetectionTask/financeConfirm</span><span class="api-desc">财务确认</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/siteDetectionTask/revocation</span><span class="api-desc">撤销任务</span></div>
+</div>
+</div>
+</body>
+</html>

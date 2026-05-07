@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>质量管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #4f46e5, #6366f1); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #3730a3; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #4f46e5; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #eef2ff; border-left: 4px solid #6366f1; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>⚙️ 质量管理</h1>
+    <div style="font-size:14px;opacity:0.85;">质量模块(xzy-quality)：技术依据、标准物质、测量标准、设备库</div>
+</div>
+
+<div class="card">
+    <h2>1. 模块清单</h2>
+    <table>
+        <tr><th>模块</th><th>前端API文件</th><th>前端页面</th><th>后端Controller</th></tr>
+        <tr>
+            <td>技术依据</td>
+            <td><code>api/quality/quaTechnicalBasis.js</code></td>
+            <td><code>views/quality/quaTechnicalBasis/index.vue</code></td>
+            <td><code>QuaTechnicalItemController.java</code></td>
+        </tr>
+        <tr>
+            <td>标准物质</td>
+            <td><code>api/quality/quaStdMat.js</code></td>
+            <td><code>views/quality/quaStdMat/index.vue</code></td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>测量标准</td>
+            <td><code>api/quality/quaMeasStd.js</code></td>
+            <td><code>views/quality/quaMeasStd/index.vue</code></td>
+            <td>—</td>
+        </tr>
+        <tr>
+            <td>设备库</td>
+            <td><code>api/quality/quaEquipLib.js</code></td>
+            <td><code>views/quality/quaEquipLib/index.vue</code></td>
+            <td>—</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>📌 代码模块：</strong><code>xzy-quality</code><br>
+        质量模块包含实验室质量管理体系的数据管理，支持设备溯源、量值传递、标准物质管理等功能。
+    </div>
+</div>
+
+<div class="card">
+    <h2>2. 核心数据表</h2>
+    <table>
+        <tr><th>表名</th><th>说明</th></tr>
+        <tr><td><code>qua_technical_basis</code></td><td>技术依据（检定规程/校准规范）</td></tr>
+        <tr><td><code>qua_standard_matter</code></td><td>标准物质管理</td></tr>
+        <tr><td><code>qua_measure_standard</code></td><td>测量标准管理</td></tr>
+        <tr><td><code>qua_equip_lib</code></td><td>设备库（标准设备信息）</td></tr>
+    </table>
+
+    <h3>技术依据查询 SQL</h3>
+    <div class="code-box">-- 技术依据列表查询
+SELECT tb.*, dept.dept_name
+FROM qua_technical_basis tb
+LEFT JOIN sys_dept dept ON tb.dept_id = dept.dept_id
+WHERE tb.del_flag = '0'
+ORDER BY tb.create_time DESC</div>
+</div>
+</div>
+</body>
+</html>

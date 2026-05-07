@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>记录编制</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #dc2626, #ea580c); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .header .flow { margin-top: 12px; font-size: 14px; opacity: 0.85; background: rgba(255,255,255,0.15); padding: 8px 20px; border-radius: 20px; display: inline-block; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #991b1b; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #dc2626; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; } .method-put { background: #f59e0b; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+        .tag-blue { background: #dbeafe; color: #1e40af; } .tag-green { background: #d1fae5; color: #065f46; } .tag-purple { background: #ede9fe; color: #5b21b6; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📄 记录编制</h1>
+    <div class="flow">上一环节：任务分配 → 记录编制（填写实验数据）→ 下一环节：审核（可选）→ 证书编制</div>
+</div>
+
+<div class="card">
+    <h2>1. 模块概述</h2>
+    <p>检测员完成实验后，在系统中编写<strong>原始记录</strong>。系统根据模板（子模板）生成 Excel 记录表，检测员填写实验数据，提交后进入审核环节。</p>
+    <p>这是 LIMS 系统的核心环节之一，涉及 <strong>PageOffice 在线编辑</strong>、<strong>Excel 模板填充</strong>、<strong>文件生成与存储</strong>。</p>
+    
+    <div class="info-box">
+        <strong>📌 前端页面：</strong><code>xiziyi-lims-web/src/views/establishment/msRecordEstablish/index.vue</code><br>
+        <strong>📌 在线编辑组件：</strong><code>xiziyi-lims-web/src/components/pageoffice/JLadd.vue</code>、<code>JLupdate.vue</code><br>
+        <strong>📌 权限标识前缀：</strong><code>measure:testTaskAllot</code>
+    </div>
+</div>
+
+<div class="card">
+    <h2>2. 前端调用的接口</h2>
+    <p>API 封装：<code>xiziyi-lims-web/src/api/establishment/EquipmentForInspection.js</code><br>
+    模板中的部分接口在 <code>msTemplateInfo.js</code> 中</p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/list</span><span class="api-desc">记录编制列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/{allotId}</span><span class="api-desc">编制详情回显</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/getRecordEcho</span><span class="api-desc"><strong>核心：记录编制回显</strong>(根据模板ID查询Excel回显数据)</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/testTaskAllot</span><span class="api-desc">新增记录编制</span></div>
+    <div class="api-item"><span class="api-method method-put">PUT</span><span class="api-url">/measure/testTaskAllot</span><span class="api-desc">修改记录编制</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/submit</span><span class="api-desc">记录编制提交</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/createOriginalFile</span><span class="api-desc"><strong>核心：上传记录文件路径</strong>/生成原始记录文件</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/excel</span><span class="api-desc">PageOffice 在线Excel编辑</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/excelView</span><span class="api-desc">Excel查看模式</span></div>
+</div>
+
+<div class="card">
+    <h2>3. 后端实现</h2>
+    
+    <h3>3.1 Controller: TestTaskAllotController</h3>
+    <p>文件：<code>xzy-admin/src/main/java/com/xzy/web/controller/measure/TestTaskAllotController.java</code></p>
+    <p>@RequestMapping：<code>/measure/testTaskAllot</code></p>
+    <p>这是整个系统<strong>最核心、代码量最大</strong>的 Controller，处理记录编制和证书编制。</p>
+
+    <h3>3.2 核心方法详解</h3>
+    <table>
+        <tr><th>方法</th><th>路径</th><th>传参</th><th>说明</th></tr>
+        <tr>
+            <td>list()</td>
+            <td>GET /list</td>
+            <td>TestTaskAllot</td>
+            <td>查询编制管理列表（记录编制列表）</td>
+        </tr>
+        <tr>
+            <td><strong>getRecordEcho()</strong></td>
+            <td>GET /getRecordEcho</td>
+            <td>allotId(分配ID),<br>templateChildId(子模板ID)</td>
+            <td><strong>记录编制回显。</strong>根据分配ID查询委托信息+样品信息+检测项目；根据子模板ID查询Excel模板，填充数据后打开 PageOffice 在线编辑</td>
+        </tr>
+        <tr>
+            <td>JLsubmit()</td>
+            <td>GET /submit</td>
+            <td>allotId</td>
+            <td>记录编制提交，状态变更为待审核</td>
+        </tr>
+        <tr>
+            <td><strong>createOriginalFile()</strong></td>
+            <td>GET /createOriginalFile</td>
+            <td>allotId,<br>filePath(记录文件路径)</td>
+            <td><strong>原始记录文件提交。</strong>保存用户编辑完的记录文件路径到数据库</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>4. 记录编制回显流程详解</h2>
+    <p>这是最核心的流程，展示了 L240-L310 的 <code>getRecordEcho()</code> 方法完整逻辑：</p>
+    
+    <div class="code-box">// TestTaskAllotController.getRecordEcho(allotId, templateChildId)
+Step 1: 查询分配信息
+  SELECT * FROM test_task_allot WHERE allot_id = #{allotId}
+
+Step 2: 根据分配信息查询委托单
+  SELECT * FROM ms_entrust_task WHERE id = #{entrustId}
+
+Step 3: 查询样品信息和检测项目信息
+  SELECT * FROM ms_sample_info WHERE entrust_id = #{entrustId}
+  SELECT * FROM bas_meterage_item WHERE id IN (检测项目ID列表)
+
+Step 4: 查询子模板信息
+  SELECT * FROM ms_template_child WHERE id = #{templateChildId}
+  → 获取 Excel 模板文件路径 (template_path)
+
+Step 5: 打开 PageOffice 在线编辑
+  返回模板文件路径 + 委托数据 + 样品数据
+  → 前端 PageOffice 组件加载 Excel 模板
+  → 将数据填充到 Excel 的指定单元格/书签区域
+  → 检测员在浏览器中编辑，编辑完后保存</div>
+</div>
+
+<div class="card">
+    <h2>5. 文件存储路径</h2>
+    <div class="warn-box">
+        <strong>📁 记录文件存储规则：</strong><br>
+        模板文件：通常在 <code>{profile}/template/</code> 目录下<br>
+        用户编辑后的记录文件：<code>{profile}/record/{entrustId}/{allotId}/原始记录.xlsx</code><br><br>
+        <strong>文件操作方式：</strong><br>
+        1. PageOffice 在线编辑 → 点保存 → 自动保存到指定路径<br>
+        2. createOriginalFile 接口 → 手动指定文件路径 → 更新数据库
+    </div>
+</div>
+
+</div>
+</body>
+</html>

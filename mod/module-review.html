@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>审核管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #15803d; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #16a34a; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>✅ 审核管理</h1>
+    <div style="font-size:14px;opacity:0.85;">贯穿全流程：委托审核 → 记录审核 → 证书审核 → 归档确认</div>
+</div>
+
+<div class="card">
+    <h2>1. 审核类型总览</h2>
+    <table>
+        <tr><th>审核类型</th><th>审核对象</th><th>审核人</th><th>Controller/接口</th></tr>
+        <tr>
+            <td>委托审核</td>
+            <td>ms_entrust_task</td>
+            <td>业务部部长/审核员</td>
+            <td>MsEntrustTaskController<br>POST /measure/msEntrustTask/audit</td>
+        </tr>
+        <tr>
+            <td>记录审核</td>
+            <td>test_task_allot (记录)</td>
+            <td>检测部部长/科室主任</td>
+            <td>TestTaskAllotController<br>GET /measure/testTaskAllot/auditSubmit</td>
+        </tr>
+        <tr>
+            <td>证书审核</td>
+            <td>test_task_allot (证书)</td>
+            <td>审核员</td>
+            <td>TestTaskAllotController<br>GET /measure/testTaskAllot/certSubmit → 审核</td>
+        </tr>
+        <tr>
+            <td>模板审核</td>
+            <td>ms_template_info</td>
+            <td>技术负责人</td>
+            <td>MsTemplateInfoController<br>POST /measure/msTemplateInfo/audit</td>
+        </tr>
+        <tr>
+            <td>子模板审核</td>
+            <td>ms_template_child</td>
+            <td>技术负责人</td>
+            <td>MsTemplateChildController<br>POST /measure/msTemplateChild/audit</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>2. 编制审核管理</h2>
+    <p>API：<code>xiziyi-lims-web/src/api/ReviewManagement/ReviewManagement.js</code></p>
+    <p>前端页面：<code>views/ReviewManagement/ApprovalManage/index.vue</code>（审批管理）</p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/auditList</span><span class="api-desc">编制审核列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/handList</span><span class="api-desc">经办任务列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/auditSubmit</span><span class="api-desc">证书审核提交</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/recordList</span><span class="api-desc">操作历史</span></div>
+</div>
+
+<div class="card">
+    <h2>3. 审核数据表</h2>
+    <table>
+        <tr><th>表名</th><th>审核相关字段</th><th>说明</th></tr>
+        <tr><td>ms_entrust_task</td><td>audit_status, audit_user_id, audit_time, audit_remark</td><td>委托审核信息</td></tr>
+        <tr><td>test_task_allot</td><td>record_status(记录状态), cert_status(证书状态), audit_status(审核状态)</td><td>编制审核信息</td></tr>
+        <tr><td>ms_entrust_record</td><td>status, record_content, create_time, create_by</td><td>所有操作记录</td></tr>
+    </table>
+
+    <h3>审核提交 SQL 示例</h3>
+    <div class="code-box">-- auditSubmit: 证书审核提交
+UPDATE test_task_allot 
+SET cert_status = #{certStatus},
+    audit_status = #{auditStatus},
+    audit_user_id = #{auditUserId},
+    audit_time = sysdate(),
+    audit_remark = #{auditRemark}
+WHERE allot_id = #{allotId}</div>
+
+    <div class="warn-box">
+        <strong>⚠️ 审核注意事项：</strong>审核涉及到状态流转，需要保持状态一致性。使用了 @Transactional 事务注解确保审核操作和执行记录INSERT在一个事务中。
+    </div>
+</div>
+
+</div>
+</body>
+</html>

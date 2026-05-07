@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>委托登记下单</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #2563eb, #7c3aed); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .header .flow { margin-top: 12px; font-size: 14px; opacity: 0.85; background: rgba(255,255,255,0.15); padding: 8px 20px; border-radius: 20px; display: inline-block; }
+        
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #1e40af; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #2563eb; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        
+        .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; }
+        .method-post { background: #3b82f6; }
+        .method-put { background: #f59e0b; }
+        .method-delete { background: #ef4444; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; word-break: break-all; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+        .tag-blue { background: #dbeafe; color: #1e40af; }
+        .tag-green { background: #d1fae5; color: #065f46; }
+        .tag-purple { background: #ede9fe; color: #5b21b6; }
+        .tag-red { background: #fce7f3; color: #9d174d; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📝 委托登记下单</h1>
+    <div class="flow">业务流程图：委托下单 → 委托审核 → 客户签名 → 业务流转 → 任务分配</div>
+</div>
+
+<!-- 模块概述 -->
+<div class="card">
+    <h2>1. 模块概述</h2>
+    <p>委托登记是整个检测业务流程的<strong>起点</strong>。客户委托检测/校准服务，由业务员在系统中创建委托单，填写委托方信息、样品信息、检测项目，生成委托协议，客户签名确认后进入业务流转环节。</p>
+    
+    <div class="info-box">
+        <strong>📌 涉及角色：</strong>业务员（登记）、业务部部长/审核员（审核）、客户（签名）<br>
+        <strong>📌 权限标识前缀：</strong> <code>measure:msEntrustTask</code><br>
+        <strong>📌 前端页面：</strong> <code>xiziyi-lims-web/src/views/business/acceptance/index.vue</code>
+    </div>
+</div>
+
+<!-- 前端实现 -->
+<div class="card">
+    <h2>2. 前端实现</h2>
+    
+    <h3>2.1 页面结构</h3>
+    <table>
+        <tr><th>组成部分</th><th>说明</th><th>文件位置</th></tr>
+        <tr>
+            <td>委托登记页面</td>
+            <td>列表展示 + 新增/编辑弹窗 + 样品明细 + 委托单预览</td>
+            <td><code>xiziyi-lims-web/src/views/business/acceptance/index.vue</code></td>
+        </tr>
+        <tr>
+            <td>业务流转页面</td>
+            <td>已受理委托的流转操作</td>
+            <td><code>xiziyi-lims-web/src/views/business/entrustFlow/index.vue</code></td>
+        </tr>
+        <tr>
+            <td>委托审核页面</td>
+            <td>审核待办列表 + 审核操作</td>
+            <td><code>xiziyi-lims-web/src/views/business/entrustedreview/index.vue</code></td>
+        </tr>
+        <tr>
+            <td>API 封装</td>
+            <td>所有后端接口的前端封装</td>
+            <td><code>xiziyi-lims-web/src/api/metering/acceptance.js</code></td>
+        </tr>
+    </table>
+
+    <h3>2.2 前端调用的接口列表</h3>
+    <p style="font-size:12px;color:#64748b;">以下接口基于前端 <code>acceptance.js</code>，baseUrl = <code>measure/msEntrustTask</code></p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/list</span><span class="api-desc">委托列表（分页）</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/{id}</span><span class="api-desc">委托详情</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msEntrustTask</span><span class="api-desc">新增委托</span></div>
+    <div class="api-item"><span class="api-method method-put">PUT</span><span class="api-url">/measure/msEntrustTask</span><span class="api-desc">修改委托</span></div>
+    <div class="api-item"><span class="api-method method-delete">DELETE</span><span class="api-url">/measure/msEntrustTask/{ids}</span><span class="api-desc">删除委托</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/submit</span><span class="api-desc">提交委托单</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/auditList</span><span class="api-desc">委托审核列表</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msEntrustTask/audit</span><span class="api-desc">委托单审核</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/sampleList</span><span class="api-desc">委托下样品列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/businessFlowList</span><span class="api-desc">业务流转列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/entrustFlow</span><span class="api-desc">获取流转单信息</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/exportEntrustSingle</span><span class="api-desc">委托单导出</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/createQuotedEntrust</span><span class="api-desc">重新生成委托单</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msEntrustTask/importData</span><span class="api-desc">导入委托样品</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msEntrustTask/recordList</span><span class="api-desc">操作记录列表</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msEntrustFlow</span><span class="api-desc">新增流转记录</span></div>
+</div>
+
+<!-- 后端实现 -->
+<div class="card">
+    <h2>3. 后端实现</h2>
+    
+    <h3>3.1 Controller 层</h3>
+    <table>
+        <tr><th>类</th><th>路径</th><th>说明</th></tr>
+        <tr>
+            <td><span class="tag tag-blue">Controller</span> MsEntrustTaskController</td>
+            <td><code>xzy-admin/src/main/java/.../controller/measure/<br>MsEntrustTaskController.java</code></td>
+            <td>委托登记主控制器，处理委托CRUD、提交、审核、流转</td>
+        </tr>
+    </table>
+
+    <h3>3.2 Service 层</h3>
+    <table>
+        <tr><th>服务（Module: xzy-measure）</th><th>路径</th><th>说明</th></tr>
+        <tr>
+            <td><span class="tag tag-green">Service</span> IMsEntrustTaskService</td>
+            <td><code>xzy-measure/src/main/java/.../service/IMsEntrustTaskService.java</code></td>
+            <td>委托任务接口</td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-green">ServiceImpl</span> MsEntrustTaskServiceImpl</td>
+            <td><code>xzy-measure/src/main/java/.../service/impl/MsEntrustTaskServiceImpl.java</code></td>
+            <td>委托任务实现，核心：<br><code>insertMsEntrustTask()</code> - 创建委托单</td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-purple">Service</span> IMsEntrustFlowService / Impl</td>
+            <td><code>xzy-measure/.../service/impl/MsEntrustFlowServiceImpl.java</code></td>
+            <td>委托流转记录服务</td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-purple">Service</span> IMsSampleInfoService / Impl</td>
+            <td><code>xzy-measure/.../service/impl/MsSampleInfoServiceImpl.java</code></td>
+            <td>样品信息服务</td>
+        </tr>
+    </table>
+
+    <h3>3.3 Mapper / SQL 层</h3>
+    <table>
+        <tr><th>文件</th><th>路径</th><th>说明</th></tr>
+        <tr>
+            <td>MsEntrustTaskMapper.java</td>
+            <td><code>xzy-measure/.../mapper/MsEntrustTaskMapper.java</code></td>
+            <td>Mapper 接口</td>
+        </tr>
+        <tr>
+            <td>MsEntrustTaskMapper.xml</td>
+            <td><code>xzy-measure/.../resources/mapper/measure/MsEntrustTaskMapper.xml</code></td>
+            <td>SQL 映射文件</td>
+        </tr>
+    </table>
+
+    <h3>3.4 核心数据表</h3>
+    <table>
+        <tr><th>表名</th><th>说明</th><th>核心字段</th></tr>
+        <tr>
+            <td><code>ms_entrust_task</code></td>
+            <td><strong>委托任务主表</strong></td>
+            <td>id, entrust_no(委托编号), customer_id(客户), register_type(委托类型:1送检/2现场), entrust_two_level(报告类型:1检定/2校准/3检测/5CNAS), status(状态:10登记/20待审核/30已审核/60已完成), audit_status(审核状态), sign_status(签名状态), entrust_time(委托时间), entrust_path(委托单存储路径)</td>
+        </tr>
+        <tr>
+            <td><code>ms_entrust_flow</code></td>
+            <td><strong>委托流转记录表</strong></td>
+            <td>flow_id, entrust_id, flow_user_id, flow_time, flow_status</td>
+        </tr>
+        <tr>
+            <td><code>ms_entrust_record</code></td>
+            <td>委托操作记录表</td>
+            <td>id, entrust_id, status, record_content</td>
+        </tr>
+        <tr>
+            <td><code>ms_sample_info</code></td>
+            <td>样品信息表</td>
+            <td>id, entrust_id, sample_name, spec(规格), sample_number(数量), flow_status(流转状态)</td>
+        </tr>
+    </table>
+</div>
+
+<!-- 委托创建核心逻辑 -->
+<div class="card">
+    <h2>4. 委托创建核心逻辑</h2>
+    
+    <h3>4.1 新增委托 - POST /measure/msEntrustTask</h3>
+    <p>传参：<code>@RequestBody MsEntrustTask</code>（含委托方信息、样品列表、检测项目等完整数据）</p>
+    
+    <div class="code-box">// MsEntrustTaskController.java add() → 调用 msEntrustTaskService.insertMsEntrustTask()
+// MsEntrustTaskServiceImpl.insertMsEntrustTask() 核心步骤:
+
+1. 生成委托编号(entrust_no)：根据规则生成唯一编号，如 "XZYWT202604290001"
+2. 保存委托主表: INSERT INTO ms_entrust_task (...)
+3. 保存样品明细: 批量 INSERT INTO ms_sample_info (entrust_id, sample_name, spec, ...)
+4. 生成委托单文件(Word/PDF): 
+   - 使用 Aspose.Words 或 PageOffice 处理模板
+   - 根据模板路径和数据填充书签/占位符
+   - 生成的委托单保存到: uploadPath/entrust/{日期}/{entrustId}/委托单.docx
+   - 更新 entrust_path 字段
+5. 生成二维码: 在委托单上嵌入防伪二维码
+6. 保存操作记录: INSERT INTO ms_entrust_record
+</div>
+
+    <h3>4.2 委托状态流转</h3>
+    <table>
+        <tr><th>状态值</th><th>常量</th><th>含义</th><th>触发操作</th></tr>
+        <tr><td>10</td><td>—</td><td>登记中</td><td>创建委托单</td></tr>
+        <tr><td>20</td><td>SET_STATUS_20</td><td>已提交/待审核</td><td>业务员提交</td></tr>
+        <tr><td>30</td><td>—</td><td>已审核</td><td>审核员审核通过</td></tr>
+        <tr><td>60</td><td>SET_STATUS_60</td><td>已完成</td><td>全部样品完成检测</td></tr>
+    </table>
+</div>
+
+<!-- SQL查询示例 -->
+<div class="card">
+    <h2>5. SQL 关键查询</h2>
+    
+    <h3>5.1 委托列表查询</h3>
+    <div class="code-box">-- 查询委托登记列表 (MsEntrustTaskMapper.xml)
+SELECT e.*, 
+    c.customer_name,
+    (SELECT COUNT(1) FROM ms_sample_info WHERE entrust_id = e.id) AS sample_total
+FROM ms_entrust_task e
+LEFT JOIN crm_customer c ON e.customer_id = c.id
+WHERE e.del_flag = '0'
+    <if test="entrustNo != null">AND e.entrust_no LIKE CONCAT('%', #{entrustNo}, '%')</if>
+    <if test="status != null">AND e.status = #{status}</if>
+    <if test="customerId != null">AND e.customer_id = #{customerId}</if>
+ORDER BY e.create_time DESC</div>
+
+    <h3>5.2 业务流转列表查询</h3>
+    <div class="code-box">-- businessFlowList: status=20(已提交), signStatus=1(客户已签名)
+SELECT e.* 
+FROM ms_entrust_task e
+WHERE e.status = '20' 
+    AND e.sign_status = '1'
+ORDER BY e.create_time DESC</div>
+</div>
+
+<!-- 文件生成说明 -->
+<div class="card">
+    <h2>6. 文件生成（委托单）</h2>
+    
+    <h3>6.1 委托单生成路径</h3>
+    <div class="info-box">
+        <strong>📁 保存路径规则：</strong><br>
+        根目录：<code>/Users/sunnicholas/lims/uploadPath</code> (application.yml: xzy.profile)<br>
+        委托单：<code>{profile}/entrust/{yyyyMMdd}/{entrustId}/委托单.docx</code><br><br>
+        <strong>生成工具：</strong>Spire.Xls / Aspose.Words<br>
+        <strong>模板位置：</strong>模板管理中配置的证书/记录模板路径
+    </div>
+
+    <h3>6.2 重新生成委托单</h3>
+    <p><code>GET /measure/msEntrustTask/createQuotedEntrust?entrustId={id}</code></p>
+    <p>使用 Spring 事件监听机制异步处理，确保数据库事务一致性：</p>
+    <div class="code-box">// MsEntrustTaskController.createQuotedEntrust()
+publisher.publishEvent(new EntrustProcessEvent(entrustId, loginUser, status));
+// EntrustProcessListener 监听到事件后异步执行:
+// 1. 重新查询委托数据和样品数据
+// 2. 使用 Aspose.Words 重新填充模板
+// 3. 覆盖原有文件
+// 4. 更新 entrust_path</div>
+
+    <div class="warn-box">
+        <strong>⚠️ 常见问题排查：</strong>
+        <ul>
+            <li>委托单生成失败 → 检查模板文件是否存在、Aspose license是否有效</li>
+            <li>路径问题 → Linux/MacOS 路径分隔符是 "/"，Windows 是 "\"</li>
+            <li>二维码不显示 → 检查 ZXing 依赖和字体文件</li>
+        </ul>
+    </div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>证书编制</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .header .flow { margin-top: 12px; font-size: 14px; opacity: 0.85; background: rgba(255,255,255,0.15); padding: 8px 20px; border-radius: 20px; display: inline-block; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #6d28d9; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #7c3aed; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #f5f3ff; border-left: 4px solid #7c3aed; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+        .tag-blue { background: #dbeafe; color: #1e40af; } .tag-green { background: #d1fae5; color: #065f46; } .tag-purple { background: #ede9fe; color: #5b21b6; } .tag-red { background: #fce7f3; color: #9d174d; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📜 证书编制</h1>
+    <div class="flow">上一环节：记录编制（审核通过后）→ 证书编制（生成证书+编号）→ 下一环节：证书审核 → 打印/发放</div>
+</div>
+
+<div class="card">
+    <h2>1. 模块概述</h2>
+    <p>证书编制是整个 LIMS 系统的<strong>核心交付物环节</strong>。根据检测/校准结果生成正式的检定证书或校准证书，包括<strong>证书编号生成</strong>、<strong>Word 模板填充</strong>、<strong>证书图片合成</strong>、<strong>防伪码生成</strong>等功能。</p>
+    
+    <div class="info-box">
+        <strong>📌 前端页面：</strong><code>views/establishment/CertificateEstablish/index.vue</code>（证书列表）<br>
+        <strong>📌 编辑组件：</strong><code>components/pageoffice/ZSadd.vue</code>、<code>ZSupdate.vue</code><br>
+        <strong>📌 权限标识前缀：</strong><code>measure:testTaskAllot</code>（与记录编制共用Controller）<br>
+        <strong>📌 核心Controller：</strong><code>TestTaskAllotController.java</code>（与记录编制共用）
+    </div>
+</div>
+
+<div class="card">
+    <h2>2. 前端调用的接口</h2>
+    <p>来自 <code>EquipmentForInspection.js</code> 和 <code>msTemplateInfo.js</code></p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/zslist</span><span class="api-desc">证书编制列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/cert/{allotId}</span><span class="api-desc">证书编制详情</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/getCertRecordEcho</span><span class="api-desc"><strong>核心：证书编制回显</strong></span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/testTaskAllot/certSubmit</span><span class="api-desc">证书编制提交</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/word</span><span class="api-desc">PageOffice Word在线编辑</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/viewWord</span><span class="api-desc">在线Word预览</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/testTaskAllot/uploadCertImgBatch</span><span class="api-desc"><strong>核心：证书图片批量上传合成</strong></span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/testTaskAllot/uploadHtmltoPdf</span><span class="api-desc">HTML转PDF上传</span></div>
+</div>
+
+<div class="card">
+    <h2>3. 证书编号生成（核心功能）</h2>
+    <p>代码位置：<code>TestTaskAllotController.java</code> 的 <code>getOrGenerateCertNumber()</code> 方法（L462）</p>
+    
+    <h3>3.1 编号规则分类</h3>
+    <table>
+        <tr><th>类型</th><th>格式</th><th>示例</th><th>触发条件</th></tr>
+        <tr>
+            <td>CMA类型</td>
+            <td>XZYJC + 年份(4位) + 递增数(4位) + 专业代码</td>
+            <td><code>XZYJC20260001JJG</code></td>
+            <td>专业为"机械"或"其他"（cmaFlag=true）</td>
+        </tr>
+        <tr>
+            <td>非CMA 检定</td>
+            <td>科室 + 委托类型(S/X) + 专业 + 证书类型 + 报告类型(G) + 年月(4位) + 递增(5位)</td>
+            <td><code>LXSEJJG260400001</code></td>
+            <td>entrustTwoLevel=1（检定）</td>
+        </tr>
+        <tr>
+            <td>非CMA 校准</td>
+            <td>科室 + 委托类型 + 专业 + 证书类型 + 报告类型(F) + 年月 + 递增</td>
+            <td><code>LXSCJJF260400001</code></td>
+            <td>entrustTwoLevel=2/3（校准）</td>
+        </tr>
+        <tr>
+            <td>非CMA CNAS</td>
+            <td>科室 + 委托类型 + 专业 + 证书类型 + 报告类型(C) + 年月 + 递增</td>
+            <td><code>JJGSHXC260400001</code></td>
+            <td>entrustTwoLevel=5（CNAS）</td>
+        </tr>
+    </table>
+
+    <h3>3.2 编号生成核心逻辑</h3>
+    <div class="code-box">// TestTaskAllotController.getOrGenerateCertNumber()
+// 1. CMA类型编号
+String currentYear = DateUtils.parseDateToStr("yyyy", new Date());
+String increment = configService.incrNumber("cma_zs", 4, "_no");
+testPost = "XZYJC" + currentYear + increment + classifyInfo.zyCode;
+
+// 2. 非CMA类型编号
+testPost = String.join("", ksCode, wtCode, zyCode, certCode, reportCode);
+return configService.getZsCode(testPost, null, entrustTime, 5);
+// → 内部调用 incrZsNumberStr() → Redis INCR 原子递增 → 每月自动重置
+// Redis Key格式: MEASURE:{pre}:incr:{entrustTime}
+// 返回格式: LXSEJJG260400001</div>
+</div>
+
+<div class="card">
+    <h2>4. 证书图片上传合成（重点）</h2>
+    <p>代码位置：<code>TestTaskAllotController.uploadCertImgBatch()</code>（L732-L860）</p>
+    
+    <div class="code-box">// POST /measure/testTaskAllot/uploadCertImgBatch
+// 传参: allotId, certFilePath(证书文件路径), 
+//        deviceTag(设备书签标识), files[](图片文件数组)
+
+核心逻辑:
+1. 获取证书 Word 文件路径 (certFilePath)
+2. 遍历上传的图片文件，保存到临时目录
+3. 使用 Aspose.Words 打开 Word 模板
+4. 根据 deviceTag(书签名称) 定位 Word 中的书签位置
+5. 将图片插入/替换到书签位置（如设备图片、签名图片等）
+6. 保存新的 Word 文件
+7. 可选：将 Word 转换为 PDF
+8. 清理临时文件
+
+文件路径: {profile}/cert/{entrustId}/{allotId}/证书.docx</div>
+
+    <div class="warn-box">
+        <strong>⚠️ 图片合成关键依赖：</strong>
+        <ul>
+            <li>Aspose.Words (aspose-words-15.8.0.jar) — Word 操作核心</li>
+            <li>Spire.Xls — Excel 转换支持</li>
+            <li>license.xml — Aspose 许可证文件（否则有水印）</li>
+        </ul>
+    </div>
+</div>
+
+<div class="card">
+    <h2>5. 证书存储路径</h2>
+    <table>
+        <tr><th>文件类型</th><th>路径模板</th><th>说明</th></tr>
+        <tr>
+            <td>证书 Word 模板</td>
+            <td><code>{profile}/template/cert/{模板ID}/证书模板.docx</code></td>
+            <td>模板管理中上传</td>
+        </tr>
+        <tr>
+            <td>证书文件（编辑后）</td>
+            <td><code>{profile}/cert/{date}/{entrustId}/{allotId}/证书.docx</code></td>
+            <td>PageOffice 编辑保存</td>
+        </tr>
+        <tr>
+            <td>证书图片</td>
+            <td><code>{profile}/cert/{date}/{entrustId}/{allotId}/img/</code></td>
+            <td>合成的图片文件</td>
+        </tr>
+        <tr>
+            <td>证书 PDF（最终件）</td>
+            <td><code>{profile}/cert/{date}/{entrustId}/{allotId}/证书.pdf</code></td>
+            <td>打印和发放用</td>
+        </tr>
+    </table>
+</div>
+
+</div>
+</body>
+</html>

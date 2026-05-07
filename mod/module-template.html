@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>模板管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #9333ea, #c084fc); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #6b21a8; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #9333ea; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; } .method-put { background: #f59e0b; } .method-delete { background: #ef4444; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; word-break: break-all; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #faf5ff; border-left: 4px solid #9333ea; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .tag-blue { background: #dbeafe; color: #1e40af; } .tag-green { background: #d1fae5; color: #065f46; } .tag-purple { background: #ede9fe; color: #5b21b6; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📐 模板管理（核心系统模块）</h1>
+    <div style="font-size:14px;opacity:0.85;">整个证书/记录体系的基石：证书模板 + 记录子模板 + 模板分类</div>
+</div>
+
+<div class="card">
+    <h2>1. 模板体系架构</h2>
+    <table>
+        <tr><th>层级</th><th>实体</th><th>说明</th><th>前端页面</th></tr>
+        <tr>
+            <td>1</td>
+            <td><span class="tag tag-purple">模板分类</span> ms_template_classify</td>
+            <td>3层树形结构：专业 → 科室 → 证书类型</td>
+            <td><code>views/basics/msTemplateClassify/index.vue</code></td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td><span class="tag tag-blue">证书模板</span> ms_template_info</td>
+            <td>Word格式证书模板，含书签占位符</td>
+            <td><code>views/template/msTemplateInfo/index.vue</code></td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td><span class="tag tag-green">记录子模板</span> ms_template_child</td>
+            <td>Excel格式原始记录模板</td>
+            <td>在证书模板页面内联管理</td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>💡 调用关系：</strong>模板分类ID (classify_id) ← 证书模板 (template_info) ← 记录子模板 (template_child)<br>
+        一个证书模板可以有多个记录子模板（如不同的检测项目用不同的记录表）
+    </div>
+</div>
+
+<div class="card">
+    <h2>2. 证书模板接口列表（约40个）</h2>
+    <p>API：<code>xiziyi-lims-web/src/api/template/msTemplateInfo.js</code></p>
+    
+    <h3>2.1 证书模板 CRUD</h3>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateInfo/list</span><span class="api-desc">模板列表</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateInfo/pageList</span><span class="api-desc">无权限分页列表</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msTemplateInfo</span><span class="api-desc">新增模板</span></div>
+    <div class="api-item"><span class="api-method method-put">PUT</span><span class="api-url">/measure/msTemplateInfo</span><span class="api-desc">修改模板</span></div>
+    <div class="api-item"><span class="api-method method-delete">DELETE</span><span class="api-url">/measure/msTemplateInfo/{id}</span><span class="api-desc">删除模板</span></div>
+
+    <h3>2.2 模板操作流程</h3>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateInfo/submit</span><span class="api-desc">模板提交</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msTemplateInfo/audit</span><span class="api-desc">证书模板审核</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateInfo/templateStop</span><span class="api-desc">暂挺/启用模板</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateInfo/copy</span><span class="api-desc">复制模板</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateInfo/recordList</span><span class="api-desc">操作历史</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateInfo/dataInfo</span><span class="api-desc">基础数据统计</span></div>
+
+    <h3>2.3 PageOffice 在线编辑</h3>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/word</span><span class="api-desc">打开Word编辑</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/openWordTag</span><span class="api-desc">获取书签</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/openWordEchoTag</span><span class="api-desc">书签回显</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/excel</span><span class="api-desc">打开Excel编辑</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/office/api/recordEditExcel</span><span class="api-desc">记录Excel区域只读模式</span></div>
+
+    <h3>2.4 记录子模板 CRUD（属于证书模板的子表）</h3>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msTemplateChild</span><span class="api-desc">新增子模板</span></div>
+    <div class="api-item"><span class="api-method method-put">PUT</span><span class="api-url">/measure/msTemplateChild</span><span class="api-desc">修改子模板</span></div>
+    <div class="api-item"><span class="api-method method-delete">DELETE</span><span class="api-url">/measure/msTemplateChild/{id}</span><span class="api-desc">删除子模板</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/msTemplateChild/audit</span><span class="api-desc">子模板审核</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateChild/templateStop</span><span class="api-desc">子模板暂停/启用</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/msTemplateChild/copy</span><span class="api-desc">复制子模板</span></div>
+</div>
+
+<div class="card">
+    <h2>3. 模板 Word/Excel 文件管理（重点）</h2>
+    
+    <h3>3.1 模板文件上传</h3>
+    <div class="code-box">// 文件上传接口
+POST /common/upload           → 通用文件上传
+POST /common/uploadOriginal    → 上传原始模板文件(.docx)
+POST /common/uploadOriginalSjImg → 上传送检原始模板图片
+
+// 上传后返回文件路径，保存到数据库：
+ms_template_info.template_path  → 证书模板路径
+ms_template_child.template_path → 记录子模板路径</div>
+
+    <h3>3.2 文件路径规则</h3>
+    <table>
+        <tr><th>文件类型</th><th>路径模板</th></tr>
+        <tr><td>证书模板文件</td><td><code>{profile}/template/{classify_id}/{template_id}/证书模板.docx</code></td></tr>
+        <tr><td>记录子模板文件</td><td><code>{profile}/template/{classify_id}/{template_id}/child/{child_id}/记录模板.xlsx</code></td></tr>
+        <tr><td>上传的原始图片</td><td><code>{profile}/upload/{date}/{filename}</code></td></tr>
+    </table>
+
+    <h3>3.3 核心数据表</h3>
+    <table>
+        <tr><th>表名</th><th>关键字段</th></tr>
+        <tr><td><code>ms_template_info</code></td><td>id, classify_id(分类), template_name, template_code, template_path(模板文件路径), template_type(1证书/2记录), status(1待提交/2待审核/3已通过/4已驳回), create_time</td></tr>
+        <tr><td><code>ms_template_child</code></td><td>id, template_id(父模板), child_name, template_path(子模板文件路径), item_id(检测项目), status</td></tr>
+        <tr><td><code>ms_template_classify</code></td><td>id, parent_id(父子关系), classify_name, classify_code(分类代码如JJG), level(层级1/2/3)</td></tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>4. 模板审核流程</h2>
+    <div class="code-box">模板创建 → 提交(status=2待审核) → 审核员审核
+                                      ├── 通过(status=3) → 可用于业务
+                                      └── 驳回(status=4) → 退回修改
+
+SQL: UPDATE ms_template_info SET status = #{status}, 
+     audit_user_id = #{auditUserId}, audit_time = sysdate()
+     WHERE id = #{id}</div>
+
+    <div class="warn-box">
+        <strong>⚠️ 模板开发常见问题：</strong>
+        <ul>
+            <li>书签名称不匹配 → 检查模板 Word 中的书签名称与 Java 代码中的书签名称是否一致</li>
+            <li>Excel 区域只读 → 使用 office/api/recordEditExcel 接口设置 Excel 的部分区域只读</li>
+            <li>模板路径在 Windows/Linux 不同 → 使用 FilePathUtil / PathConverter 处理路径</li>
+            <li>Aspose 水印问题 → 检查 license.xml 是否在 classpath 中且有锁</li>
+        </ul>
+    </div>
+</div>
+
+</div>
+</body>
+</html>

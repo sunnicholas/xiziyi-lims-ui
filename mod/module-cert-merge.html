@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>合证管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #0891b2, #06b6d4); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .header .flow { margin-top: 12px; font-size: 14px; opacity: 0.85; background: rgba(255,255,255,0.15); padding: 8px 20px; border-radius: 20px; display: inline-block; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #0e7490; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #0891b2; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .api-item { display: flex; align-items: flex-start; padding: 10px 14px; border-bottom: 1px solid #f1f5f9; gap: 12px; }
+        .api-method { font-weight: 700; font-size: 12px; padding: 3px 10px; border-radius: 4px; color: white; min-width: 52px; text-align: center; flex-shrink: 0; }
+        .method-get { background: #10b981; } .method-post { background: #3b82f6; }
+        .api-url { font-family: 'Consolas', monospace; font-size: 13px; color: #1e40af; flex: 1; }
+        .api-desc { color: #64748b; font-size: 13px; flex-shrink: 0; }
+        .info-box { background: #ecfeff; border-left: 4px solid #06b6d4; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>🔗 合证管理</h1>
+    <div class="flow">特殊场景：多张委托单合并为一张证书</div>
+</div>
+
+<div class="card">
+    <h2>1. 模块概述</h2>
+    <p>适用场景：同一客户在同一时间段内多台同类型设备，需要合并出具<strong>一张证书</strong>。将多张委托单的检测项合并到一个合证任务中，统一出一张证书。</p>
+    
+    <div class="info-box">
+        <strong>📌 前端页面：</strong><code>views/certified/certifiedsample/index.vue</code><br>
+        <strong>📌 权限标识：</strong><code>measure:mergeTaskInfo</code>
+    </div>
+</div>
+
+<div class="card">
+    <h2>2. 接口列表</h2>
+    <p>API：<code>xiziyi-lims-web/src/api/certified/certified.js</code></p>
+    
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/mergeTaskInfo/entrustList</span><span class="api-desc">合证委托单列表（查询mergeCert=1的委托）</span></div>
+    <div class="api-item"><span class="api-method method-get">GET</span><span class="api-url">/measure/mergeTaskInfo/list</span><span class="api-desc">合证任务列表</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/mergeTaskInfo/batchMergeAllot</span><span class="api-desc">批量合证任务分配</span></div>
+    <div class="api-item"><span class="api-method method-post">POST</span><span class="api-url">/measure/mergeTaskInfo/batchMergeCert</span><span class="api-desc"><strong>批量合证</strong>（核心操作）</span></div>
+</div>
+
+<div class="card">
+    <h2>3. 后端实现</h2>
+    <p>Controller：<code>MergeTaskInfoController.java</code><br>
+    路径：<code>xzy-admin/src/main/java/com/xzy/web/controller/measure/MergeTaskInfoController.java</code><br>
+    @RequestMapping：<code>/measure/mergeTaskInfo</code></p>
+    
+    <h3>核心数据表</h3>
+    <table>
+        <tr><th>表名</th><th>说明</th></tr>
+        <tr><td><code>merge_task_info</code></td><td>合证任务主表（记录合证任务ID、合并的多张委托单ID、对应证书）</td></tr>
+        <tr><td><code>ms_entrust_task</code> (merge_cert字段)</td><td>委托单增加 merge_cert=1 标记表示支持合证</td></tr>
+    </table>
+</div>
+</div>
+</body>
+</html>

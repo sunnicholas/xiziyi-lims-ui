@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>基础数据管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #2563eb, #3b82f6); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #1e40af; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #2563eb; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .info-box { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .tag-blue { background: #dbeafe; color: #1e40af; } .tag-green { background: #d1fae5; color: #065f46; } .tag-yellow { background: #fef3c7; color: #92400e; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📊 基础数据管理</h1>
+    <div style="font-size:14px;opacity:0.85;">xzy-basics模块：计量项目、客户报价、设备分类、编码规则、标签模板等</div>
+</div>
+
+<div class="card">
+    <h2>1. 基础数据模块清单</h2>
+    <table>
+        <tr><th>模块</th><th>前端API</th><th>后端Controller</th><th>数据表</th></tr>
+        <tr>
+            <td><span class="tag tag-blue">计量项目</span></td>
+            <td><code>api/basics/basMeterageItem.js</code></td>
+            <td><code>BasMeterageItemController.java</code></td>
+            <td><code>bas_meterage_item</code></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-blue">计量目录</span></td>
+            <td><code>api/basics/basMeteringDirectory.js</code></td>
+            <td><code>BasMeteringDirectoryController.java</code></td>
+            <td><code>bas_metering_directory</code></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-blue">客户报价</span></td>
+            <td><code>api/basics/basMeterageItemPrice.js</code></td>
+            <td>—</td>
+            <td><code>bas_quoted_price</code></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-blue">物品分类</span></td>
+            <td><code>api/basics/basWareCate.js</code></td>
+            <td>—</td>
+            <td><code>bas_ware_cate</code></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-green">编码规则</span></td>
+            <td><code>api/basics/basEncodingRules.js</code></td>
+            <td>—</td>
+            <td><code>bas_encoding_rules</code></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-green">标签模板</span></td>
+            <td><code>api/basics/basLabelTemplate.js</code></td>
+            <td>—</td>
+            <td><code>bas_label_template</code></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-yellow">模板分类</span></td>
+            <td><code>api/basics/msTemplateClassify.js</code></td>
+            <td>—</td>
+            <td><code>ms_template_classify</code></td>
+        </tr>
+        <tr>
+            <td><span class="tag tag-yellow">外检费用</span></td>
+            <td><code>api/basics/basExternal.js</code></td>
+            <td>—</td>
+            <td><code>bas_external</code></td>
+        </tr>
+    </table>
+
+    <div class="info-box">
+        <strong>📌 代码模块：</strong><code>xzy-basics</code><br>
+        基础数据是整个 LIMS 系统的配置基础，计量项目是检测/校准的核心数据字典。
+    </div>
+</div>
+
+<div class="card">
+    <h2>2. 计量项目 - 核心SQL</h2>
+    <div class="code-box">-- 计量项目查询（关联客户报价）
+SELECT mi.item_code, mi.item_name, mi.range_min, mi.range_max, 
+       mi.accuracy, qp.price
+FROM bas_meterage_item mi
+LEFT JOIN bas_quoted_price qp ON mi.item_id = qp.item_id 
+    AND qp.customer_id = #{customerId}
+WHERE mi.del_flag = '0'
+    <if test="itemName != null">AND mi.item_name LIKE CONCAT('%',#{itemName},'%')</if>
+ORDER BY mi.item_code</div>
+</div>
+</div>
+</body>
+</html>
