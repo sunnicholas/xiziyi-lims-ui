@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>文件上传规则与路径生成详解</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f8fafc; color: #1e293b; padding: 30px; line-height: 1.8; }
+        .container { max-width: 1300px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #7c3aed, #a78bfa); color: white; padding: 35px; border-radius: 12px; margin-bottom: 28px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 6px; }
+        .card { background: white; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 20px; color: #7c3aed; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #a78bfa; }
+        .card h3 { font-size: 16px; color: #334155; margin: 18px 0 10px; }
+        .code-box { background: #1e1e1e; color: #d4d4d4; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', 'Monaco', monospace; font-size: 13px; overflow-x: auto; white-space: pre-wrap; line-height: 1.7; margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+        th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; }
+        td { padding: 10px 14px; border-bottom: 1px solid #e2e8f0; }
+        tr:hover td { background: #f8fafc; }
+        .info-box { background: #f5f3ff; border-left: 4px solid #a78bfa; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .warn-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .success-box { background: #ecfdf5; border-left: 4px solid #10b981; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 14px 0; font-size: 14px; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+        .tag-blue { background: #dbeafe; color: #1e40af; } .tag-green { background: #d1fae5; color: #065f46; } .tag-purple { background: #ede9fe; color: #5b21b6; }
+        .tag-red { background: #fce7f3; color: #9d174d; } .tag-yellow { background: #fef3c7; color: #92400e; } .tag-gray { background: #f1f5f9; color: #475569; }
+        .flow-arrow { text-align: center; color: #a78bfa; font-size: 20px; margin: 8px 0; }
+        .path-formula { background: #f5f3ff; padding: 16px 20px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 14px; text-align: center; margin: 16px 0; border: 2px dashed #a78bfa; }
+    </style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+    <h1>📤 文件上传规则与路径生成详解</h1>
+    <div style="font-size:14px;opacity:0.85;">从配置到磁盘：文件是怎么被存到服务器上的？路径是怎么拼出来的？</div>
+</div>
+
+<div class="card">
+    <h2>1. 一切从配置开始</h2>
+    <p>在 <code>application.yml</code> 中有一个核心配置项，它决定了所有文件的"家"在哪：</p>
+    <div class="code-box"># application.yml
+xzy:
+  profile: /Users/sunnicholas/uploadPath    ← 这就是所有文件的根目录</div>
+
+    <div class="info-box">
+        <strong>💡 什么叫"根目录"？</strong><br>
+        就像你电脑上的 <code>C:\Users\你的用户名</code> 或 <code>/home/你的用户名</code> 一样，<br>
+        <code>profile</code> 就是整个项目存放文件的"大本营"。所有上传的文件都在这个目录下面。
+    </div>
+
+    <p>这个配置被 <code>XiziYiConfig</code> 类读取，并且基于它生成了 <strong>13 个子目录</strong>，每个子目录对应一种业务用途：</p>
+
+    <table>
+        <tr><th>XiziYiConfig 方法</th><th>生成的完整路径</th><th>用途</th></tr>
+        <tr><td><code>getProfile()</code></td><td><code>/Users/.../uploadPath</code></td><td><span class="tag tag-gray">根目录</span></td></tr>
+        <tr><td><code>getUploadPath()</code></td><td><code>/Users/.../uploadPath/upload</code></td><td><span class="tag tag-blue">通用上传</span></td></tr>
+        <tr><td><code>getSignPath()</code></td><td><code>/Users/.../uploadPath/sign</code></td><td><span class="tag tag-yellow">电子签名</span></td></tr>
+        <tr><td><code>getOriginalPath()</code></td><td><code>/Users/.../uploadPath/original</code></td><td><span class="tag tag-green">原始记录模板</span></td></tr>
+        <tr><td><code>getOriginalImgXcPath()</code></td><td><code>/Users/.../uploadPath/original/xcImg</code></td><td><span class="tag tag-green">现场检测图片</span></td></tr>
+        <tr><td><code>getOriginalImgSjPath()</code></td><td><code>/Users/.../uploadPath/original/sjImg</code></td><td><span class="tag tag-green">送检图片</span></td></tr>
+        <tr><td><code>getCertPath()</code></td><td><code>/Users/.../uploadPath/cert</code></td><td><span class="tag tag-purple">证书模板</span></td></tr>
+        <tr><td><code>getCertImgPath()</code></td><td><code>/Users/.../uploadPath/certImg</code></td><td><span class="tag tag-purple">证书图片</span></td></tr>
+        <tr><td><code>getCusCfmPath()</code></td><td><code>/Users/.../uploadPath/cuscfm</code></td><td><span class="tag tag-yellow">客户确认单</span></td></tr>
+        <tr><td><code>getDownloadPath()</code></td><td><code>/Users/.../uploadPath/download/</code></td><td><span class="tag tag-gray">文件下载</span></td></tr>
+        <tr><td><code>getImportPath()</code></td><td><code>/Users/.../uploadPath/import</code></td><td><span class="tag tag-blue">数据导入</span></td></tr>
+        <tr><td><code>getAvatarPath()</code></td><td><code>/Users/.../uploadPath/avatar</code></td><td><span class="tag tag-red">用户头像</span></td></tr>
+        <tr><td><code>getTemplatePath()</code></td><td><code>/Users/.../uploadPath/template</code></td><td><span class="tag tag-green">模板文件</span></td></tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>2. 上传入口：Controller 层</h2>
+    <p>所有上传请求都发到 <code>CommonController</code>，不同的接口对应不同的存储子目录：</p>
+    <table>
+        <tr><th>接口路径</th><th>存储子目录</th><th>业务场景</th></tr>
+        <tr><td><code>POST /common/upload</code></td><td><code>upload/</code></td><td>通用文件上传</td></tr>
+        <tr><td><code>POST /common/uploads</code></td><td><code>upload/</code></td><td>批量文件上传</td></tr>
+        <tr><td><code>POST /common/uploadSign</code></td><td><code>sign/</code></td><td>电子签名上传</td></tr>
+        <tr><td><code>POST /common/uploadOriginal</code></td><td><code>original/</code></td><td>原始记录模板上传</td></tr>
+        <tr><td><code>POST /common/uploadOriginalXcImg</code></td><td><code>original/xcImg/</code></td><td>现场检测主图上传</td></tr>
+        <tr><td><code>POST /common/uploadOriginalSjImg</code></td><td><code>original/sjImg/</code></td><td>送检记录主图上传</td></tr>
+        <tr><td><code>POST /common/uploadCert</code></td><td><code>cert/</code></td><td>证书模板上传</td></tr>
+        <tr><td><code>POST /common/uploadCusCfm</code></td><td><code>cuscfm/</code></td><td>客户确认单上传</td></tr>
+    </table>
+
+    <h3>每个接口的代码结构都一样</h3>
+    <div class="code-box">// 以通用上传为例（CommonController.uploadFile）
+@PostMapping("/upload")
+public AjaxResult uploadFile(MultipartFile file) throws Exception {
+    String filePath = XiziYiConfig.getUploadPath();   // ① 拿到 "upload" 子目录
+    String fileName = FileUploadUtils.upload(filePath, file);  // ② 执行上传
+    String url = serverConfig.getUrl() + fileName;    // ③ 拼出完整URL返回前端
+    // 返回: url, fileName, newFileName, originalFilename
+}</div>
+</div>
+
+<div class="card">
+    <h2>3. 核心上传逻辑：FileUploadUtils</h2>
+    <p>这是整个文件上传的"大脑"。<code>upload()</code> 方法做了四件事：</p>
+
+    <h3>3.1 第一步：文件校验</h3>
+    <table>
+        <tr><th>校验项</th><th>规则</th><th>值</th></tr>
+        <tr><td>文件大小</td><td>不能超过 <code>DEFAULT_MAX_SIZE</code></td><td><strong>1024 MB</strong> (1GB)</td></tr>
+        <tr><td>文件名长度</td><td>不能超过 <code>DEFAULT_FILE_NAME_LENGTH</code></td><td><strong>100 个字符</strong></td></tr>
+        <tr><td>文件类型</td><td>后缀必须在白名单内</td><td>bmp, gif, jpg, jpeg, png, svg, doc, docx, xls, xlsx, xlsm, ppt, pptx, pdf, html, htm, txt, rar, zip, gz, bz2, mp4, avi, rmvb</td></tr>
+    </table>
+
+    <div class="info-box">
+        <strong>💡 还有个"守门员"——Spring Multipart 配置</strong><br>
+        在上面的校验之前，Spring 就已经拦了一道：<br>
+        <code>max-file-size: 1024MB</code>（单个文件），<code>max-request-size: 2048MB</code>（一次请求总大小）
+    </div>
+
+    <h3>3.2 第二步：生成文件名（核心中的核心！）</h3>
+    <div class="path-formula">
+        <strong>文件名 = 日期目录 / 原始文件基名 _ 唯一ID . 后缀</strong>
+    </div>
+
+    <p>拆开来看看每个部分是怎么来的：</p>
+    <table>
+        <tr><th>部分</th><th>来源</th><th>示例值</th></tr>
+        <tr><td>日期目录</td><td><code>DateUtils.datePath()</code> → <code>yyyy/MM/dd</code> 格式</td><td><code>2026/05/12</code></td></tr>
+        <tr><td>原始文件基名</td><td>去掉后缀的文件名（如"检测报告.pdf" → "检测报告"）</td><td><code>检测报告</code></td></tr>
+        <tr><td>唯一ID</td><td><code>Seq.getId()</code> → <code>yyMMddHHmmss</code> + "A" + 3位序号</td><td><code>260512143025A001</code></td></tr>
+        <tr><td>后缀</td><td>从文件名或 Content-Type 推断</td><td><code>pdf</code></td></tr>
+    </table>
+
+    <div class="success-box">
+        <strong>✅ 最终生成的相对文件名：</strong><br>
+        <code>2026/05/12/检测报告_260512143025A001.pdf</code>
+    </div>
+
+    <h3>3.3 Seq 唯一ID 是怎么生成的？</h3>
+    <div class="code-box">Seq.getId(Seq.uploadSeqType) 的组成：
+yyMMddHHmmss + "A" + 3位自增序号(000~999循环)
+
+例如：2026年5月12日 14:30:25 → "260512143025" + "A" + "001" = 260512143025A001
+
+序号从000开始，每次上传+1，到999后回到000重新开始。
+这样即使同一秒上传多个文件也不会重名。</div>
+
+    <h3>3.4 第三步：写入磁盘</h3>
+    <div class="code-box">// 拼接绝对路径
+绝对路径 = baseDir + / + 相对文件名
+       = /Users/sunnicholas/uploadPath/upload + / + 2026/05/12/检测报告_260512143025A001.pdf
+       = /Users/sunnicholas/uploadPath/upload/2026/05/12/检测报告_260512143025A001.pdf
+
+// 自动创建不存在的目录
+if (!desc.getParentFile().exists()) { desc.getParentFile().mkdirs(); }
+
+// 写入文件
+file.transferTo(Paths.get(absPath));</div>
+
+    <h3>3.5 第四步：返回 Web 访问路径</h3>
+    <div class="code-box">// getPathFileName() 的返回值格式：
+/profile/{子目录}/{相对文件名}
+
+= /profile/upload/2026/05/12/检测报告_260512143025A001.pdf</div>
+
+    <div class="info-box">
+        <strong>💡 /profile 是什么？</strong><br>
+        它是一个"虚拟路径前缀"（定义在 <code>Constants.RESOURCE_PREFIX</code>），<br>
+        前端拿这个路径拼上服务器地址就能访问文件了。<br>
+        后端收到 <code>/profile/...</code> 的请求时，会自动把它映射到真实的磁盘路径。
+    </div>
+</div>
+
+<div class="card">
+    <h2>4. 完整路径生成公式</h2>
+    <div class="path-formula" style="font-size:16px;">
+        <div style="margin-bottom:12px;"><strong>磁盘绝对路径 =</strong></div>
+        <div>{profile} / {子目录} / {yyyy/MM/dd} / {原始文件名}_{yyMMddHHmmss}A{3位序号}.{后缀}</div>
+        <div style="margin-top:18px;margin-bottom:12px;"><strong>Web 访问路径 =</strong></div>
+        <div>/profile / {子目录} / {yyyy/MM/dd} / {原始文件名}_{yyMMddHHmmss}A{3位序号}.{后缀}</div>
+    </div>
+
+    <h3>一条完整的上传链路</h3>
+    <div class="code-box">假设我上传了一个文件 "检定证书.pdf"：
+
+① Controller 拿到文件，指定 baseDir = /Users/sunnicholas/uploadPath/cert
+② FileUploadUtils 校验大小(OK)、类型(OK)、文件名长度(OK)
+③ extractFilename() 生成新文件名:
+   datePath = 2026/05/12
+   baseName = 检定证书
+   seqId    = 260512143025A001
+   后缀     = pdf
+   → "2026/05/12/检定证书_260512143025A001.pdf"
+
+④ getAbsoluteFile() 拼绝对路径:
+   /Users/sunnicholas/uploadPath/cert/2026/05/12/检定证书_260512143025A001.pdf
+   目录不存在 → 自动创建
+
+⑤ file.transferTo() 写入磁盘
+
+⑥ getPathFileName() 返回:
+   /profile/cert/2026/05/12/检定证书_260512143025A001.pdf
+
+⑦ Controller 拼 serverConfig.getUrl() + fileName 返回给前端</div>
+</div>
+
+<div class="card">
+    <h2>5. 其他上传方式</h2>
+
+    <h3>5.1 自定义文件名上传</h3>
+    <div class="code-box">// FileUploadCustomUtil.java —— 不自动生成名字，用你指定的文件名
+FileUploadCustomUtil.uploadWithCustomName(uploadDir, file, "我的自定义名称.pdf");
+
+// 跳过 extractFilename() 的自动命名逻辑，直接使用你给的文件名。</div>
+
+    <h3>5.2 byte[] 方式写入</h3>
+    <div class="code-box">// FileUtils.writeBytes() —— 直接写二进制数据
+String pathName = DateUtils.datePath() + "/" + IdUtils.fastUUID() + "." + extension;
+// 文件名是 UUID，不是原始文件名，用于不需要保留原始文件名的场景（如导入数据）。</div>
+
+    <div class="warn-box">
+        <strong>⚠️ 两种方式的区别：</strong><br>
+        • <code>FileUploadUtils.upload()</code> → 文件名 = "原始名_SeqId.后缀" → <strong>保留原始文件名，方便人识别</strong><br>
+        • <code>FileUtils.writeBytes()</code> → 文件名 = "UUID.后缀" → <strong>纯UUID，不会中文乱码，适合系统内部使用</strong>
+    </div>
+</div>
+
+<div class="card">
+    <h2>6. 设计思想总结</h2>
+    <table>
+        <tr><th>设计点</th><th>怎么做的</th><th>为什么</th></tr>
+        <tr><td>按日期分目录</td><td><code>yyyy/MM/dd/</code> 作为文件路径前缀</td><td>避免一个目录下积累几十万个文件，方便按天管理</td></tr>
+        <tr><td>文件名唯一</td><td>加入 <code>Seq</code>（时间戳 + 机器码 + 序号）</td><td>即使同名文件多次上传也不会覆盖</td></tr>
+        <tr><td>保留原始文件名</td><td>文件名包含原始基名</td><td>人看一眼就知道是什么文件，不用点开</td></tr>
+        <tr><td>多子目录隔离</td><td>证书/签名/模板等分不同子目录</td><td>按业务类型隔离，方便备份和清理</td></tr>
+        <tr><td>磁盘路径与URL分离</td><td>磁盘存绝对路径，返回 /profile/ 前缀的URL</td><td>隐藏真实磁盘结构，前端只认 URL，后端映射到磁盘</td></tr>
+    </table>
+</div>
+
+</div>
+</body>
+</html>

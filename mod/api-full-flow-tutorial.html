@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后端接口全链路开发教程 - 从零到一</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f7fa; padding: 20px; line-height: 1.8; }
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 12px; text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 30px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 16px; }
+
+        .toc { background: white; border-radius: 12px; padding: 25px 35px; margin-bottom: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .toc h2 { color: #333; margin-bottom: 15px; padding-left: 12px; border-left: 4px solid #667eea; }
+        .toc ol { margin-left: 20px; }
+        .toc li { margin-bottom: 6px; }
+        .toc a { color: #667eea; text-decoration: none; }
+        .toc a:hover { text-decoration: underline; }
+
+        .section { background: white; border-radius: 12px; padding: 30px; margin-bottom: 30px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        .section h2 { color: #333; margin-bottom: 20px; padding-left: 12px; border-left: 4px solid #667eea; font-size: 22px; }
+        .section h3 { color: #444; margin: 20px 0 12px 0; font-size: 18px; }
+        .section h4 { color: #555; margin: 15px 0 8px 0; font-size: 15px; }
+
+        .flow-node {
+            background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%);
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .flow-node::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #667eea;
+        }
+        .flow-node:last-child::after { display: none; }
+
+        .node-header { display: flex; align-items: center; margin-bottom: 12px; }
+        .node-number {
+            width: 32px; height: 32px;
+            background: #667eea; color: white;
+            border-radius: 50%; display: flex;
+            align-items: center; justify-content: center;
+            font-weight: bold; margin-right: 12px; flex-shrink: 0;
+        }
+        .node-title { font-size: 16px; font-weight: bold; color: #333; }
+        .node-type {
+            margin-left: auto;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .type-db { background: #fce7f3; color: #9d174d; }
+        .type-domain { background: #dbeafe; color: #1e40af; }
+        .type-mapper { background: #fef3c7; color: #92400e; }
+        .type-service { background: #d1fae5; color: #065f46; }
+        .type-controller { background: #ede9fe; color: #5b21b6; }
+        .type-config { background: #e0e7ff; color: #3730a3; }
+
+        .node-content { padding-left: 44px; }
+        .content-section { margin-bottom: 10px; }
+        .section-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+        .section-value { font-size: 14px; color: #333; }
+
+        .code-path {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: #dc3545;
+            overflow-x: auto;
+        }
+
+        .code-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            margin-top: 10px;
+            overflow-x: auto;
+            border-left: 4px solid #667eea;
+            line-height: 1.6;
+        }
+        .code-box .comment { color: #6a9955; }
+        .code-box .keyword { color: #569cd6; }
+        .code-box .string { color: #ce9178; }
+        .code-box .annotation { color: #dcdcaa; }
+        .code-box .type { color: #4ec9b0; }
+        .code-box .tag { color: #569cd6; }
+        .code-box .attr { color: #9cdcfe; }
+        .code-box .xmltag { color: #808080; }
+
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #1e40af;
+        }
+        .warn-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #92400e;
+        }
+        .success-box {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #065f46;
+        }
+
+        .format-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .format-table th, .format-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px; }
+        .format-table th { background: #f8f9fa; font-weight: 600; }
+        .format-table tr:hover { background: #f8f9fa; }
+
+        .dir-tree {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+        .dir-tree .folder { color: #dcdcaa; }
+        .dir-tree .file { color: #9cdcfe; }
+        .dir-tree .highlight { color: #4ec9b0; font-weight: bold; }
+
+        .step-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .arrow-flow {
+            text-align: center;
+            padding: 10px 0;
+            font-size: 24px;
+            color: #667eea;
+        }
+
+        .compare-box {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        .compare-item {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .compare-item h4 { margin-bottom: 8px; color: #333; }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .legend-color { width: 20px; height: 20px; border-radius: 4px; }
+
+        .footer { text-align: center; padding: 20px; color: #999; font-size: 14px; margin-top: 30px; }
+
+        ul, ol { margin-left: 20px; }
+        li { margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 后端接口全链路开发教程</h1>
+            <p>以 SysDemo 演示模块为例 | 从需求到上线的完整链路 | 文件创建 · 命名规则 · 调用关系</p>
+        </div>
+
+        <div class="toc">
+            <h2>📑 目录</h2>
+            <ol>
+                <li><a href="#req">需求分析：我们要做什么</a></li>
+                <li><a href="#arch">项目架构总览：代码放在哪</a></li>
+                <li><a href="#db">Step 1 - 数据库建表</a></li>
+                <li><a href="#domain">Step 2 - Domain 实体类</a></li>
+                <li><a href="#query">Step 3 - Query 查询参数类</a></li>
+                <li><a href="#mapper-java">Step 4 - Mapper 接口</a></li>
+                <li><a href="#mapper-xml">Step 5 - Mapper XML（SQL映射）</a></li>
+                <li><a href="#service">Step 6 - Service 接口 + 实现</a></li>
+                <li><a href="#controller">Step 7 - Controller 控制层</a></li>
+                <li><a href="#full-flow">完整调用链路图</a></li>
+                <li><a href="#naming">命名规则速查表</a></li>
+                <li><a href="#file-location">文件位置速查表</a></li>
+                <li><a href="#ajax-result">统一返回格式 AjaxResult</a></li>
+                <li><a href="#base-entity">BaseEntity 继承说明</a></li>
+                <li><a href="#config">关键配置说明</a></li>
+                <li><a href="#checklist">开发检查清单</a></li>
+            </ol>
+        </div>
+
+        <!-- ==================== 1. 需求分析 ==================== -->
+        <div class="section" id="req">
+            <h2>1. 需求分析：我们要做什么</h2>
+            <p>假设产品经理提了一个需求：</p>
+            <div class="info-box">
+                <strong>📋 需求描述：</strong>需要一个"演示数据管理"功能，支持查询演示数据列表，可按名称和内容模糊搜索，后续还要支持增删改。
+            </div>
+            <h3>需求拆解为技术任务</h3>
+            <table class="format-table">
+                <thead>
+                    <tr><th>技术任务</th><th>对应文件</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>建表</td><td>SQL脚本</td><td>sys_demo 表，含 id、demo_name、demo_content 等字段</td></tr>
+                    <tr><td>实体类</td><td>SysDemo.java</td><td>映射数据库表，Java 对象</td></tr>
+                    <tr><td>查询参数</td><td>DemoQuery.java</td><td>接收前端搜索条件的 DTO</td></tr>
+                    <tr><td>Mapper接口</td><td>SysDemoMapper.java</td><td>定义数据访问方法签名</td></tr>
+                    <tr><td>Mapper XML</td><td>SysDemoMapper.xml</td><td>编写 SQL 语句</td></tr>
+                    <tr><td>Service接口</td><td>SysDemoService.java</td><td>定义业务方法签名</td></tr>
+                    <tr><td>Service实现</td><td>SysDemoServiceImpl.java</td><td>实现业务逻辑</td></tr>
+                    <tr><td>Controller</td><td>SysDemoController.java</td><td>暴露 HTTP 接口</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ==================== 2. 项目架构总览 ==================== -->
+        <div class="section" id="arch">
+            <h2>2. 项目架构总览：代码放在哪</h2>
+            <p>本项目基于 <strong>若依（RuoYi）</strong> 框架，采用 Maven 多模块架构，Spring Boot 2.5 + MyBatis-Plus。</p>
+
+            <div class="dir-tree">
+<span class="folder">xiziyi-lims-service/</span>
+├── <span class="folder">xzy-common/</span>          <span class="comment">← 通用工具模块（BaseEntity、AjaxResult、工具类等）</span>
+├── <span class="folder">xzy-framework/</span>       <span class="comment">← 框架核心（安全、拦截器、数据源等）</span>
+├── <span class="folder">xzy-system/</span>          <span class="comment">← 系统模块（部门、用户、角色、<span class="highlight">SysDemo在这里</span>）</span>
+│   └── src/main/
+│       ├── <span class="folder">java/com/xzy/system/</span>
+│       │   ├── <span class="folder">domain/</span>        <span class="comment">← 实体类（SysDemo.java、DemoQuery.java）</span>
+│       │   ├── <span class="folder">mapper/</span>        <span class="comment">← Mapper接口（SysDemoMapper.java）</span>
+│       │   └── <span class="folder">service/</span>
+│       │       ├── <span class="file">SysDemoService.java</span>      <span class="comment">← Service接口</span>
+│       │       └── <span class="folder">impl/</span>
+│       │           └── <span class="file">SysDemoServiceImpl.java</span>  <span class="comment">← Service实现</span>
+│       └── <span class="folder">resources/mapper/system/</span>
+│           └── <span class="file">SysDemoMapper.xml</span>           <span class="comment">← SQL映射文件</span>
+├── <span class="folder">xzy-admin/</span>            <span class="comment">← 启动模块 + Controller层</span>
+│   └── src/main/
+│       ├── <span class="folder">java/com/xzy/web/controller/system/</span>
+│       │   └── <span class="file">SysDemoController.java</span>   <span class="comment">← <span class="highlight">Controller在这里</span></span>
+│       └── <span class="folder">resources/</span>
+│           ├── <span class="file">application.yml</span>            <span class="comment">← 主配置文件</span>
+│           └── <span class="file">application-druid.yml</span>      <span class="comment">← 数据源配置</span>
+├── <span class="folder">xzy-measure/</span>          <span class="comment">← 计量模块</span>
+├── <span class="folder">xzy-quality/</span>          <span class="comment">← 质量模块</span>
+├── <span class="folder">xzy-crm/</span>              <span class="comment">← 客户关系模块</span>
+└── <span class="file">pom.xml</span>                <span class="comment">← 父POM，管理所有模块</span>
+            </div>
+
+            <div class="warn-box">
+                <strong>⚠️ 关键理解：</strong>Controller 放在 <code>xzy-admin</code> 模块，而 Domain/Mapper/Service 放在 <code>xzy-system</code> 模块。这是因为 xzy-admin 依赖 xzy-system，xzy-system 依赖 xzy-common。模块间依赖关系：<code>xzy-admin → xzy-system → xzy-common</code>
+            </div>
+        </div>
+
+        <!-- ==================== 3. 数据库建表 ==================== -->
+        <div class="section" id="db">
+            <h2>3. Step 1 - 数据库建表</h2>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">1</div>
+                    <div class="node-title">数据库建表</div>
+                    <span class="node-type type-db">数据库</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">sql/lims20260305170424.sql（或独立 SQL 脚本）</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">建表 SQL</div>
+                        <div class="code-box">
+<span class="keyword">CREATE TABLE</span> sys_demo (
+    id          <span class="type">BIGINT</span>       <span class="keyword">NOT NULL AUTO_INCREMENT</span> <span class="comment">-- 主键，自增</span>
+    demo_name   <span class="type">VARCHAR(100)</span>  <span class="keyword">DEFAULT NULL</span>           <span class="comment">-- 演示名称</span>
+    demo_content <span class="type">VARCHAR(500)</span> <span class="keyword">DEFAULT NULL</span>           <span class="comment">-- 演示内容</span>
+    create_by   <span class="type">VARCHAR(64)</span>   <span class="keyword">DEFAULT NULL</span>           <span class="comment">-- 创建者（BaseEntity继承）</span>
+    create_time <span class="type">DATETIME</span>      <span class="keyword">DEFAULT NULL</span>           <span class="comment">-- 创建时间（BaseEntity继承）</span>
+    update_by   <span class="type">VARCHAR(64)</span>   <span class="keyword">DEFAULT NULL</span>           <span class="comment">-- 更新者（BaseEntity继承）</span>
+    update_time <span class="type">DATETIME</span>      <span class="keyword">DEFAULT NULL</span>           <span class="comment">-- 更新时间（BaseEntity继承）</span>
+    remark      <span class="type">VARCHAR(500)</span>  <span class="keyword">DEFAULT NULL</span>           <span class="comment">-- 备注（BaseEntity继承）</span>
+    <span class="keyword">PRIMARY KEY</span> (id)
+) <span class="keyword">ENGINE</span>=InnoDB <span class="keyword">DEFAULT CHARSET</span>=utf8mb4;
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 表名规则：</strong>系统模块表以 <code>sys_</code> 前缀，业务模块各有前缀（如 <code>ms_</code> 计量、<code>qua_</code> 质量、<code>crm_</code> 客户）。字段用下划线命名（snake_case），Java 属性用驼峰命名（camelCase），MyBatis 自动转换。
+            </div>
+        </div>
+
+        <!-- ==================== 4. Domain 实体类 ==================== -->
+        <div class="section" id="domain">
+            <h2>4. Step 2 - Domain 实体类</h2>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">2</div>
+                    <div class="node-title">创建 Domain 实体类</div>
+                    <span class="node-type type-domain">实体类</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">xzy-system/src/main/java/com/xzy/system/domain/SysDemo.java</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">完整代码</div>
+                        <div class="code-box">
+<span class="keyword">package</span> com.xzy.system.domain;
+
+<span class="keyword">import</span> com.xzy.common.core.domain.BaseEntity;
+<span class="keyword">import</span> lombok.Data;
+
+<span class="comment">/**
+ * 演示实体
+ * 继承BaseEntity：自动拥有创建人、创建时间、备注等字段
+ */</span>
+<span class="annotation">@Data</span>  <span class="comment">// Lombok注解：自动生成get/set/toString</span>
+<span class="keyword">public class</span> <span class="type">SysDemo</span> <span class="keyword">extends</span> <span class="type">BaseEntity</span> {
+
+    <span class="keyword">private static final long</span> serialVersionUID = 1L;
+
+    <span class="comment">// 主键</span>
+    <span class="keyword">private</span> <span class="type">Long</span> id;
+
+    <span class="comment">// 演示名称</span>
+    <span class="keyword">private</span> <span class="type">String</span> demoName;
+
+    <span class="comment">// 演示内容</span>
+    <span class="keyword">private</span> <span class="type">String</span> demoContent;
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>为什么要继承 BaseEntity？</h3>
+            <div class="success-box">
+                继承 <code>BaseEntity</code> 后，SysDemo 自动拥有以下字段，<strong>不需要在实体类中重复定义</strong>：
+                <table class="format-table" style="margin-top: 10px;">
+                    <thead><tr><th>继承字段</th><th>类型</th><th>说明</th><th>数据库对应列</th></tr></thead>
+                    <tbody>
+                        <tr><td>createBy</td><td>String</td><td>创建者</td><td>create_by</td></tr>
+                        <tr><td>createTime</td><td>Date</td><td>创建时间</td><td>create_time</td></tr>
+                        <tr><td>updateBy</td><td>String</td><td>更新者</td><td>update_by</td></tr>
+                        <tr><td>updateTime</td><td>Date</td><td>更新时间</td><td>update_time</td></tr>
+                        <tr><td>remark</td><td>String</td><td>备注</td><td>remark</td></tr>
+                        <tr><td>params</td><td>Map</td><td>请求参数（非数据库字段）</td><td>—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>命名规则</h3>
+            <table class="format-table">
+                <thead><tr><th>规则</th><th>示例</th><th>说明</th></tr></thead>
+                <tbody>
+                    <tr><td>类名 = 模块前缀 + 业务名</td><td>SysDemo</td><td>Sys 表示系统模块，Demo 是业务名</td></tr>
+                    <tr><td>属性名 = 驼峰命名</td><td>demoName</td><td>对应数据库列 demo_name</td></tr>
+                    <tr><td>主键通常叫 id</td><td>private Long id</td><td>自增主键用 Long 类型</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ==================== 5. Query 查询参数类 ==================== -->
+        <div class="section" id="query">
+            <h2>5. Step 3 - Query 查询参数类（DTO）</h2>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">3</div>
+                    <div class="node-title">创建 Query 查询参数类</div>
+                    <span class="node-type type-domain">DTO</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">xzy-system/src/main/java/com/xzy/system/domain/DemoQuery.java</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">完整代码</div>
+                        <div class="code-box">
+<span class="keyword">package</span> com.xzy.system.domain;
+
+<span class="keyword">import</span> io.swagger.annotations.ApiModelProperty;
+<span class="keyword">import</span> lombok.Data;
+
+<span class="annotation">@Data</span>
+<span class="keyword">public class</span> <span class="type">DemoQuery</span> {
+
+    <span class="comment">/** 演示名称（模糊查询） */</span>
+    <span class="annotation">@ApiModelProperty</span>(<span class="string">"演示名称"</span>)
+    <span class="keyword">private</span> <span class="type">String</span> demoName;
+
+    <span class="comment">/** 演示内容（模糊查询） */</span>
+    <span class="annotation">@ApiModelProperty</span>(<span class="string">"演示内容"</span>)
+    <span class="keyword">private</span> <span class="type">String</span> demoContent;
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 为什么需要单独的 Query 类？</strong><br>
+                查询参数和实体类职责不同：实体类映射完整的数据表（含 id、时间等），而 Query 类只接收前端传入的搜索条件。这样接口更清晰，也不会暴露不必要的字段。<br><br>
+                <strong>命名规则：</strong>业务名 + Query。如 <code>DemoQuery</code>、<code>EntrustDto</code>、<code>TaskDto</code>。本项目 Query 和 DTO 都放在 <code>domain</code> 包下。
+            </div>
+        </div>
+
+        <!-- ==================== 6. Mapper 接口 ==================== -->
+        <div class="section" id="mapper-java">
+            <h2>6. Step 4 - Mapper 接口（数据访问层）</h2>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">4</div>
+                    <div class="node-title">创建 Mapper 接口</div>
+                    <span class="node-type type-mapper">Mapper</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">xzy-system/src/main/java/com/xzy/system/mapper/SysDemoMapper.java</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">完整代码</div>
+                        <div class="code-box">
+<span class="keyword">package</span> com.xzy.system.mapper;
+
+<span class="keyword">import</span> com.xzy.system.domain.DemoQuery;
+<span class="keyword">import</span> com.xzy.system.domain.SysDemo;
+<span class="keyword">import</span> org.apache.ibatis.annotations.Mapper;
+<span class="keyword">import</span> java.util.List;
+
+<span class="comment">/**
+ * 演示表 数据映射层
+ */</span>
+<span class="annotation">@Mapper</span>
+<span class="keyword">public interface</span> <span class="type">SysDemoMapper</span> {
+
+    <span class="comment">/**
+     * 查询所有演示数据
+     * @param query 查询条件
+     * @return 数据列表
+     */</span>
+    <span class="type">List</span>&lt;<span class="type">SysDemo</span>&gt; selectSysDemoList(<span class="type">DemoQuery</span> query);
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Mapper 接口要点</h3>
+            <table class="format-table">
+                <thead><tr><th>要点</th><th>说明</th></tr></thead>
+                <tbody>
+                    <tr><td><code>@Mapper</code> 注解</td><td>告诉 MyBatis 这是一个映射接口，Spring 会自动生成实现类（代理对象）</td></tr>
+                    <tr><td>方法名 = 操作 + 实体名</td><td>如 <code>selectSysDemoList</code>、<code>insertSysDemo</code>、<code>updateSysDemo</code>、<code>deleteSysDemoById</code></td></tr>
+                    <tr><td>方法名对应 XML 的 id</td><td>方法名必须和 XML 中 <code>&lt;select id="selectSysDemoList"&gt;</code> 的 id 一致</td></tr>
+                    <tr><td>参数类型</td><td>查询用 Query/DTO，增删改用实体类，单参数用 Long/String</td></tr>
+                    <tr><td>返回类型</td><td>列表用 <code>List&lt;SysDemo&gt;</code>，单条用 <code>SysDemo</code>，增删改用 <code>int</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ==================== 7. Mapper XML ==================== -->
+        <div class="section" id="mapper-xml">
+            <h2>7. Step 5 - Mapper XML（SQL 映射文件）</h2>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">5</div>
+                    <div class="node-title">创建 Mapper XML</div>
+                    <span class="node-type type-mapper">SQL映射</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">xzy-system/src/main/resources/mapper/system/SysDemoMapper.xml</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">完整代码（逐行注释）</div>
+                        <div class="code-box">
+<span class="xmltag">&lt;?xml version="1.0" encoding="UTF-8" ?&gt;</span>
+<span class="xmltag">&lt;!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"&gt;</span>
+
+<span class="comment">&lt;!-- namespace = Mapper接口的全限定类名，必须一致！ --&gt;</span>
+<span class="tag">&lt;mapper</span> <span class="attr">namespace</span>=<span class="string">"com.xzy.system.mapper.SysDemoMapper"</span><span class="tag">&gt;</span>
+
+    <span class="comment">&lt;!-- 结果映射：数据库列名 → Java属性名（驼峰自动转换也可，但显式映射更清晰） --&gt;</span>
+    <span class="tag">&lt;resultMap</span> <span class="attr">type</span>=<span class="string">"SysDemo"</span> <span class="attr">id</span>=<span class="string">"SysDemoResult"</span><span class="tag">&gt;</span>
+        <span class="tag">&lt;id</span> <span class="attr">property</span>=<span class="string">"id"</span> <span class="attr">column</span>=<span class="string">"id"</span><span class="tag">/&gt;</span>
+        <span class="tag">&lt;result</span> <span class="attr">property</span>=<span class="string">"demoName"</span> <span class="attr">column</span>=<span class="string">"demo_name"</span><span class="tag">/&gt;</span>
+        <span class="tag">&lt;result</span> <span class="attr">property</span>=<span class="string">"demoContent"</span> <span class="attr">column</span>=<span class="string">"demo_content"</span><span class="tag">/&gt;</span>
+    <span class="tag">&lt;/resultMap&gt;</span>
+
+    <span class="comment">&lt;!-- 查询列表：id 必须和 Mapper 接口方法名一致 --&gt;</span>
+    <span class="tag">&lt;select</span> <span class="attr">id</span>=<span class="string">"selectSysDemoList"</span> <span class="attr">resultMap</span>=<span class="string">"SysDemoResult"</span><span class="tag">&gt;</span>
+        select id, demo_name, demo_content, create_time, remark
+        from sys_demo
+        <span class="tag">&lt;where&gt;</span>
+            <span class="comment">&lt;!-- 动态SQL：只有参数不为空时才拼接条件 --&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoName != null and demoName != ''"</span><span class="tag">&gt;</span>
+                and demo_name like concat('%', #{demoName}, '%')
+            <span class="tag">&lt;/if&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoContent != null and demoContent != ''"</span><span class="tag">&gt;</span>
+                and demo_content like concat('%', #{demoContent}, '%')
+            <span class="tag">&lt;/if&gt;</span>
+        <span class="tag">&lt;/where&gt;</span>
+        order by id desc
+    <span class="tag">&lt;/select&gt;</span>
+
+    <span class="comment">&lt;!-- 根据ID查询 --&gt;</span>
+    <span class="tag">&lt;select</span> <span class="attr">id</span>=<span class="string">"selectSysDemoById"</span> <span class="attr">resultMap</span>=<span class="string">"SysDemoResult"</span><span class="tag">&gt;</span>
+        select id, demo_name, demo_content, create_time, remark
+        from sys_demo
+        where id = #{id}
+    <span class="tag">&lt;/select&gt;</span>
+
+    <span class="comment">&lt;!-- 新增：useGeneratedKeys 回填自增主键 --&gt;</span>
+    <span class="tag">&lt;insert</span> <span class="attr">id</span>=<span class="string">"insertSysDemo"</span> <span class="attr">parameterType</span>=<span class="string">"SysDemo"</span>
+            <span class="attr">useGeneratedKeys</span>=<span class="string">"true"</span> <span class="attr">keyProperty</span>=<span class="string">"id"</span><span class="tag">&gt;</span>
+        insert into sys_demo
+        <span class="tag">&lt;trim</span> <span class="attr">prefix</span>=<span class="string">"("</span> <span class="attr">suffix</span>=<span class="string">")"</span> <span class="attr">suffixOverrides</span>=<span class="string">","</span><span class="tag">&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoName != null and demoName != ''"</span><span class="tag">&gt;</span>demo_name,<span class="tag">&lt;/if&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoContent != null and demoContent != ''"</span><span class="tag">&gt;</span>demo_content,<span class="tag">&lt;/if&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"remark != null"</span><span class="tag">&gt;</span>remark,<span class="tag">&lt;/if&gt;</span>
+            create_time
+        <span class="tag">&lt;/trim&gt;</span>
+        <span class="tag">&lt;trim</span> <span class="attr">prefix</span>=<span class="string">"values ("</span> <span class="attr">suffix</span>=<span class="string">")"</span> <span class="attr">suffixOverrides</span>=<span class="string">","</span><span class="tag">&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoName != null and demoName != ''"</span><span class="tag">&gt;</span>#{demoName},<span class="tag">&lt;/if&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoContent != null and demoContent != ''"</span><span class="tag">&gt;</span>#{demoContent},<span class="tag">&lt;/if&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"remark != null"</span><span class="tag">&gt;</span>#{remark},<span class="tag">&lt;/if&gt;</span>
+            sysdate()
+        <span class="tag">&lt;/trim&gt;</span>
+    <span class="tag">&lt;/insert&gt;</span>
+
+    <span class="comment">&lt;!-- 修改 --&gt;</span>
+    <span class="tag">&lt;update</span> <span class="attr">id</span>=<span class="string">"updateSysDemo"</span> <span class="attr">parameterType</span>=<span class="string">"SysDemo"</span><span class="tag">&gt;</span>
+        update sys_demo
+        <span class="tag">&lt;set&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoName != null and demoName != ''"</span><span class="tag">&gt;</span>demo_name = #{demoName},<span class="tag">&lt;/if&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"demoContent != null and demoContent != ''"</span><span class="tag">&gt;</span>demo_content = #{demoContent},<span class="tag">&lt;/if&gt;</span>
+            <span class="tag">&lt;if</span> <span class="attr">test</span>=<span class="string">"remark != null"</span><span class="tag">&gt;</span>remark = #{remark},<span class="tag">&lt;/if&gt;</span>
+            update_time = sysdate()
+        <span class="tag">&lt;/set&gt;</span>
+        where id = #{id}
+    <span class="tag">&lt;/update&gt;</span>
+
+    <span class="comment">&lt;!-- 删除 --&gt;</span>
+    <span class="tag">&lt;delete</span> <span class="attr">id</span>=<span class="string">"deleteSysDemoById"</span> <span class="attr">parameterType</span>=<span class="string">"Long"</span><span class="tag">&gt;</span>
+        delete from sys_demo where id = #{id}
+    <span class="tag">&lt;/delete&gt;</span>
+
+<span class="tag">&lt;/mapper&gt;</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>XML 关键标签速查</h3>
+            <table class="format-table">
+                <thead><tr><th>标签</th><th>作用</th><th>关键属性</th></tr></thead>
+                <tbody>
+                    <tr><td><code>&lt;mapper namespace="..."&gt;</code></td><td>绑定 Mapper 接口</td><td>namespace = 接口全限定名</td></tr>
+                    <tr><td><code>&lt;resultMap&gt;</code></td><td>列名 → 属性名映射</td><td>type=实体别名, id=映射标识</td></tr>
+                    <tr><td><code>&lt;select&gt;</code></td><td>查询</td><td>id=方法名, resultMap/resultType</td></tr>
+                    <tr><td><code>&lt;insert&gt;</code></td><td>新增</td><td>useGeneratedKeys=true 回填主键</td></tr>
+                    <tr><td><code>&lt;update&gt;</code></td><td>修改</td><td>parameterType=参数类型</td></tr>
+                    <tr><td><code>&lt;delete&gt;</code></td><td>删除</td><td>parameterType=参数类型</td></tr>
+                    <tr><td><code>&lt;where&gt;</code></td><td>智能 WHERE 子句</td><td>自动去除开头的 AND/OR</td></tr>
+                    <tr><td><code>&lt;if test="..."&gt;</code></td><td>动态条件</td><td>满足条件才拼接 SQL</td></tr>
+                    <tr><td><code>&lt;set&gt;</code></td><td>智能 SET 子句</td><td>自动去除末尾逗号</td></tr>
+                    <tr><td><code>&lt;trim&gt;</code></td><td>自定义前后缀</td><td>prefix, suffix, suffixOverrides</td></tr>
+                    <tr><td><code>&lt;foreach&gt;</code></td><td>批量遍历</td><td>collection, item, separator</td></tr>
+                    <tr><td><code>#{xxx}</code></td><td>参数占位符</td><td>预编译，防 SQL 注入</td></tr>
+                    <tr><td><code>${xxx}</code></td><td>字符串替换</td><td>直接拼接，有注入风险，慎用</td></tr>
+                </tbody>
+            </table>
+
+            <div class="warn-box">
+                <strong>⚠️ XML 文件位置规则：</strong><br>
+                源码位置：<code>xzy-system/src/main/resources/mapper/system/SysDemoMapper.xml</code><br>
+                编译后位置：<code>xzy-system/target/classes/mapper/system/SysDemoMapper.xml</code>（Maven 自动复制，内容一致）<br>
+                MyBatis 扫描路径配置在 <code>application.yml</code>：<code>mybatis-plus.mapper-locations: classpath*:mapper/**/*Mapper.xml</code>
+            </div>
+        </div>
+
+        <!-- ==================== 8. Service ==================== -->
+        <div class="section" id="service">
+            <h2>8. Step 6 - Service 接口 + 实现类</h2>
+
+            <h3>8.1 Service 接口</h3>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">6a</div>
+                    <div class="node-title">创建 Service 接口</div>
+                    <span class="node-type type-service">Service接口</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">xzy-system/src/main/java/com/xzy/system/service/SysDemoService.java</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">完整代码</div>
+                        <div class="code-box">
+<span class="keyword">package</span> com.xzy.system.service;
+
+<span class="keyword">import</span> com.xzy.system.domain.DemoQuery;
+<span class="keyword">import</span> com.xzy.system.domain.SysDemo;
+<span class="keyword">import</span> java.util.List;
+
+<span class="comment">/**
+ * 演示业务层接口
+ */</span>
+<span class="keyword">public interface</span> <span class="type">SysDemoService</span> {
+
+    <span class="type">List</span>&lt;<span class="type">SysDemo</span>&gt; selectSysDemoList(<span class="type">DemoQuery</span> query);
+
+    <span class="type">SysDemo</span> selectSysDemoById(<span class="type">Long</span> id);
+
+    <span class="keyword">int</span> insertSysDemo(<span class="type">SysDemo</span> sysDemo);
+
+    <span class="keyword">int</span> updateSysDemo(<span class="type">SysDemo</span> sysDemo);
+
+    <span class="keyword">int</span> deleteSysDemoById(<span class="type">Long</span> id);
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>8.2 Service 实现类</h3>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">6b</div>
+                    <div class="node-title">创建 Service 实现类</div>
+                    <span class="node-type type-service">Service实现</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">xzy-system/src/main/java/com/xzy/system/service/impl/SysDemoServiceImpl.java</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">完整代码</div>
+                        <div class="code-box">
+<span class="keyword">package</span> com.xzy.system.service.impl;
+
+<span class="keyword">import</span> com.xzy.system.domain.DemoQuery;
+<span class="keyword">import</span> com.xzy.system.domain.SysDemo;
+<span class="keyword">import</span> com.xzy.system.mapper.SysDemoMapper;
+<span class="keyword">import</span> com.xzy.system.service.SysDemoService;
+<span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="keyword">import</span> org.springframework.stereotype.Service;
+<span class="keyword">import</span> java.util.List;
+
+<span class="annotation">@Service</span>
+<span class="keyword">public class</span> <span class="type">SysDemoServiceImpl</span> <span class="keyword">implements</span> <span class="type">SysDemoService</span> {
+
+    <span class="annotation">@Autowired</span>
+    <span class="keyword">private</span> <span class="type">SysDemoMapper</span> sysDemoMapper;  <span class="comment">// 注入 Mapper</span>
+
+    <span class="annotation">@Override</span>
+    <span class="keyword">public</span> <span class="type">List</span>&lt;<span class="type">SysDemo</span>&gt; selectSysDemoList(<span class="type">DemoQuery</span> query) {
+        <span class="keyword">return</span> sysDemoMapper.selectSysDemoList(query);  <span class="comment">// 直接委托给 Mapper</span>
+    }
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Service 层要点</h3>
+            <table class="format-table">
+                <thead><tr><th>要点</th><th>说明</th></tr></thead>
+                <tbody>
+                    <tr><td>接口和实现分离</td><td>接口定义方法签名，实现类写业务逻辑。Controller 注入接口而非实现类（面向接口编程）</td></tr>
+                    <tr><td><code>@Service</code></td><td>标记为 Spring Bean，自动注册到容器</td></tr>
+                    <tr><td><code>@Autowired</code></td><td>自动注入依赖（Mapper、其他 Service）</td></tr>
+                    <tr><td>实现类包名</td><td>接口在 <code>service/</code>，实现类在 <code>service/impl/</code></td></tr>
+                    <tr><td>命名规则</td><td>接口：<code>I</code>前缀或直接业务名（本项目两种都有）；实现类：接口名 + <code>Impl</code></td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 本项目命名风格：</strong>系统模块 Service 接口不加 <code>I</code> 前缀（如 <code>SysDemoService</code>），但部分模块加 <code>I</code> 前缀（如 <code>ISysDeptService</code>）。新代码建议统一加 <code>I</code> 前缀以区分接口和实现类。
+            </div>
+        </div>
+
+        <!-- ==================== 9. Controller ==================== -->
+        <div class="section" id="controller">
+            <h2>9. Step 7 - Controller 控制层（HTTP 接口）</h2>
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">7</div>
+                    <div class="node-title">创建 Controller</div>
+                    <span class="node-type type-controller">Controller</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">文件位置</div>
+                        <div class="code-path">xzy-admin/src/main/java/com/xzy/web/controller/system/SysDemoController.java</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">完整代码</div>
+                        <div class="code-box">
+<span class="keyword">package</span> com.xzy.web.controller.system;
+
+<span class="keyword">import</span> com.xzy.common.core.domain.AjaxResult;
+<span class="keyword">import</span> com.xzy.system.domain.DemoQuery;
+<span class="keyword">import</span> com.xzy.system.domain.SysDemo;
+<span class="keyword">import</span> com.xzy.system.service.SysDemoService;
+<span class="keyword">import</span> io.swagger.annotations.Api;
+<span class="keyword">import</span> io.swagger.annotations.ApiOperation;
+<span class="keyword">import</span> org.springframework.beans.factory.annotation.Autowired;
+<span class="keyword">import</span> org.springframework.web.bind.annotation.*;
+
+<span class="keyword">import</span> java.util.List;
+
+<span class="annotation">@RestController</span>                    <span class="comment">// = @Controller + @ResponseBody，返回JSON</span>
+<span class="annotation">@RequestMapping</span>(<span class="string">"/system/demo"</span>)     <span class="comment">// 接口路径前缀</span>
+<span class="annotation">@Api</span>(value = <span class="string">"SysDemoController"</span>, tags = <span class="string">"【演示模块】Demo管理"</span>)  <span class="comment">// Swagger文档</span>
+<span class="keyword">public class</span> <span class="type">SysDemoController</span> {
+
+    <span class="annotation">@Autowired</span>
+    <span class="keyword">private</span> <span class="type">SysDemoService</span> sysDemoService;  <span class="comment">// 注入 Service 接口</span>
+
+    <span class="annotation">@ApiOperation</span>(<span class="string">"查询演示数据列表"</span>)
+    <span class="annotation">@GetMapping</span>(<span class="string">"/list"</span>)             <span class="comment">// GET 请求，路径: /system/demo/list</span>
+    <span class="keyword">public</span> <span class="type">AjaxResult</span> list(<span class="type">DemoQuery</span> query) {
+        <span class="type">List</span>&lt;<span class="type">SysDemo</span>&gt; list = sysDemoService.selectSysDemoList(query);
+        <span class="keyword">return</span> AjaxResult.success(list);    <span class="comment">// 统一返回格式</span>
+    }
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Controller 关键注解速查</h3>
+            <table class="format-table">
+                <thead><tr><th>注解</th><th>作用</th><th>示例</th></tr></thead>
+                <tbody>
+                    <tr><td><code>@RestController</code></td><td>标记为 REST 控制器，方法返回值自动转 JSON</td><td>类级别</td></tr>
+                    <tr><td><code>@RequestMapping</code></td><td>定义接口路径前缀</td><td><code>@RequestMapping("/system/demo")</code></td></tr>
+                    <tr><td><code>@GetMapping</code></td><td>GET 请求映射</td><td><code>@GetMapping("/list")</code></td></tr>
+                    <tr><td><code>@PostMapping</code></td><td>POST 请求映射</td><td><code>@PostMapping</code></td></tr>
+                    <tr><td><code>@PutMapping</code></td><td>PUT 请求映射</td><td><code>@PutMapping</code></td></tr>
+                    <tr><td><code>@DeleteMapping</code></td><td>DELETE 请求映射</td><td><code>@DeleteMapping("/{id}")</code></td></tr>
+                    <tr><td><code>@PathVariable</code></td><td>获取路径参数</td><td><code>@PathVariable Long id</code></td></tr>
+                    <tr><td><code>@RequestBody</code></td><td>获取请求体 JSON</td><td><code>@RequestBody SysDemo sysDemo</code></td></tr>
+                    <tr><td><code>@Api</code></td><td>Swagger 分组</td><td><code>@Api(tags = "模块名")</code></td></tr>
+                    <tr><td><code>@ApiOperation</code></td><td>Swagger 接口说明</td><td><code>@ApiOperation("查询列表")</code></td></tr>
+                </tbody>
+            </table>
+
+            <h3>完整 CRUD 接口示例</h3>
+            <div class="code-box">
+<span class="comment">// 查询列表</span>
+<span class="annotation">@GetMapping</span>(<span class="string">"/list"</span>)
+<span class="keyword">public</span> <span class="type">AjaxResult</span> list(<span class="type">DemoQuery</span> query) {
+    <span class="keyword">return</span> AjaxResult.success(sysDemoService.selectSysDemoList(query));
+}
+
+<span class="comment">// 查询详情</span>
+<span class="annotation">@GetMapping</span>(<span class="string">"/{id}"</span>)
+<span class="keyword">public</span> <span class="type">AjaxResult</span> getInfo(<span class="annotation">@PathVariable</span> <span class="type">Long</span> id) {
+    <span class="keyword">return</span> AjaxResult.success(sysDemoService.selectSysDemoById(id));
+}
+
+<span class="comment">// 新增</span>
+<span class="annotation">@PostMapping</span>
+<span class="keyword">public</span> <span class="type">AjaxResult</span> add(<span class="annotation">@RequestBody</span> <span class="type">SysDemo</span> sysDemo) {
+    <span class="keyword">return</span> AjaxResult.success(sysDemoService.insertSysDemo(sysDemo));
+}
+
+<span class="comment">// 修改</span>
+<span class="annotation">@PutMapping</span>
+<span class="keyword">public</span> <span class="type">AjaxResult</span> edit(<span class="annotation">@RequestBody</span> <span class="type">SysDemo</span> sysDemo) {
+    <span class="keyword">return</span> AjaxResult.success(sysDemoService.updateSysDemo(sysDemo));
+}
+
+<span class="comment">// 删除</span>
+<span class="annotation">@DeleteMapping</span>(<span class="string">"/{id}"</span>)
+<span class="keyword">public</span> <span class="type">AjaxResult</span> remove(<span class="annotation">@PathVariable</span> <span class="type">Long</span> id) {
+    <span class="keyword">return</span> AjaxResult.success(sysDemoService.deleteSysDemoById(id));
+}
+            </div>
+        </div>
+
+        <!-- ==================== 10. 完整调用链路图 ==================== -->
+        <div class="section" id="full-flow">
+            <h2>10. 完整调用链路图</h2>
+            <p>以 <code>GET /xzy-api/system/demo/list?demoName=测试</code> 为例，一次请求的完整链路：</p>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background: #ede9fe;"></div><span>Controller 层</span></div>
+                <div class="legend-item"><div class="legend-color" style="background: #d1fae5;"></div><span>Service 层</span></div>
+                <div class="legend-item"><div class="legend-color" style="background: #fef3c7;"></div><span>Mapper 层</span></div>
+                <div class="legend-item"><div class="legend-color" style="background: #fce7f3;"></div><span>数据库</span></div>
+            </div>
+
+            <div class="flow-node" style="border-color: #8b5cf6;">
+                <div class="node-header">
+                    <div class="node-number" style="background: #8b5cf6;">1</div>
+                    <div class="node-title">前端发起 HTTP 请求</div>
+                    <span class="node-type type-controller">请求入口</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">请求 URL</div>
+                        <div class="section-value"><code>GET http://localhost:30001/xzy-api/system/demo/list?demoName=测试</code></div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">URL 组成</div>
+                        <div class="section-value">
+                            <code>http://localhost:30001</code> → 服务器地址（application.yml: server.port=30001）<br>
+                            <code>/xzy-api</code> → 上下文路径（application.yml: server.servlet.context-path=/xzy-api）<br>
+                            <code>/system/demo/list</code> → 接口路径（@RequestMapping + @GetMapping）<br>
+                            <code>?demoName=测试</code> → 查询参数（自动绑定到 DemoQuery.demoName）
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-node" style="border-color: #8b5cf6;">
+                <div class="node-header">
+                    <div class="node-number" style="background: #8b5cf6;">2</div>
+                    <div class="node-title">Spring MVC 路由到 Controller</div>
+                    <span class="node-type type-controller">Controller</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">匹配规则</div>
+                        <div class="section-value">
+                            <code>@RequestMapping("/system/demo")</code> + <code>@GetMapping("/list")</code><br>
+                            → 完整路径：<code>/system/demo/list</code>
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">参数绑定</div>
+                        <div class="section-value">
+                            Spring 自动将 <code>?demoName=测试</code> 绑定到 <code>DemoQuery.demoName</code> 字段
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">xzy-admin/.../controller/system/SysDemoController.java:34</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-node" style="border-color: #10b981;">
+                <div class="node-header">
+                    <div class="node-number" style="background: #10b981;">3</div>
+                    <div class="node-title">Controller 调用 Service</div>
+                    <span class="node-type type-service">Service</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">调用代码</div>
+                        <div class="code-box">
+sysDemoService.selectSysDemoList(query)
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">xzy-admin/.../controller/system/SysDemoController.java:36</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-node" style="border-color: #10b981;">
+                <div class="node-header">
+                    <div class="node-number" style="background: #10b981;">4</div>
+                    <div class="node-title">Service 实现类调用 Mapper</div>
+                    <span class="node-type type-service">ServiceImpl</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">调用代码</div>
+                        <div class="code-box">
+sysDemoMapper.selectSysDemoList(query)
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">xzy-system/.../service/impl/SysDemoServiceImpl.java:21</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-node" style="border-color: #f59e0b;">
+                <div class="node-header">
+                    <div class="node-number" style="background: #f59e0b;">5</div>
+                    <div class="node-title">MyBatis 找到 XML 中的 SQL</div>
+                    <span class="node-type type-mapper">Mapper</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">匹配规则</div>
+                        <div class="section-value">
+                            1. 接口全限定名 → XML namespace：<code>com.xzy.system.mapper.SysDemoMapper</code><br>
+                            2. 方法名 → XML 标签 id：<code>selectSysDemoList</code><br>
+                            3. 参数类型 → DemoQuery<br>
+                            4. 返回类型 → resultMap="SysDemoResult"
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">生成的 SQL</div>
+                        <div class="code-box">
+<span class="keyword">SELECT</span> id, demo_name, demo_content, create_time, remark
+<span class="keyword">FROM</span> sys_demo
+<span class="keyword">WHERE</span> demo_name <span class="keyword">LIKE</span> concat(<span class="string">'%'</span>, <span class="string">'测试'</span>, <span class="string">'%'</span>)
+<span class="keyword">ORDER BY</span> id <span class="keyword">DESC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-node" style="border-color: #ec4899;">
+                <div class="node-header">
+                    <div class="node-number" style="background: #ec4899;">6</div>
+                    <div class="node-title">执行 SQL，返回结果集</div>
+                    <span class="node-type type-db">数据库</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">MyBatis 自动映射</div>
+                        <div class="section-value">
+                            数据库列 <code>demo_name</code> → Java 属性 <code>demoName</code>（根据 resultMap 或驼峰转换）<br>
+                            每一行数据 → 一个 <code>SysDemo</code> 对象<br>
+                            所有行 → <code>List&lt;SysDemo&gt;</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flow-node" style="border-color: #8b5cf6;">
+                <div class="node-header">
+                    <div class="node-number" style="background: #8b5cf6;">7</div>
+                    <div class="node-title">Controller 包装返回结果</div>
+                    <span class="node-type type-controller">响应</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">调用代码</div>
+                        <div class="code-box">
+AjaxResult.success(list)
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">最终返回 JSON</div>
+                        <div class="code-box">
+{
+    <span class="string">"code"</span>: 200,
+    <span class="string">"msg"</span>: <span class="string">"操作成功"</span>,
+    <span class="string">"data"</span>: [
+        {
+            <span class="string">"id"</span>: 1,
+            <span class="string">"demoName"</span>: <span class="string">"测试数据1"</span>,
+            <span class="string">"demoContent"</span>: <span class="string">"这是内容"</span>,
+            <span class="string">"createTime"</span>: <span class="string">"2026-04-29 10:00:00"</span>,
+            <span class="string">"remark"</span>: <span class="keyword">null</span>
+        }
+    ]
+}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== 11. 命名规则速查表 ==================== -->
+        <div class="section" id="naming">
+            <h2>11. 命名规则速查表</h2>
+            <table class="format-table">
+                <thead>
+                    <tr><th>层级</th><th>命名规则</th><th>示例</th><th>说明</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>数据库表</td><td>模块前缀_业务名（下划线）</td><td>sys_demo</td><td>sys=系统, ms=计量, qua=质量, crm=客户</td></tr>
+                    <tr><td>数据库列</td><td>下划线命名</td><td>demo_name</td><td>Java 驼峰自动转换</td></tr>
+                    <tr><td>实体类</td><td>模块前缀 + 业务名（大驼峰）</td><td>SysDemo</td><td>对应表名，去掉下划线首字母大写</td></tr>
+                    <tr><td>查询参数</td><td>业务名 + Query/Dto</td><td>DemoQuery</td><td>放在 domain 包下</td></tr>
+                    <tr><td>Mapper 接口</td><td>实体类名 + Mapper</td><td>SysDemoMapper</td><td>放在 mapper 包下</td></tr>
+                    <tr><td>Mapper XML</td><td>与 Mapper 接口同名</td><td>SysDemoMapper.xml</td><td>放在 resources/mapper/模块/ 下</td></tr>
+                    <tr><td>Service 接口</td><td>I + 实体类名 + Service</td><td>ISysDemoService</td><td>放在 service 包下</td></tr>
+                    <tr><td>Service 实现</td><td>Service接口名 + Impl</td><td>SysDemoServiceImpl</td><td>放在 service/impl/ 下</td></tr>
+                    <tr><td>Controller</td><td>实体类名 + Controller</td><td>SysDemoController</td><td>放在 controller/模块/ 下</td></tr>
+                    <tr><td>接口路径</td><td>/模块/业务</td><td>/system/demo</td><td>小写，与表前缀对应</td></tr>
+                    <tr><td>Mapper 方法</td><td>操作 + 实体名</td><td>selectSysDemoList</td><td>select/insert/update/delete 开头</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ==================== 12. 文件位置速查表 ==================== -->
+        <div class="section" id="file-location">
+            <h2>12. 文件位置速查表</h2>
+            <p>以 <strong>系统模块（system）</strong>为例，新建一个业务接口需要创建的文件：</p>
+            <table class="format-table">
+                <thead>
+                    <tr><th>序号</th><th>文件</th><th>路径模板</th><th>实际路径</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>实体类</td>
+                        <td>xzy-system/src/main/java/com/xzy/system/domain/<strong>{Entity}.java</strong></td>
+                        <td>.../domain/SysDemo.java</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>查询参数</td>
+                        <td>xzy-system/src/main/java/com/xzy/system/domain/<strong>{Query}.java</strong></td>
+                        <td>.../domain/DemoQuery.java</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Mapper 接口</td>
+                        <td>xzy-system/src/main/java/com/xzy/system/mapper/<strong>{Entity}Mapper.java</strong></td>
+                        <td>.../mapper/SysDemoMapper.java</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Mapper XML</td>
+                        <td>xzy-system/src/main/resources/mapper/system/<strong>{Entity}Mapper.xml</strong></td>
+                        <td>.../mapper/system/SysDemoMapper.xml</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Service 接口</td>
+                        <td>xzy-system/src/main/java/com/xzy/system/service/<strong>I{Entity}Service.java</strong></td>
+                        <td>.../service/SysDemoService.java</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>Service 实现</td>
+                        <td>xzy-system/src/main/java/com/xzy/system/service/impl/<strong>{Entity}ServiceImpl.java</strong></td>
+                        <td>.../service/impl/SysDemoServiceImpl.java</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>Controller</td>
+                        <td>xzy-admin/src/main/java/com/xzy/web/controller/system/<strong>{Entity}Controller.java</strong></td>
+                        <td>.../controller/system/SysDemoController.java</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 其他模块的路径规则：</strong><br>
+                计量模块：将 <code>system</code> 替换为 <code>measure</code>，包名 <code>com.xzy.measure</code><br>
+                质量模块：将 <code>system</code> 替换为 <code>quality</code>，包名 <code>com.xzy.quality</code><br>
+                客户模块：将 <code>system</code> 替换为 <code>crm</code>，包名 <code>com.xzy.crm</code><br>
+                基础模块：将 <code>system</code> 替换为 <code>basics</code>，包名 <code>com.xzy.basics</code>
+            </div>
+        </div>
+
+        <!-- ==================== 13. AjaxResult ==================== -->
+        <div class="section" id="ajax-result">
+            <h2>13. 统一返回格式 AjaxResult</h2>
+            <p>所有接口统一使用 <code>AjaxResult</code> 返回，保证前端接收格式一致。</p>
+
+            <div class="code-box">
+<span class="comment">// AjaxResult 继承 HashMap&lt;String, Object&gt;，固定三个 key：</span>
+{
+    <span class="string">"code"</span>: 200,       <span class="comment">// 状态码：200成功, 500失败, 601警告</span>
+    <span class="string">"msg"</span>: <span class="string">"操作成功"</span>,  <span class="comment">// 提示信息</span>
+    <span class="string">"data"</span>: [...]      <span class="comment">// 业务数据（可为null）</span>
+}
+            </div>
+
+            <h3>常用静态方法</h3>
+            <table class="format-table">
+                <thead><tr><th>方法</th><th>场景</th><th>返回示例</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><code>AjaxResult.success()</code></td>
+                        <td>操作成功（无数据）</td>
+                        <td><code>{"code":200, "msg":"操作成功"}</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>AjaxResult.success(data)</code></td>
+                        <td>操作成功（有数据）</td>
+                        <td><code>{"code":200, "msg":"操作成功", "data":[...]}</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>AjaxResult.success("msg", data)</code></td>
+                        <td>自定义成功消息</td>
+                        <td><code>{"code":200, "msg":"查询成功", "data":[...]}</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>AjaxResult.error("msg")</code></td>
+                        <td>操作失败</td>
+                        <td><code>{"code":500, "msg":"参数不能为空"}</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>AjaxResult.warn("msg")</code></td>
+                        <td>警告</td>
+                        <td><code>{"code":601, "msg":"该名称已存在"}</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 代码位置：</strong><code>xzy-common/src/main/java/com/xzy/common/core/domain/AjaxResult.java</code><br>
+                状态码常量定义在：<code>xzy-common/src/main/java/com/xzy/common/constant/HttpStatus.java</code>
+            </div>
+        </div>
+
+        <!-- ==================== 14. BaseEntity ==================== -->
+        <div class="section" id="base-entity">
+            <h2>14. BaseEntity 继承说明</h2>
+            <p>代码位置：<code>xzy-common/src/main/java/com/xzy/common/core/domain/BaseEntity.java</code></p>
+
+            <table class="format-table">
+                <thead><tr><th>字段</th><th>类型</th><th>数据库列</th><th>说明</th><th>是否数据库字段</th></tr></thead>
+                <tbody>
+                    <tr><td>searchValue</td><td>String</td><td>—</td><td>搜索值（非持久化）</td><td>否（@TableField(exist=false)）</td></tr>
+                    <tr><td>createBy</td><td>String</td><td>create_by</td><td>创建者</td><td>否（@TableField(exist=false)）</td></tr>
+                    <tr><td>createTime</td><td>Date</td><td>create_time</td><td>创建时间</td><td>是</td></tr>
+                    <tr><td>updateBy</td><td>String</td><td>update_by</td><td>更新者</td><td>否（@TableField(exist=false)）</td></tr>
+                    <tr><td>updateTime</td><td>Date</td><td>update_time</td><td>更新时间</td><td>是</td></tr>
+                    <tr><td>remark</td><td>String</td><td>remark</td><td>备注</td><td>是</td></tr>
+                    <tr><td>createUserId</td><td>String</td><td>create_user_id</td><td>创建者ID</td><td>是</td></tr>
+                    <tr><td>createName</td><td>String</td><td>create_name</td><td>创建者名称</td><td>是</td></tr>
+                    <tr><td>updateUserId</td><td>String</td><td>update_user_id</td><td>更新者ID</td><td>是</td></tr>
+                    <tr><td>updateName</td><td>String</td><td>update_name</td><td>更新者名称</td><td>是</td></tr>
+                    <tr><td>params</td><td>Map</td><td>—</td><td>请求参数（非持久化）</td><td>否（@TableField(exist=false)）</td></tr>
+                    <tr><td>ids</td><td>String</td><td>—</td><td>逗号隔开ID（非持久化）</td><td>否（@TableField(exist=false)）</td></tr>
+                </tbody>
+            </table>
+
+            <div class="warn-box">
+                <strong>⚠️ 注意：</strong>部分字段标记了 <code>@TableField(exist = false)</code>，意味着 MyBatis-Plus 不会将它们映射到数据库列。但在 MyBatis XML 中手动写 SQL 时，这些字段仍可在 resultMap 中映射（只要 SQL 查出来了对应列）。
+            </div>
+        </div>
+
+        <!-- ==================== 15. 关键配置 ==================== -->
+        <div class="section" id="config">
+            <h2>15. 关键配置说明</h2>
+
+            <h3>application.yml 核心配置</h3>
+            <table class="format-table">
+                <thead><tr><th>配置项</th><th>值</th><th>说明</th></tr></thead>
+                <tbody>
+                    <tr><td>server.port</td><td>30001</td><td>服务端口号</td></tr>
+                    <tr><td>server.servlet.context-path</td><td>/xzy-api</td><td>接口统一前缀，所有请求都要加这个</td></tr>
+                    <tr><td>mybatis-plus.mapper-locations</td><td>classpath*:mapper/**/*Mapper.xml</td><td>Mapper XML 扫描路径</td></tr>
+                    <tr><td>mybatis-plus.typeAliasesPackage</td><td>com.xzy.**.domain</td><td>实体类包路径，XML 中可直接写类名简写</td></tr>
+                    <tr><td>mybatis-plus.configLocation</td><td>classpath:mybatis/mybatis-config.xml</td><td>MyBatis 全局配置</td></tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <strong>💡 为什么 XML 中可以写 <code>type="SysDemo"</code> 而不是全限定名？</strong><br>
+                因为 <code>typeAliasesPackage: com.xzy.**.domain</code> 配置了包扫描，MyBatis 会自动为该包下的类注册别名（类名首字母小写或原类名）。所以 <code>SysDemo</code> 等价于 <code>com.xzy.system.domain.SysDemo</code>。
+            </div>
+
+            <h3>MyBatis XML 扫描路径解析</h3>
+            <div class="code-box">
+<span class="comment">// 配置：classpath*:mapper/**/*Mapper.xml</span>
+<span class="comment">// 扫描范围：所有模块 target/classes 下的 mapper 目录</span>
+
+<span class="comment">// 实际扫描到的文件：</span>
+xzy-system/target/classes/mapper/system/SysDemoMapper.xml     <span class="comment">✅</span>
+xzy-system/target/classes/mapper/system/SysDeptMapper.xml     <span class="comment">✅</span>
+xzy-crm/target/classes/mapper/crm/CrmCustomerMapper.xml       <span class="comment">✅</span>
+xzy-measure/target/classes/mapper/measure/MsEntrustTaskMapper.xml <span class="comment">✅</span>
+<span class="comment">// ... 所有模块的 Mapper XML 都会被扫描到</span>
+            </div>
+        </div>
+
+        <!-- ==================== 16. 开发检查清单 ==================== -->
+        <div class="section" id="checklist">
+            <h2>16. 开发检查清单</h2>
+            <p>新建一个接口时，按此清单逐项检查：</p>
+
+            <table class="format-table">
+                <thead><tr><th>序号</th><th>检查项</th><th>确认</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>数据库表已创建，字段与实体类对应</td><td>☐</td></tr>
+                    <tr><td>2</td><td>Domain 实体类已创建，继承 BaseEntity，使用 @Data</td><td>☐</td></tr>
+                    <tr><td>3</td><td>Query/DTO 类已创建（如有查询条件），使用 @Data + @ApiModelProperty</td><td>☐</td></tr>
+                    <tr><td>4</td><td>Mapper 接口已创建，加 @Mapper，方法名与 XML id 一致</td><td>☐</td></tr>
+                    <tr><td>5</td><td>Mapper XML 已创建，namespace 与 Mapper 接口全限定名一致</td><td>☐</td></tr>
+                    <tr><td>6</td><td>Mapper XML 的 resultMap 中 property 与实体类属性名一致</td><td>☐</td></tr>
+                    <tr><td>7</td><td>Service 接口已创建，方法签名完整</td><td>☐</td></tr>
+                    <tr><td>8</td><td>Service 实现类已创建，加 @Service，注入 Mapper</td><td>☐</td></tr>
+                    <tr><td>9</td><td>Controller 已创建，加 @RestController + @RequestMapping</td><td>☐</td></tr>
+                    <tr><td>10</td><td>Controller 注入 Service 接口（不是实现类）</td><td>☐</td></tr>
+                    <tr><td>11</td><td>接口返回统一使用 AjaxResult</td><td>☐</td></tr>
+                    <tr><td>12</td><td>Swagger 注解已添加（@Api、@ApiOperation）</td><td>☐</td></tr>
+                    <tr><td>13</td><td>编译通过：mvn compile 无报错</td><td>☐</td></tr>
+                    <tr><td>14</td><td>接口测试：Swagger UI 或 Postman 验证返回数据</td><td>☐</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ==================== 总结：一图看全貌 ==================== -->
+        <div class="section">
+            <h2>📌 一图看全貌：文件创建顺序与依赖关系</h2>
+            <div class="code-box" style="font-size: 14px; line-height: 2.2;">
+<span style="color: #4ec9b0; font-weight: bold;">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>                     <span style="color: #dcdcaa; font-weight: bold;">新建接口的完整步骤</span>                                    <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>                                                                     <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #ce9178;">Step 1</span>  建表 SQL              →  <span style="color: #9cdcfe;">sys_demo</span>                          <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>    ↓                                                                <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #ce9178;">Step 2</span>  Domain 实体类         →  <span style="color: #9cdcfe;">SysDemo.java</span> <span style="color: #6a9955;">(xzy-system/domain/)</span>     <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>    ↓                                                                <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #ce9178;">Step 3</span>  Query 查询参数        →  <span style="color: #9cdcfe;">DemoQuery.java</span> <span style="color: #6a9955;">(xzy-system/domain/)</span>    <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>    ↓                                                                <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #ce9178;">Step 4</span>  Mapper 接口           →  <span style="color: #9cdcfe;">SysDemoMapper.java</span> <span style="color: #6a9955;">(xzy-system/mapper/)</span> <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>    ↓  (方法名必须一致)                                                <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #ce9178;">Step 5</span>  Mapper XML            →  <span style="color: #9cdcfe;">SysDemoMapper.xml</span> <span style="color: #6a9955;">(resources/mapper/system/)</span> <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>    ↓                                                                <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #ce9178;">Step 6</span>  Service 接口 + 实现   →  <span style="color: #9cdcfe;">SysDemoService + Impl</span> <span style="color: #6a9955;">(xzy-system/service/)</span> <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>    ↓                                                                <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #ce9178;">Step 7</span>  Controller            →  <span style="color: #9cdcfe;">SysDemoController.java</span> <span style="color: #6a9955;">(xzy-admin/controller/)</span> <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>                                                                     <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #dcdcaa; font-weight: bold;">调用链路：</span>Controller → Service → Mapper → XML → 数据库         <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #dcdcaa; font-weight: bold;">返回链路：</span>数据库 → XML映射 → Mapper → Service → Controller → JSON <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>                                                                     <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">│</span>  <span style="color: #dcdcaa; font-weight: bold;">模块依赖：</span>xzy-admin → xzy-system → xzy-common                    <span style="color: #4ec9b0; font-weight: bold;">│</span>
+<span style="color: #4ec9b0; font-weight: bold;">└─────────────────────────────────────────────────────────────────────┘</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 西自仪云检测一体化平台 - 后端接口全链路开发教程</p>
+            <p>基于 SysDemo 演示模块 | 若依框架 + Spring Boot + MyBatis-Plus</p>
+        </div>
+    </div>
+</body>
+</html>

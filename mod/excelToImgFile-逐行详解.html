@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>excelToImgFile() 逐行详解 — 为什么Excel→PDF→PNG？</title>
+<style>
+:root {
+  --pri: #1a73e8; --pri-bg: #e8f0fe; --succ: #34a853; --warn: #fbbc04; --err: #ea4335;
+  --dark: #202124; --gray: #5f6368; --border: #dadce0;
+  --bg: #f8f9fa; --code-bg: #1e1e1e; --code-txt: #d4d4d4; --card: #ffffff;
+  --question: #9333ea; --q-bg: #f3e8ff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; background: var(--bg); color: var(--dark); line-height: 1.85; padding: 20px; }
+.container { max-width: 1100px; margin: 0 auto; }
+
+.header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; padding: 40px; border-radius: 16px; margin-bottom: 28px; text-align: center; }
+.header h1 { font-size: 1.7rem; margin-bottom: 8px; }
+.header p { opacity: 0.8; font-size: 0.95rem; }
+
+.section { background: var(--card); border-radius: 12px; padding: 28px 34px; margin-bottom: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+.section h2 { font-size: 1.35rem; color: var(--pri); margin-bottom: 12px; padding-bottom: 5px; border-bottom: 3px solid var(--pri); }
+.section h3 { font-size: 1.1rem; color: #333; margin: 22px 0 8px; }
+.section h3:before { content: "▸ "; color: var(--pri); }
+
+.code-block { background: var(--code-bg); color: var(--code-txt); border-radius: 8px; margin: 10px 0; overflow: hidden; }
+.code-block .title { background: #333; padding: 8px 14px; font-size: 0.78rem; color: #aaa; font-weight: 500; }
+.code-block pre { padding: 14px 16px; overflow-x: auto; font-size: 0.8rem; line-height: 1.6; margin: 0; }
+.code-block .lineno { color: #858585; user-select: none; margin-right: 12px; }
+
+.comment { color: #6a9955; }
+.keyword { color: #569cd6; }
+.string { color: #ce9178; }
+.method { color: #dcdcaa; }
+.annotation { color: #4ec9b0; }
+
+.info-box { background: var(--pri-bg); border-left: 4px solid var(--pri); padding: 12px 16px; border-radius: 6px; margin: 12px 0; font-size: 0.9rem; }
+.warn-box { background: #fef7e0; border-left: 4px solid var(--warn); padding: 12px 16px; border-radius: 6px; margin: 12px 0; font-size: 0.9rem; }
+.q-box { background: var(--q-bg); border-left: 4px solid var(--question); padding: 14px 16px; border-radius: 6px; margin: 14px 0; font-size: 0.9rem; }
+
+.data-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.88rem; }
+.data-table th { background: var(--bg); padding: 9px 12px; text-align: left; border: 1px solid var(--border); font-weight: 600; }
+.data-table td { padding: 8px 12px; border: 1px solid var(--border); }
+.data-table tr:hover { background: var(--pri-bg); }
+
+.flow-box { background: #f0f4ff; border: 2px solid var(--pri); border-radius: 10px; padding: 20px 24px; margin: 14px 0; font-family: monospace; font-size: 0.85rem; line-height: 2.2; }
+.flow-box .root { color: #569cd6; font-weight: bold; }
+.flow-box .branch { color: #dcdcaa; }
+.flow-box .arrow { color: #888; margin: 0 6px; }
+.flow-box .output { color: #ce9178; }
+.flow-box .explain { color: #6a9955; font-style: italic; }
+
+.step { position: relative; padding: 14px 18px 14px 60px; margin-bottom: 10px; background: var(--bg); border-radius: 8px; }
+.step .num { position: absolute; left: 12px; top: 12px; width: 32px; height: 32px; border-radius: 50%; text-align: center; line-height: 32px; font-weight: bold; font-size: 0.9rem; }
+.num-blue { background: var(--pri); color: white; }
+.num-purple { background: var(--question); color: white; }
+.num-green { background: var(--succ); color: white; }
+.step h4 { font-size: 0.95rem; margin-bottom: 4px; }
+.step p { font-size: 0.88rem; color: var(--gray); }
+.step code { background: #e8e8e8; padding: 1px 6px; border-radius: 3px; font-size: 0.83rem; color: var(--err); }
+
+.answer-steps { counter-reset: ans; }
+.answer-steps li { position: relative; padding-left: 40px; margin-bottom: 18px; list-style: none; }
+.answer-steps li:before { counter-increment: ans; content: counter(ans); position: absolute; left: 0; top: 0; width: 26px; height: 26px; background: var(--question); color: white; border-radius: 50%; text-align: center; line-height: 26px; font-weight: bold; font-size: 0.82rem; }
+.answer-steps li h4 { color: var(--question); margin-bottom: 4px; }
+.answer-steps li p { font-size: 0.9rem; }
+
+.toc { background: var(--card); border-radius: 12px; padding: 20px 28px; margin-bottom: 22px; border: 1px solid var(--border); }
+.toc h3 { margin-top: 0 !important; color: var(--dark); }
+.toc ol { padding-left: 22px; line-height: 2.2; }
+.toc a { color: var(--pri); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+.top-btn { position: fixed; bottom: 30px; right: 30px; width: 42px; height: 42px; background: var(--pri); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.top-btn:hover { background: #1557b0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>📐 excelToImgFile() 逐行详解</h1>
+  <p>以及核心问题：为什么 Excel → PDF → PNG，而不是直接 Excel → PNG？</p>
+</div>
+
+<div class="toc">
+  <h3>📑 目录</h3>
+  <ol>
+    <li><a href="#full-code">完整代码一览</a></li>
+    <li><a href="#line-by-line">逐行拆解（12步）</a></li>
+    <li><a href="#why">核心问答：为什么不直接 Excel → PNG？</a></li>
+    <li><a href="#data-flow">上下游数据流：这些东西去哪了</a></li>
+  </ol>
+</div>
+
+<!-- ========== 1. 完整代码 ========== -->
+<div class="section" id="full-code">
+  <h2>📋 1. 完整代码一览</h2>
+  <p class="file-ref">📄 <a style="color:var(--pri);font-family:monospace" href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-admin/src/main/java/com/xzy/web/controller/common/OfficeOnlineApi.java">OfficeOnlineApi.java</a> 第 249~296 行</p>
+
+  <div class="code-block">
+    <div class="title">excelToImgFile() — 完整方法</div>
+<pre>    <span class="annotation">@param</span> filePath  Excel文件路径
+    <span class="annotation">@return</span> 处理后的图片路径集合 + 数据页PDF路径
+<span class="keyword">private</span> Map&lt;String, Object&gt; <span class="method">excelToImgFile</span>(String filePath) {
+    Map&lt;String, Object&gt; resultMap = <span class="keyword">new</span> HashMap&lt;&gt;();           <span class="comment">// ① 准备返回容器</span>
+    File originalFile = <span class="keyword">new</span> File(filePath);                  <span class="comment">// ② 包装为File对象</span>
+    String parentDir = originalFile.getParent();                 <span class="comment">// ③ 取父目录</span>
+    String resultImgDir = parentDir + File.separator + "result"; <span class="comment">// ④ 拼result/子目录</span>
+    <span class="method">mkDir</span>(resultImgDir);                                       <span class="comment">// ⑤ 创建目录</span>
+    String dataPdfPath = FilePathUtil.getPdfPath(filePath, "_data");     <span class="comment">// ⑥ 数据页PDF路径</span>
+    String resultPdfPath = FilePathUtil.getPdfPath(filePath, "_result"); <span class="comment">// ⑦ 结果页PDF路径</span>
+    <span class="keyword">try</span> {
+        ExcelSheetToPdfUtils.convertSingleSheet(filePath, resultPdfPath, "结果页"); <span class="comment">// ⑧ Excel→PDF(结果页)</span>
+        ExcelSheetToPdfUtils.convertSingleSheet(filePath, dataPdfPath, "数据页");   <span class="comment">// ⑨ Excel→PDF(数据页)</span>
+        List&lt;String&gt; resultImages = PdfCertCleanConverter.convertPdfPages(           <span class="comment">// ⑩ PDF→PNG</span>
+            resultPdfPath, resultImgDir);
+        resultMap.put("croppedResultImages", resultImages); <span class="comment">// ⑪ 装包：图片列表</span>
+        resultMap.put("dataPdfPath", dataPdfPath);           <span class="comment">// ⑫ 装包：数据PDF路径</span>
+    } <span class="keyword">catch</span> (Exception e) {
+        <span class="keyword">throw</span> <span class="keyword">new</span> CustomException("Excel转图片处理失败", e);
+    }
+    <span class="keyword">return</span> resultMap;  <span class="comment">// 返回包裹</span>
+}</pre>
+  </div>
+</div>
+
+<!-- ========== 2. 逐行拆解 ========== -->
+<div class="section" id="line-by-line">
+  <h2>🔍 2. 逐行拆解（12步）</h2>
+
+  <div class="step">
+    <div class="num num-blue">①</div>
+    <h4>创建返回值 Map</h4>
+    <p>好比准备一个<strong>快递纸箱</strong>，后面所有的处理结果（图片列表、PDF路径）都要装进这个箱子里，最后一起返回给调用方。</p>
+  </div>
+
+  <div class="step">
+    <div class="num num-blue">②</div>
+    <h4>File originalFile = new File(filePath)</h4>
+    <p>把字符串路径包装成 Java 的 <code>File</code> 对象。这只是个"指针"，并不会真的去打开文件。<br>
+    例如：<code>"/home/xiziyi/uploadPath/original/2026/05/记录模板.xlsx"</code></p>
+  </div>
+
+  <div class="step">
+    <div class="num num-blue">③</div>
+    <h4>originalFile.getParent() → 取父目录</h4>
+    <p>从完整路径中去掉文件名，只保留目录部分。<br>
+    输入：<code>/home/xiziyi/uploadPath/original/2026/05/记录模板.xlsx</code><br>
+    输出：<code>/home/xiziyi/uploadPath/original/2026/05</code></p>
+  </div>
+
+  <div class="step">
+    <div class="num num-blue">④</div>
+    <h4>拼出 "result/" 子目录路径</h4>
+    <p>在父目录后面接上 <code>/result</code>。之所以用子目录而不是直接放同级，是为了<strong>避免文件名冲突、方便管理</strong>。<br>
+    输出：<code>/home/xiziyi/uploadPath/original/2026/05/result/</code></p>
+  </div>
+
+  <div class="step">
+    <div class="num num-blue">⑤</div>
+    <h4>mkDir(resultImgDir) → 创建 result/ 目录</h4>
+    <p>如果目录已经存在就跳过，不存在就创建。这步确保了后面 PDF→PNG 时输出路径是确实存在的。<br>
+    底层用的是 <code>Files.createDirectories()</code>，会自动创建中间所有不存在的父目录。</p>
+  </div>
+
+  <div class="step">
+    <div class="num num-blue">⑥⑦</div>
+    <h4>用 FilePathUtil.getPdfPath() 生成两个 PDF 路径</h4>
+    <p>这个工具方法的逻辑很简单：<strong>去掉Excel的扩展名，换上 PDF 扩展名，中间加个后缀</strong>。<br><br>
+    输入：<code>/home/.../记录模板.xlsx</code>，后缀 <code>"_result"</code><br>
+    输出：<code>/home/.../记录模板_result.pdf</code><br><br>
+    输入：<code>/home/.../记录模板.xlsx</code>，后缀 <code>"_data"</code><br>
+    输出：<code>/home/.../记录模板_data.pdf</code></p>
+  </div>
+
+  <div class="step">
+    <div class="num num-purple">⑧</div>
+    <h4>ExcelSheetToPdfUtils.convertSingleSheet(filePath, resultPdfPath, "结果页")</h4>
+    <p>这是<strong>第一步转换</strong>的核心——<strong>Excel → PDF</strong>。它做了三件事：</p>
+    <ol style="margin-top:6px;padding-left:20px;font-size:0.88rem;line-height:1.9;">
+      <li>用 Apache POI 打开 Excel，遍历所有单元格：<strong>公式→静态值</strong>（因为LibreOffice不计算公式）</li>
+      <li><strong>删除"结果页"以外的所有其他 Sheet</strong>（只保留目标Sheet）</li>
+      <li>把处理后的临时Excel交给 <strong>LibreOffice</strong>，由它打开后 → "另存为PDF"</li>
+    </ol>
+    <p>输出文件：<code>/home/.../记录模板_result.pdf</code></p>
+  </div>
+
+  <div class="step">
+    <div class="num num-purple">⑨</div>
+    <h4>ExcelSheetToPdfUtils.convertSingleSheet(filePath, dataPdfPath, "数据页")</h4>
+    <p>和上一步完全一样的逻辑，只是目标是 <strong>"数据页" Sheet</strong> → <code>记录模板_data.pdf</code></p>
+  </div>
+
+  <div class="step">
+    <div class="num num-green">⑩</div>
+    <h4>PdfCertCleanConverter.convertPdfPages(resultPdfPath, resultImgDir)</h4>
+    <p>这是<strong>第二步转换</strong>的核心——<strong>PDF → PNG</strong>。注意：只转换了 <strong>"结果页"的PDF</strong>，数据页PDF<strong>不转</strong>。它做了：</p>
+    <ol style="margin-top:6px;padding-left:20px;font-size:0.88rem;line-height:1.9;">
+      <li>用 PDFBox 打开 <code>记录模板_result.pdf</code></li>
+      <li>逐页以 <strong>600 DPI</strong>（打印级超清）渲染成 Java 位图</li>
+      <li>对每张位图执行 <strong>智能裁剪</strong>（去上下左右空白区域）</li>
+      <li>写出到 <code>result/</code> 目录：<code>page_1.png</code>、<code>page_2.png</code>...</li>
+      <li>返回全部 PNG 文件的路径列表</li>
+    </ol>
+    <p>返回值示例：<code>["/home/.../result/page_1.png", "/home/.../result/page_2.png"]</code></p>
+  </div>
+
+  <div class="step">
+    <div class="num num-blue">⑪⑫</div>
+    <h4>装包 + 返回</h4>
+    <p>把两个东西塞进 Map：</p>
+    <table class="data-table" style="margin-top:6px;">
+      <tr><th>Key</th><th>Value</th><th>说明</th></tr>
+      <tr><td><code>"croppedResultImages"</code></td><td>图片路径列表</td><td>如 <code>[".../page_1.png", ".../page_2.png"]</code></td></tr>
+      <tr><td><code>"dataPdfPath"</code></td><td>PDF路径字符串</td><td>如 <code>"/home/.../记录模板_data.pdf"</code></td></tr>
+    </table>
+    <p>这个 Map 交回给 <code>saveOriginalFile()</code> 后，图片列表序列化成 JSON 存入数据库的 <code>result_file_url</code> 字段，PDF 路径存入 <code>data_pdf_url</code> 字段。</p>
+  </div>
+</div>
+
+<!-- ========== 3. 核心问答 ========== -->
+<div class="section" id="why">
+  <h2>❓ 3. 核心问答：为什么不直接 Excel → PNG？</h2>
+
+  <div class="q-box">
+    <strong>用户的问题：</strong><br>
+    程序的执行逻辑是将 Excel 先转化为 PDF，然后再转化为图片（PNG）。为什么是多此一举？为什么不能直接把 Excel 转成 PNG？
+  </div>
+
+  <h3>答案有三个层次：技术限制 + 格式保真 + 业务需要</h3>
+
+  <ol class="answer-steps">
+    <li>
+      <h4>层次一：Java 生态里不存在免费且高质量的 "Excel → PNG" 方案</h4>
+      <table class="data-table" style="margin-top:6px;">
+        <tr><th>Java 库</th><th>能直接 Excel→PNG？</th><th>为什么不行 / 什么代价</th></tr>
+        <tr>
+          <td><strong>Apache POI</strong></td>
+          <td style="color:var(--err);font-weight:bold">❌ 完全不行</td>
+          <td>POI 只是一个<strong>数据读写工具</strong>。它能读单元格里的数字、文字、公式，但它<strong>不会"画"表格</strong>。合并单元格、边框、颜色、字体——这些东西 POI 只能存、不能渲染成一幅画。</td>
+        </tr>
+        <tr>
+          <td><strong>Aspose.Cells</strong></td>
+          <td style="color:var(--succ);font-weight:bold">✅ 可以</td>
+          <td>但是<strong>商业付费库</strong>。注意代码中有这行：<br><code>// AsposeLicenseUtil.getLicense();</code> —— <strong>被注释掉了</strong>！说明服务器上没有付费 License，或者为了省钱没有用它。</td>
+        </tr>
+        <tr>
+          <td><strong>LibreOffice Calc</strong></td>
+          <td style="color:var(--warn);font-weight:bold">❌ 不能</td>
+          <td>LibreOffice 的 Calc 组件可以 Excel→PDF，但是<strong>没有直接的 Excel→PNG 命令行选项</strong>。它能输出 PDF、HTML、CSV，但不能直接输出 PNG。</td>
+        </tr>
+      </table>
+      <p style="margin-top:8px;">所以设计者的选择是：要么花钱用 Aspose，要么免费组合 LibreOffice + PDFBox。<strong>显然选了后者。</strong></p>
+    </li>
+
+    <li>
+      <h4>层次二：LibreOffice 是唯一能做到 "Excel 1:1 格式还原" 的免费方案</h4>
+      <p>LibreOffice 的 Calc 是一个<strong>真实的电子表格软件</strong>，不是简单的格式转换器。它打开 Excel 后能做到：</p>
+      <table class="data-table" style="margin-top:6px;">
+        <tr><td>✅ 合并单元格</td><td>✅ 边框样式（粗细/颜色/虚线）</td><td>✅ 字体/字号/颜色</td></tr>
+        <tr><td>✅ 条件格式</td><td>✅ 数字格式（日期/货币）</td><td>✅ 行高/列宽</td></tr>
+        <tr><td>✅ 单元格背景色</td><td>✅ 文字对齐方式</td><td>✅ 打印区域/分页</td></tr>
+      </table>
+      <p>但 LibreOffice 的"文件→导出"功能只支持 <strong>PDF</strong> 输出，不支持 PNG。所以 <strong>PDF 成了必经的中间产物</strong>。</p>
+    </li>
+
+    <li>
+      <h4>层次三："中间产物" PDF 不是废品，它在业务中还有用</h4>
+      <p>注意方法返回了两个东西：</p>
+      <div class="flow-box">
+        <span class="root">excelToImgFile()</span><br>
+        <span class="branch">&nbsp;&nbsp;├──</span> 结果页PDF <span class="arrow">→</span> <span class="method">PdfCertCleanConverter</span> <span class="arrow">→</span> <span class="output">PNG × N 张</span> <span class="explain">→ 嵌入证书Word模板的结果页位置</span><br>
+        <span class="branch">&nbsp;&nbsp;└──</span> 数据页PDF <span class="arrow">→</span> <span class="output">直接保留！不转图片！</span> <span class="explain">→ 后续"证书编制"中和主页合并成完整档案PDF</span>
+      </div>
+      <p style="margin-top:8px;">认证检测机构的档案必须是 <strong>PDF 格式</strong>（盖电子章、防篡改）。如果在第一步就把 Excel 全转成了 PNG，那数据页就只剩图片，没法合并到最终证书 PDF 里了。</p>
+    </li>
+  </ol>
+
+  <div class="info-box">
+    <strong>一句话总结</strong>：<br>
+    Excel → PDF（LibreOffice）→ PNG（PDFBox）不是"多此一举"，而是<strong>技术上的最优解</strong>——用免费的 LibreOffice 保证格式还原，用 PDFBox 实现高清图片，中间的 PDF 顺便还给后续"证书合并"留着用。
+  </div>
+</div>
+
+<!-- ========== 4. 上下游 ========== -->
+<div class="section" id="data-flow">
+  <h2>🔄 4. 上下游数据流：这些东西去哪了</h2>
+
+  <h3>4.1 上游：谁调用了 excelToImgFile()？</h3>
+  <p>在同一个文件中，第 226 行：</p>
+  <div class="code-block">
+    <div class="title">saveOriginalFile() 中的调用</div>
+<pre>Map&lt;String, Object&gt; amap = <span class="method">excelToImgFile</span>(normalizedPath);
+List&lt;String&gt; croppedResultImages = amap.get("croppedResultImages");  <span class="comment">// 取PNG列表</span>
+String dataPdfPath = amap.get("dataPdfPath");                        <span class="comment">// 取PDF路径</span>
+
+<span class="comment">// 把PNG列表转成JSON字符串</span>
+String resultImgJson = <span class="keyword">new</span> ObjectMapper().writeValueAsString(croppedResultImages);
+
+<span class="comment">// 调用 Service 层 → 存入数据库</span>
+testTaskAllotService.<span class="method">updateTaskAllotWithResultTemplate</span>(
+    allotId,        <span class="comment">// 任务分配ID</span>
+    resultImgJson,  <span class="comment">// 图片JSON → 存入证书(ZS)记录的 result_file_url</span>
+    <span class="keyword">null</span>,           <span class="comment">// dataImgPath：本次为null</span>
+    dataPdfPath,    <span class="comment">// 数据PDF路径 → 存入证书(ZS)记录的 data_pdf_url</span>
+    filePath        <span class="comment">// 原始Excel路径</span>
+);</pre>
+  </div>
+
+  <h3>4.2 下游：存入数据库后谁在用？</h3>
+  <table class="data-table">
+    <tr><th>东西</th><th>存的字段</th><th>存的格式</th><th>后续工序谁读</th></tr>
+    <tr>
+      <td>结果页 <code>page_1.png, page_2.png ...</code></td>
+      <td><code>result_file_url</code></td>
+      <td>JSON 数组：<br><code>["/profile/original/.../page_1.png","/profile/original/.../page_2.png"]</code></td>
+      <td><strong>证书编制</strong>：Word 模板打开时，读取这个 JSON，把图片依次插入到 Word 文档的"结果页"区域</td>
+    </tr>
+    <tr>
+      <td>数据页 <code>xxx_data.pdf</code></td>
+      <td><code>data_pdf_url</code></td>
+      <td>单个路径字符串：<br><code>/profile/original/.../xxx_data.pdf</code></td>
+      <td><strong>证书归档</strong>：用 PdfMergeUtils 把证书主页 PDF + 数据页 PDF 合并成一个完整的档案 PDF</td>
+    </tr>
+  </table>
+
+  <h3>4.3 完整调用链图</h3>
+  <div class="flow-box" style="line-height:2.4;">
+    <span class="branch">用户点击"保存"</span><br>
+    &nbsp;&nbsp;<span class="arrow">↓</span><br>
+    <span class="branch">前端 submitForm() → WebSave()</span><br>
+    &nbsp;&nbsp;<span class="arrow">↓</span><br>
+    <span class="method">POST /office/api/saveOriginalFile</span><br>
+    &nbsp;&nbsp;<span class="arrow">↓</span><br>
+    <span class="root">excelToImgFile() ← 📍 你正在看的方法</span><br>
+    &nbsp;&nbsp;<span class="arrow">↓</span> 返回 Map<br>
+    <span class="branch">├─ croppedResultImages → JSON → DB: result_file_url</span><br>
+    <span class="branch">└─ dataPdfPath → DB: data_pdf_url</span><br>
+    &nbsp;&nbsp;<span class="arrow">↓</span><br>
+    <span class="branch">后续"证书编制"读取这些字段</span>
+  </div>
+</div>
+
+<div style="text-align:center;padding:30px;color:var(--gray);font-size:0.83rem;">
+  📅 报告生成：2026-05-08 · OfficeOnlineApi.java L249-296 逐行详解
+</div>
+</div>
+
+<button class="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+</body>
+</html>

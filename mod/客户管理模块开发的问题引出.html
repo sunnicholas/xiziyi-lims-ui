@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>receiverPhone 加 @Sensitive 连锁反应分析</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f5f7fa; color: #333; line-height: 1.8; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+  h1 { text-align: center; font-size: 28px; color: #1a1a2e; padding: 30px 0 10px; border-bottom: 3px solid #409eff; margin-bottom: 30px; }
+  h2 { font-size: 22px; color: #303133; margin: 40px 0 16px; padding-left: 12px; border-left: 4px solid #409eff; }
+  h3 { font-size: 17px; color: #606266; margin: 24px 0 12px; }
+  p { margin: 12px 0; text-indent: 2em; }
+  p.no-indent { text-indent: 0; }
+  .card { background: #fff; border-radius: 8px; padding: 24px 28px; margin: 20px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .card.danger { border-left: 4px solid #f56c6c; }
+  .card.warn { border-left: 4px solid #e6a23c; }
+  .card.info { border-left: 4px solid #409eff; }
+  .card.success { border-left: 4px solid #67c23a; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th { background: #ecf5ff; color: #409eff; font-weight: 600; text-align: left; padding: 10px 14px; border: 1px solid #dfe6ec; }
+  td { padding: 10px 14px; border: 1px solid #dfe6ec; vertical-align: top; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  code { background: #f0f2f5; color: #e74c3c; padding: 2px 6px; border-radius: 3px; font-size: 13px; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+  pre { background: #2d2d2d; color: #f8f8f2; padding: 18px 22px; border-radius: 6px; overflow-x: auto; margin: 16px 0; font-size: 13px; line-height: 1.7; }
+  pre .kw { color: #66d9ef; }
+  pre .str { color: #e6db74; }
+  pre .cmt { color: #75715e; }
+  pre .ann { color: #a6e22e; }
+  pre .add { color: #a6e22e; }
+  pre .del { color: #f92672; }
+  .highlight { background: #fff3cd; padding: 1px 4px; border-radius: 3px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 0 2px; }
+  .tag.blue { background: #409eff; color: #fff; }
+  .tag.red { background: #f56c6c; color: #fff; }
+  .tag.orange { background: #e6a23c; color: #fff; }
+  .tag.green { background: #67c23a; color: #fff; }
+  .tag.gray { background: #909399; color: #fff; }
+  ul, ol { margin: 12px 0; padding-left: 2em; }
+  li { margin: 6px 0; }
+  .flow { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 20px 0; }
+  .flow-box { background: #ecf5ff; border: 2px solid #409eff; border-radius: 8px; padding: 10px 18px; text-align: center; font-size: 13px; min-width: 100px; }
+  .flow-box.warn { border-color: #e6a23c; background: #fdf6ec; }
+  .flow-box.danger { border-color: #f56c6c; background: #fef0f0; }
+  .flow-arrow { font-size: 20px; color: #409eff; }
+  .note { font-size: 13px; color: #909399; margin-top: 4px; }
+  .sticky-note { background: #fff9c4; border: 1px solid #f9a825; border-radius: 6px; padding: 12px 16px; margin: 16px 0; }
+  .sticky-note h4 { color: #f57f17; margin-bottom: 8px; }
+  .old-code { background: #fff5f5; border: 1px solid #f56c6c; border-radius: 6px; padding: 16px; font-size: 13px; margin: 10px 0; }
+  .new-code { background: #f0fff4; border: 1px solid #67c23a; border-radius: 6px; padding: 16px; font-size: 13px; margin: 10px 0; }
+  .old-code h4 { color: #f56c6c; margin-bottom: 6px; }
+  .new-code h4 { color: #67c23a; margin-bottom: 6px; }
+  .chain { display: flex; flex-direction: column; align-items: center; margin: 24px 0; }
+  .chain-item { background: #ecf5ff; border: 2px solid #409eff; border-radius: 8px; padding: 10px 20px; text-align: center; width: 80%; max-width: 600px; margin: 5px 0; }
+  .chain-arrow { font-size: 20px; color: #909399; margin: 2px 0; }
+  .chain-item.impact { border-color: #e6a23c; background: #fdf6ec; }
+  .chain-item.danger { border-color: #f56c6c; background: #fef0f0; }
+  .chain-item.ok { border-color: #67c23a; background: #f0f9ff; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>只加一行 @Sensitive，连锁反应有多大？</h1>
+
+<div class="card">
+  <h2>一、改动本身</h2>
+  <p>在 <code>CrmInvoiceTitle.java</code> 第 98 行的 <code>receiverPhone</code> 字段上，加一个 <code>@Sensitive</code> 注解。完整的改后代码：</p>
+
+  <div class="old-code">
+    <h4>改前</h4>
+<pre><span class="cmt">/** 收件人电话 */</span>
+<span class="ann">@ApiModelProperty</span>(<span class="str">"收件人电话"</span>)
+<span class="ann">@Excel</span>(name = <span class="str">"收件人电话"</span>)
+<span class="kw">private</span> String receiverPhone;</pre>
+  </div>
+
+  <div class="new-code">
+    <h4>改后</h4>
+<pre><span class="cmt">/** 收件人电话 */</span>
+<span class="ann">@ApiModelProperty</span>(<span class="str">"收件人电话"</span>)
+<span class="ann">@Excel</span>(name = <span class="str">"收件人电话"</span>)
+<span class="ann"><span class="add">@Sensitive(desensitizedType = DesensitizedType.PHONE)</span></span>   <span class="cmt">// codes fix from zxyPC</span>
+<span class="kw">private</span> String receiverPhone;</pre>
+  </div>
+
+  <p>还需要两个 import（IDE 自动补全即可）：</p>
+<pre><span class="kw">import</span> com.xzy.common.annotation.Sensitive;
+<span class="kw">import</span> com.xzy.common.enums.DesensitizedType;</pre>
+
+  <p>就这些。只加 <strong>1 行注解 + 2 行 import</strong>。改完编译通过、应用启动正常。</p>
+  <p>但它的影响会像一颗石子扔进池塘，涟漪会扩散到 <strong>3 层</strong>：后端序列化层 → 前端展示层 → 用户操作层。</p>
+</div>
+
+<!-- ==================== 核心机制 ==================== -->
+<div class="card">
+  <h2>二、必须先理解：@Sensitive 到底做了什么？</h2>
+
+  <h3>它是 Jackson 的"拦截器"</h3>
+  <p><code>@Sensitive</code> 本身是一个空壳注解，真正的逻辑在 <code>SensitiveJsonSerializer</code> 类里。这个类继承了 Jackson 的 <code>JsonSerializer</code>，会在 Java 对象转 JSON 字符串的时候介入。</p>
+
+  <table>
+    <tr><th>文件</th><th>角色</th><th>一句话</th></tr>
+    <tr>
+      <td><code>annotation/Sensitive.java</code></td>
+      <td>标记</td>
+      <td>"这个字段需要脱敏"</td>
+    </tr>
+    <tr>
+      <td><code>enums/DesensitizedType.java</code></td>
+      <td>规则</td>
+      <td>"手机号=中间4位变****"</td>
+    </tr>
+    <tr>
+      <td><code>serializer/SensitiveJsonSerializer.java</code></td>
+      <td>执行</td>
+      <td>"真的执行正则替换"</td>
+    </tr>
+  </table>
+
+  <h3>脱敏的核心逻辑</h3>
+<pre><span class="kw">public class</span> SensitiveJsonSerializer <span class="kw">extends</span> JsonSerializer&lt;String&gt; {
+
+    <span class="ann">@Override</span>
+    <span class="kw">public void</span> serialize(String value, JsonGenerator gen, ...) <span class="kw">throws</span> IOException {
+        <span class="kw">if</span> (desensitization()) {
+            <span class="cmt">// 需要脱敏：13812345678 → 138****5678</span>
+            gen.writeString(desensitizedType.desensitizer().apply(value));
+        } <span class="kw">else</span> {
+            <span class="cmt">// 不需要脱敏：返回原文</span>
+            gen.writeString(value);
+        }
+    }
+
+    <span class="kw">private boolean</span> desensitization() {
+        LoginUser securityUser = SecurityUtils.getLoginUser();
+        <span class="kw">return</span> !securityUser.getUser().isAdmin();   <span class="cmt">// 管理员不脱敏！</span>
+    }
+}</pre>
+
+  <div class="sticky-note">
+    <h4>🛡 管理员不脱敏</h4>
+    <p>代码第 52 行：<code>return !securityUser.getUser().isAdmin();</code>。管理员登录 → 返回 false → 不执行脱敏 → 看到完整的 <code>13812345678</code>。普通用户登录 → 返回 true → 执行脱敏 → 看到 <code>138****5678</code>。</p>
+  </div>
+
+  <h3>什么时候生效？什么时候不生效？</h3>
+  <table>
+    <tr><th>场景</th><th>是否走 Jackson 序列化？</th><th>@Sensitive 是否生效？</th></tr>
+    <tr><td>Controller 返回 JSON（list、getInfo）</td><td><span class="tag green">走</span></td><td><span class="tag red">▶ 生效！</span></td></tr>
+    <tr><td>Controller 接收 JSON（add、edit）</td><td><span class="tag blue">不走（反序列化）</span></td><td><span class="tag green">不生效</span></td></tr>
+    <tr><td>Excel 导出（export）</td><td><span class="tag blue">不走（ExcelUtil）</span></td><td><span class="tag green">不生效</span></td></tr>
+    <tr><td>存数据库</td><td><span class="tag blue">不走</span></td><td><span class="tag green">不生效</span></td></tr>
+  </table>
+</div>
+
+<!-- ==================== 连锁反应 ==================== -->
+<div class="card">
+  <h2>三、完整的连锁反应</h2>
+  <p>下面从"用户打开页面"到"用户点击修改"的整个过程，逐环节分析。</p>
+</div>
+
+<div class="card">
+  <h2>3.1 链路一：打开列表页面</h2>
+
+  <h3>请求链路</h3>
+  <div class="flow">
+    <div class="flow-box">前端调用<br><span class="note">GET /crm/crmInvoiceTitle/list</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Controller.list()<br><span class="note">返回 TableDataInfo</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box warn">Jackson 序列化<br><span class="note" style="color:#e6a23c;">@Sensitive 拦截</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">前端收到 JSON</div>
+  </div>
+
+  <h4>改前（前端收到的 JSON）</h4>
+<pre>{
+  "receiverPhone": "13812345678"     <span class="cmt">← 明文</span>
+}</pre>
+
+  <h4>改后（前端收到的 JSON）</h4>
+  <table>
+    <tr><th>用户角色</th><th>前端收到的 JSON</th></tr>
+    <tr>
+      <td><span class="tag blue">管理员</span></td>
+      <td><code>"receiverPhone": "13812345678"</code> ← 原文，不变</td>
+    </tr>
+    <tr>
+      <td><span class="tag orange">普通用户</span></td>
+      <td><code>"receiverPhone": "138****5678"</code> ← <strong>变了！</strong></td>
+    </tr>
+  </table>
+
+  <h3>前端表现</h3>
+  <p>看前端 Vue 代码第 126 行：</p>
+<pre>&lt;el-table-column label="收件人电话" align="left" <span class="kw">prop="</span><span class="str">receiverPhone</span><span class="kw">"</span> /&gt;</pre>
+  <p>表格绑定了 <code>receiverPhone</code> 属性。后端返回什么就显示什么。</p>
+  <p>所以列表中"收件人电话"这一列：</p>
+  <ul>
+    <li>管理员 → 看到 <code>13812345678</code> ✅ 正常</li>
+    <li>普通用户 → 看到 <code>138****5678</code> ✅ 脱敏显示，符合预期</li>
+  </ul>
+  <p class="no-indent"><span class="tag green">这个环节没有副作用</span>，列表的脱敏显示正是我们想要的。</p>
+</div>
+
+<div class="card warn">
+  <h2>3.2 链路二：点击"修改"按钮 ⚠ 这里有坑</h2>
+
+  <h3>请求链路</h3>
+  <div class="flow">
+    <div class="flow-box">用户点击"修改"<br><span class="note">触发 handleUpdate(row)</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">前端调用<br><span class="note">GET /crm/crmInvoiceTitle/{id}</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Controller.getInfo()<br><span class="note">返回 AjaxResult</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box warn">Jackson 序列化<br><span class="note" style="color:#e6a23c;">@Sensitive 拦截</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box danger">前端编辑表单<br><span class="note" style="color:#f56c6c;">显示脱敏数据？</span></div>
+  </div>
+
+  <p>看前端 Vue 代码第 402-409 行的 <code>handleUpdate</code> 方法：</p>
+<pre>handleUpdate(row) {
+    this.reset();
+    <span class="kw">const</span> id = row.id || this.ids;
+    getCrmInvoiceTitle(id).then((response) => {
+        this.form = response.data;    <span class="cmt">// 直接把后端返回的数据填进表单</span>
+        this.open = true;
+        this.title = '修改发票抬头管理';
+    });
+},</pre>
+
+  <p>第 222-224 行的表单输入框：</p>
+<pre>&lt;el-input v-model=<span class="str">"form.receiverPhone"</span> placeholder=<span class="str">"请输入收件人电话"</span> /&gt;</pre>
+
+  <h3>⚠ 关键问题</h3>
+  <p>因为 <code>getInfo()</code> 接口返回的 JSON 中 <code>receiverPhone</code> 已经被脱敏了，前端 <code>this.form = response.data</code> 直接赋值后，编辑表单里显示的就是脱敏后的值：</p>
+
+  <table>
+    <tr><th>用户角色</th><th>编辑表单中显示</th><th>风险</th></tr>
+    <tr>
+      <td><span class="tag blue">管理员</span></td>
+      <td><code>13812345678</code></td>
+      <td><span class="tag green">无</span></td>
+    </tr>
+    <tr>
+      <td><span class="tag orange">普通用户</span></td>
+      <td><code>138****5678</code></td>
+      <td><span class="tag red">如果用户没注意，点"确定"提交，会把这串****保存到数据库！</span></td>
+    </tr>
+  </table>
+
+  <div class="sticky-note" style="border-color:#f56c6c; background:#fff5f5;">
+    <h4 style="color:#f56c6c;">🔴 这是最大的潜在风险</h4>
+    <p>流程推演：</p>
+    <ol>
+      <li>普通用户打开列表，看到"收件人电话"列显示 <code>138****5678</code></li>
+      <li>点击"修改"按钮，编辑表单弹出，输入框里显示 <code>138****5678</code></li>
+      <li>用户可能没注意到这个值已被脱敏，直接改其他字段后点"确定"</li>
+      <li>提交 <code>PUT /crm/crmInvoiceTitle</code>，请求体里 <code>receiverPhone: "138****5678"</code></li>
+      <li>后端接收 JSON 反序列化 → @Sensitive 不干预 → 原样存入数据库</li>
+      <li><strong>数据库中的手机号永远变成了 <code>138****5678</code></strong></li>
+    </ol>
+  </div>
+
+  <h3>这个问题存不存在？</h3>
+  <p>取决于项目的实际情况：</p>
+  <ul>
+    <li><strong>如果普通用户没有"修改"权限</strong>（Controller 有 <code>@PreAuthorize("...edit")</code> 权限检查）→ <span class="tag green">无风险</span></li>
+    <li><strong>如果普通用户可以修改</strong> → <span class="tag red">需要前端配合</span>，方案见下方</li>
+  </ul>
+</div>
+
+<div class="card">
+  <h2>3.3 链路三：新增数据（add）——无影响</h2>
+
+  <div class="flow">
+    <div class="flow-box">用户新增<br><span class="note">填写 13812345678</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">POST JSON<br><span class="note">@RequestBody 反序列化<br>@Sensitive 不干预</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">存数据库<br><span class="note">13812345678</span></div>
+  </div>
+  <p><span class="tag green">无影响</span>。@Sensitive 只在序列化时工作，反序列化（JSON→Java对象）时不干预。用户提交什么，数据库就存什么。</p>
+</div>
+
+<div class="card">
+  <h2>3.4 链路四：编辑后保存（edit）——无影响</h2>
+
+  <div class="flow">
+    <div class="flow-box">用户提交修改<br><span class="note">PUT JSON</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Controller.edit()<br><span class="note">@RequestBody 反序列化<br>@Sensitive 不干预</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Service</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Mapper UPDATE</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">数据库<br><span class="note">存用户提交的值</span></div>
+  </div>
+  <p><span class="tag green">写入方向不受影响</span>。但如果"读取→编辑→保存"这个流程中，读取到的值是脱敏后的（见 3.2 的问题），那用户保存的就是脱敏值。这是 3.2 问题的延伸，不是 edit 接口本身的问题。</p>
+</div>
+
+<div class="card">
+  <h2>3.5 链路五：搜索功能——略微影响</h2>
+
+  <p>前端第 55-61 行：</p>
+<pre>&lt;el-form-item label="收件人电话" prop="receiverPhone"&gt;
+  &lt;el-input v-model=<span class="str">"queryParams.receiverPhone"</span>
+    placeholder=<span class="str">"请输入收件人电话"</span> /&gt;
+&lt;/el-form-item&gt;</pre>
+
+  <p>用户输入内容搜索，发送到后端 → Controller → Mapper XML 第 76 行：</p>
+<pre>&lt;if test="receiverPhone != null  and receiverPhone != ''"&gt;
+  and cit.receiver_phone like concat('%',  #{receiverPhone} , '%')
+&lt;/if&gt;</pre>
+  <p>这是模糊搜索，查的是数据库。跟 @Sensitive 无关。</p>
+  <p><span class="tag green">搜索功能不受影响</span>。</p>
+</div>
+
+<div class="card success">
+  <h2>3.6 链路六：Excel 导出 —— 完美绕开</h2>
+
+  <div class="flow">
+    <div class="flow-box">用户点导出<br><span class="note">POST /crm/crmInvoiceTitle/export</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">Controller.export()<br><span class="note">ExcelUtil.exportExcel()</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box ok">ExcelUtil 读 @Excel 注解<br><span class="note" style="color:#67c23a;">不读 @Sensitive</span></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">生成 Excel 文件<br><span class="note">显示 13812345678 原文</span></div>
+  </div>
+
+  <p>Excel 导出用的是若依框架的 <code>ExcelUtil</code>，它只读 <code>@Excel</code> 注解的 <code>name</code> 属性（列头），不经过 Jackson 序列化，@Sensitive 完全不参与。</p>
+  <p class="no-indent"><span class="tag green">Excel 导出的是明文，不存在脱敏。</span>对需要打印或做数据核查的场景来说，这是正确行为。</p>
+</div>
+
+<div class="card">
+  <h2>3.7 链路七：数据库层 —— 完全不受影响</h2>
+  <p>Mapper XML 中 <code>receiverPhone</code> → <code>receiver_phone</code> 列的映射完全不变。@Sensitive 是 Java 注解，MyBatis 不认识它，SQL 不会变，数据库表结构不动，数据迁移不需要。</p>
+  <p class="no-indent"><span class="tag green">数据库零改动。</span></p>
+</div>
+
+<!-- ==================== 总影响矩阵 ==================== -->
+<div class="card info">
+  <h2>四、影响矩阵一览</h2>
+  <table>
+    <tr><th>位置</th><th>文件</th><th>需要改吗？</th><th>说明</th></tr>
+    <tr>
+      <td>Java 实体</td>
+      <td><code>CrmInvoiceTitle.java</code></td>
+      <td><span class="tag green">改：+1行注解+2行import</span></td>
+      <td>核心改动</td>
+    </tr>
+    <tr>
+      <td>Mapper 接口</td>
+      <td><code>CrmInvoiceTitleMapper.java</code></td>
+      <td><span class="tag gray">不改</span></td>
+      <td>字段名和方法都没变</td>
+    </tr>
+    <tr>
+      <td>Mapper XML</td>
+      <td><code>CrmInvoiceTitleMapper.xml</code></td>
+      <td><span class="tag gray">不改</span></td>
+      <td>resultMap、SQL 都不变</td>
+    </tr>
+    <tr>
+      <td>Service 层</td>
+      <td><code>ICrmInvoiceTitleService.java</code> / impl</td>
+      <td><span class="tag gray">不改</span></td>
+      <td>业务逻辑不涉及</td>
+    </tr>
+    <tr>
+      <td>Controller</td>
+      <td><code>CrmInvoiceTitleController.java</code></td>
+      <td><span class="tag gray">不改</span></td>
+      <td>接口签名不变</td>
+    </tr>
+    <tr>
+      <td>数据库</td>
+      <td><code>crm_invoice_title</code> 表</td>
+      <td><span class="tag gray">不改</span></td>
+      <td>列名和数据都不变</td>
+    </tr>
+    <tr style="background:#fdf6ec;">
+      <td>前端列表</td>
+      <td><code>index.vue</code> 表格列</td>
+      <td><span class="tag orange">注意</span></td>
+      <td>普通用户看到脱敏值，管理员看到原文。这是预期行为，不需改代码</td>
+    </tr>
+    <tr style="background:#fef0f0;">
+      <td>前端编辑表单</td>
+      <td><code>index.vue</code> 编辑弹窗</td>
+      <td><span class="tag red">需评估</span></td>
+      <td>getInfo 返回脱敏数据 → 编辑框显示****。如普通用户有编辑权限需处理</td>
+    </tr>
+    <tr>
+      <td>Excel 导出</td>
+      <td><code>index.vue</code> 导出按钮</td>
+      <td><span class="tag gray">不改</span></td>
+      <td>走 ExcelUtil，不受影响</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ==================== 风险分析 ==================== -->
+<div class="card danger">
+  <h2>五、风险点：编辑表单的脱敏回填</h2>
+
+  <h3>问题复现路径</h3>
+  <ol>
+    <li>普通用户 → 打开列表 → 看到 <code>138****5678</code></li>
+    <li>点击"修改" → 编辑框显示 <code>138****5678</code>（因为 getInfo 返回的是脱敏数据）</li>
+    <li>用户只改了其他字段（没改电话）→ 点"确定"</li>
+    <li>提交 PUT，<code>receiverPhone: "138****5678"</code> → <strong>****被写进数据库</strong></li>
+  </ol>
+
+  <h3>方案对比</h3>
+  <table>
+    <tr><th>方案</th><th>做法</th><th>改动量</th><th>是否推荐</th></tr>
+    <tr>
+      <td>A. 不改</td>
+      <td>前提：普通用户没有编辑权限（Controller 有 @PreAuthorize 保护）</td>
+      <td><span class="tag green">0</span></td>
+      <td><span class="tag green">✅ 如果权限已保护</span></td>
+    </tr>
+    <tr>
+      <td>B. 前端处理</td>
+      <td>编辑时如果 phone 包含 ****，先清空提示用户重新输入</td>
+      <td><span class="tag orange">前端改 Vue</span></td>
+      <td><span class="tag orange">可以但魔幻</span></td>
+    </tr>
+    <tr>
+      <td>C. 后端分离接口</td>
+      <td>getInfo 不走脱敏（单独写 VO 或去掉 @Sensitive），list 保留脱敏</td>
+      <td><span class="tag orange">后端加 VO 类</span></td>
+      <td><span class="tag green">✅ 推荐，改动可控</span></td>
+    </tr>
+    <tr>
+      <td>D. 只脱敏不编辑</td>
+      <td>前端编辑表单中"收件人电话"改为只读展示，不让编辑</td>
+      <td><span class="tag orange">前端改 Vue</span></td>
+      <td><span class="tag orange">业务上可能不合理</span></td>
+    </tr>
+  </table>
+
+  <p class="note" style="margin-top:16px;">当前项目 Controller 上有 <code>@PreAuthorize("@ss.hasPermi('crm:crmInvoiceTitle:edit')")</code> 保护。如果编辑权限只分配给管理员角色，则方案 A 已经是安全的。</p>
+</div>
+
+<!-- ==================== 总结 ==================== -->
+<div class="card success">
+  <h2>六、总结：一颗石子，六层涟漪</h2>
+
+  <div class="chain">
+    <div class="chain-item ok">❶ Java 实体层<br><span class="note">+1行注解 +2行import，编译通过</span></div>
+    <div class="chain-arrow">▼</div>
+    <div class="chain-item ok">❷ JSON 序列化层<br><span class="note">Jackson 输出时执行：13812345678 → 138****5678</span></div>
+    <div class="chain-arrow">▼</div>
+    <div class="chain-item">❸ 后端 API 响应<br><span class="note">list() / getInfo() 返回脱敏数据给前端</span></div>
+    <div class="chain-arrow">▼</div>
+    <div class="chain-item">❹ 前端列表展示<br><span class="note">表格列的"收件人电话"自动变成脱敏显示 ✅</span></div>
+    <div class="chain-arrow">▼</div>
+    <div class="chain-item impact">❺ 前端编辑表单 ⚠<br><span class="note" style="color:#e6a23c;">getInfo返回脱敏值 → 表单回填**** → 若用户未改就提交 → ****入库</span></div>
+    <div class="chain-arrow">▼</div>
+    <div class="chain-item ok">❻ Excel导出 / 数据库存储<br><span class="note">不受影响 ✅</span></div>
+  </div>
+
+  <h3 style="margin-top:30px;">一句话结论</h3>
+  <p style="font-size:16px; text-align:center; margin:20px 0;">
+    加上 <code>@Sensitive</code> 后，<strong>管理员毫无感知</strong>（看到原文），<br>
+    普通用户在<strong>列表和详情页</strong>看到脱敏手机号 <code>138****5678</code>，<br>
+    <strong>唯一的风险</strong>是普通用户编辑时可能把 <code>****</code> 存入数据库——<br>
+    但只要编辑权限限制在管理员，这个问题就不存在。
+  </p>
+</div>
+
+<p style="text-align:center; color:#909399; margin:40px 0 20px; font-size:13px;">
+  报告生成时间：2026-05-09 &nbsp;|&nbsp; 项目：xiziyi-lims-service &nbsp;|&nbsp; 模块：xzy-crm / CrmInvoiceTitle.java
+</p>
+
+</div>
+</body>
+</html>

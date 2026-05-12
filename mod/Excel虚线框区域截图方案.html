@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel虚线框区域截图方案 —— 实现报告</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #2563eb;
+            --accent-light: #eff6ff;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --purple: #7c3aed;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg); color: var(--text); line-height: 1.8; font-size: 15px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; }
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #6366f1 100%);
+            color: #fff; border-radius: var(--radius); padding: 40px 48px;
+            margin-bottom: 32px; box-shadow: 0 4px 24px rgba(37,99,235,0.25);
+        }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .header .subtitle { font-size: 15px; opacity: 0.85; }
+        .header .meta { margin-top: 16px; font-size: 13px; opacity: 0.7; display: flex; gap: 24px; flex-wrap: wrap; }
+        .card {
+            background: var(--card-bg); border-radius: var(--radius); padding: 32px;
+            margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .card h2 {
+            font-size: 20px; font-weight: 700; margin-bottom: 16px;
+            padding-bottom: 12px; border-bottom: 2px solid var(--accent); color: var(--accent);
+        }
+        .card h3 { font-size: 16px; font-weight: 600; margin: 24px 0 12px; color: #334155; }
+        .card h3::before { content: "▸ "; color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        th, td { padding: 10px 14px; text-align: left; border: 1px solid var(--border); }
+        th { background: #f1f5f9; font-weight: 600; color: #334155; white-space: nowrap; }
+        tr:hover td { background: #f8fafc; }
+        code {
+            background: #f1f5f9; padding: 2px 6px; border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; color: #e11d48;
+        }
+        pre {
+            background: var(--code-bg); color: var(--code-text); padding: 20px 24px;
+            border-radius: var(--radius); overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 13px; line-height: 1.7; margin: 12px 0;
+        }
+        pre .kw { color: #c084fc; }
+        pre .str { color: #86efac; }
+        pre .cmt { color: #94a3b8; }
+        pre .num { color: #fbbf24; }
+        pre .fn { color: #67e8f9; }
+
+        .flow-container { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+        .flow-step {
+            display: flex; align-items: flex-start; gap: 16px;
+            padding: 16px 20px; background: var(--accent-light);
+            border-radius: 8px; border-left: 4px solid var(--accent);
+        }
+        .flow-step .step-num {
+            background: var(--accent); color: #fff; min-width: 32px; height: 32px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 14px; flex-shrink: 0;
+        }
+        .flow-step .step-content { flex: 1; }
+        .flow-step .step-title { font-weight: 600; margin-bottom: 4px; }
+        .flow-step .step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+        .pipeline {
+            display: flex; align-items: center; gap: 0; margin: 24px 0;
+            flex-wrap: wrap; justify-content: center;
+        }
+        .pipeline .node {
+            background: var(--accent-light); border: 2px solid var(--accent);
+            border-radius: 8px; padding: 12px 20px; text-align: center;
+            font-weight: 600; font-size: 13px; white-space: nowrap;
+        }
+        .pipeline .arrow { font-size: 20px; color: var(--accent); padding: 0 8px; font-weight: 700; }
+        .pipeline .node-highlight { background: #fee2e2; border-color: #dc2626; }
+        .pipeline .node-db { background: #fef3c7; border-color: #d97706; color: #92400e; }
+        .pipeline .node-disk { background: #dcfce7; border-color: #16a34a; color: #166534; }
+        .pipeline .node-success { background: #dbeafe; border-color: #2563eb; color: #1e40af; }
+
+        .badge {
+            display: inline-block; padding: 3px 10px; border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+        }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-amber { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-purple { background: #f3e8ff; color: #7c3aed; }
+
+        .file-tree {
+            background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;
+            padding: 16px 20px; font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 13px; line-height: 2;
+        }
+        .file-tree .dir { color: #2563eb; font-weight: 600; }
+        .file-tree .file { color: #334155; }
+        .file-tree .indent { margin-left: 20px; }
+        .file-tree .new-file { color: #059669; font-weight: 600; }
+
+        .highlight-box {
+            background: #fefce8; border: 1px solid #facc15; border-radius: 8px;
+            padding: 16px 20px; margin: 16px 0; font-size: 14px;
+        }
+        .highlight-box .label { font-weight: 700; color: #a16207; margin-bottom: 6px; }
+
+        .info-box {
+            background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px;
+            padding: 16px 20px; margin: 16px 0; font-size: 14px;
+        }
+        .info-box .label { font-weight: 700; color: #0369a1; margin-bottom: 6px; }
+
+        .tip-box {
+            background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px;
+            padding: 16px 20px; margin: 16px 0; font-size: 14px;
+        }
+        .tip-box .label { font-weight: 700; color: #166534; margin-bottom: 6px; }
+
+        .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+        @media (max-width: 768px) { .compare-grid { grid-template-columns: 1fr; } }
+        .compare-card {
+            padding: 20px; border-radius: 8px; border: 2px solid var(--border);
+        }
+        .compare-card.old { border-color: #fca5a5; background: #fef2f2; }
+        .compare-card.new { border-color: #86efac; background: #f0fdf4; }
+        .compare-card h4 { margin-bottom: 8px; font-size: 15px; }
+
+        .toc {
+            background: var(--card-bg); border-radius: var(--radius); padding: 24px 32px;
+            margin-bottom: 24px; box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .toc h3 { margin-bottom: 12px; font-size: 16px; }
+        .toc a { display: block; padding: 6px 0; color: var(--accent); text-decoration: none; font-size: 14px; }
+        .toc a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+    <h1>📸 Excel虚线框区域截图方案 — 完整实现报告</h1>
+    <div class="subtitle">从 VBA 虚线边框 → POI 智能检测 → 逐区域高清截图 → 数据库存储的全链路实现</div>
+    <div class="meta">
+        <span>📅 生成时间：2026-05-08</span>
+        <span>📦 涉及模块：xzy-common / xzy-admin</span>
+        <span>🏷 标签：codes fix from xzyPC</span>
+    </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+    <h3>📑 目录</h3>
+    <a href="#problem">一、需求背景：为什么要改？</a>
+    <a href="#compare">二、方案对比：新旧模式</a>
+    <a href="#howto">三、如何在Excel中画虚线框（VBA宏）</a>
+    <a href="#algorithm">四、核心算法：虚线框检测原理</a>
+    <a href="#capture">五、区域截图生成流程</a>
+    <a href="#integration">六、集成到现有保存流程</a>
+    <a href="#files">七、新增/修改的文件清单</a>
+    <a href="#db">八、数据库存储变化</a>
+    <a href="#test">九、测试验证步骤</a>
+    <a href="#qa">十、常见问题</a>
+</div>
+
+<!-- ==================== 1. 需求背景 ==================== -->
+<div class="card" id="problem">
+    <h2>一、需求背景：为什么要改？</h2>
+
+    <h3>1.1 原有方案的问题</h3>
+    <p>原有 <code>PdfCertCleanConverter.smartCrop()</code> 是对<strong>整页PDF渲染图片做全局白色裁剪</strong>：扫描左/右/下三个方向的纯白像素，裁掉白边。这导致：</p>
+    <ul style="padding-left: 20px; margin: 12px 0;">
+        <li>❌ <strong>只能出一张图</strong>：整页Excel只能裁剪出一张大图，无法按区域拆分</li>
+        <li>❌ <strong>无法区分多个逻辑区块</strong>：比如检测记录中有"外观检查区"、"尺寸测量区"、"性能测试区"三个独立区块，原方案只能把它们混在一张图里</li>
+        <li>❌ <strong>空白裁剪不精确</strong>：如果表格中间有大片空白，smartCrop 无法感知"中间空白"，只能按最外围边界裁剪</li>
+    </ul>
+
+    <h3>1.2 新需求</h3>
+    <p>用户在Excel模板中用 VBA 宏绘制<strong>虚线边框</strong>（xlDash）围成多个矩形区域，保存时希望<strong>每个区域单独截一张图</strong>。</p>
+
+    <div class="pipeline">
+        <div class="node node-disk">📊 Excel模板<br>(含多个虚线框)</div>
+        <div class="arrow">➤</div>
+        <div class="node node-success">🔍 POI检测<br>3个虚线区域</div>
+        <div class="arrow">➤</div>
+        <div class="node node-disk">🖼 区域1.png</div>
+        <div class="arrow">+</div>
+        <div class="node node-disk">🖼 区域2.png</div>
+        <div class="arrow">+</div>
+        <div class="node node-disk">🖼 区域3.png</div>
+    </div>
+</div>
+
+<!-- ==================== 2. 方案对比 ==================== -->
+<div class="card" id="compare">
+    <h2>二、方案对比：新旧模式</h2>
+
+    <div class="compare-grid">
+        <div class="compare-card old">
+            <h4>❌ 旧模式：整页裁剪</h4>
+            <p style="font-size:13px; color:#991b1b;">
+                整张Excel → LibreOffice转PDF → <strong>整个PDF→600DPI大图 → smartCrop全局白边裁剪 → 1张PNG</strong>
+            </p>
+        </div>
+        <div class="compare-card new">
+            <h4>✅ 新模式：按虚线框区域裁剪</h4>
+            <p style="font-size:13px; color:#166534;">
+                POI扫描虚线边框 → 识别N个矩形区域 → <strong>逐区域创建临时Excel → LibreOffice转PDF → 600DPI渲染 → 白边裁剪 → N张PNG</strong>
+            </p>
+        </div>
+    </div>
+
+    <table style="margin-top: 20px;">
+        <tr><th>对比维度</th><th>旧模式 smartCrop</th><th>新模式 虚线框检测</th></tr>
+        <tr><td>截图数量</td><td>每页1张</td><td><strong>每个虚线框1张</strong></td></tr>
+        <tr><td>检测方式</td><td>像素级白色扫描</td><td><strong>POI单元格边框样式读取</strong></td></tr>
+        <tr><td>支持多区域</td><td>❌ 不支持</td><td>✅ 自动检测，不限数量</td></tr>
+        <tr><td>性能</td><td>快（1次LibreOffice转换）</td><td>稍慢（N次LibreOffice转换）</td></tr>
+        <tr><td>兼容性</td><td>需要PDF中有内容</td><td>需要Excel有虚线边框</td></tr>
+        <tr><td>降级策略</td><td>—</td><td>无虚线框时<strong>自动回退到旧模式</strong></td></tr>
+    </table>
+</div>
+
+<!-- ==================== 3. 如何画虚线框 ==================== -->
+<div class="card" id="howto">
+    <h2>三、如何在Excel中画虚线框（VBA宏）</h2>
+
+    <h3>3.1 方法一：VBA宏（推荐，模板中使用）</h3>
+    <p>在Excel中按 <code>Alt+F11</code> 打开VBA编辑器，插入模块，粘贴以下代码：</p>
+    <pre>
+<span class="cmt">' codes fix from xzyPC: 选中区域后运行此宏，自动画虚线边框</span>
+<span class="kw">Sub</span> <span class="fn">AddDashedBorder</span>()
+    <span class="kw">With</span> Selection.Borders(xlEdgeLeft)
+        .LineStyle = xlDash          <span class="cmt">' 虚线</span>
+        .Weight = xlMedium           <span class="cmt">' 中等粗细</span>
+        .ColorIndex = xlAutomatic
+    <span class="kw">End With</span>
+    <span class="kw">With</span> Selection.Borders(xlEdgeTop)
+        .LineStyle = xlDash
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    <span class="kw">End With</span>
+    <span class="kw">With</span> Selection.Borders(xlEdgeBottom)
+        .LineStyle = xlDash
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    <span class="kw">End With</span>
+    <span class="kw">With</span> Selection.Borders(xlEdgeRight)
+        .LineStyle = xlDash
+        .Weight = xlMedium
+        .ColorIndex = xlAutomatic
+    <span class="kw">End With</span>
+<span class="kw">End Sub</span></pre>
+
+    <h3>3.2 方法二：手动设置（测试用）</h3>
+    <p>选中单元格区域 → 右键"设置单元格格式" → "边框"标签 → 选择虚线样式 → 点击"外边框"。</p>
+
+    <h3>3.3 使用步骤</h3>
+    <div class="flow-container">
+        <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <div class="step-title">打开Excel模板</div>
+                <div class="step-desc">在 PageOffice 中打开模板（或本地打开 .xlsx 文件）</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <div class="step-title">选中需要截图的区域</div>
+                <div class="step-desc">用鼠标选中一个矩形区域（如 B2:F10）</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <div class="step-title">运行宏添加虚线框</div>
+                <div class="step-desc">按 Alt+F8，选择 AddDashedBorder，点击运行</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <div class="step-title">保存并正常使用</div>
+                <div class="step-desc">填充数据后点击保存，后端自动检测虚线框并逐区域截图</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tip-box">
+        <div class="label">💡 支持的虚线样式（VBA → POI 对应关系）</div>
+        <table>
+            <tr><th>VBA 常量</th><th>POI BorderStyle</th></tr>
+            <tr><td><code>xlDash</code></td><td><code>BorderStyle.DASHED</code></td></tr>
+            <tr><td><code>xlDashDot</code></td><td><code>BorderStyle.DASH_DOT</code></td></tr>
+            <tr><td><code>xlDashDotDot</code></td><td><code>BorderStyle.DASH_DOT_DOT</code></td></tr>
+            <tr><td><code>xlMediumDash</code> (xlDash + xlMedium)</td><td><code>BorderStyle.MEDIUM_DASHED</code></td></tr>
+            <tr><td><code>xlMediumDashDot</code></td><td><code>BorderStyle.MEDIUM_DASH_DOT</code></td></tr>
+            <tr><td><code>xlMediumDashDotDot</code></td><td><code>BorderStyle.MEDIUM_DASH_DOT_DOT</code></td></tr>
+        </table>
+    </div>
+</div>
+
+<!-- ==================== 4. 核心算法 ==================== -->
+<div class="card" id="algorithm">
+    <h2>四、核心算法：虚线框检测原理</h2>
+
+    <h3>4.1 算法总体流程</h3>
+    <div class="flow-container">
+        <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <div class="step-title">构建边框矩阵（4个二维布尔数组）</div>
+                <div class="step-desc">遍历所有单元格，读取 CellStyle，判断 Top/Bottom/Left/Right 4个方向的边框是否为虚线样式。<br>
+                如果 BorderTop ∈ DASHED_STYLES → hasDashedTop[row][col] = true<br>
+                同理：hasDashedBottom、hasDashedLeft、hasDashedRight</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <div class="step-title">逐行扫描"上边界"连续段</div>
+                <div class="step-desc">从上到下，对每一行扫描 hasDashedTop[row][*]，找到连续的虚线Top列段。<br>
+                例：第3行中，列B到列F都有 Top虚线 → 一个"上边界"段：startCol=B, endCol=F, row=3</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <div class="step-title">验证左上角的 Left 边界</div>
+                <div class="step-desc">检查 startCol 列在当前行是否有 Left虚线。<br>
+                有 → 确认是矩形左上角；没有 → 跳过（可能只是水平线，不是矩形）</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <div class="step-title">向下扫描找"下边界"行</div>
+                <div class="step-desc">从当前行往下一行行找：startCol到endCol所有列都有 Bottom虚线的行 → 就是下边界。<br>
+                同时验证 endCol 列从 topRow 到 bottomRow 每行都有 Right虚线 → 确认是矩形右边界</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">5</div>
+            <div class="step-content">
+                <div class="step-title">记录矩形区域 + 去重</div>
+                <div class="step-desc">四边都验证通过 → 创建 CellRangeAddress(topRow, bottomRow, startCol, endCol)<br>
+                检查是否与已发现的区域相同 → 不重复 → 加入结果列表</div>
+            </div>
+        </div>
+    </div>
+
+    <h3>4.2 示意图</h3>
+    <pre>
+<span class="cmt">Excel 单元格结构（虚线边框示意）：</span>
+
+     A    B    C    D    E    F    G
+ 1
+ 2  ┌────────Top虚线──────────┐
+ 3  │ Left虚线  区域1内容  Right虚线│
+ 4  └───────Bottom虚线─────────┘
+ 5
+ 6  ┌────────Top虚线──────────┐
+ 7  │ Left虚线  区域2内容  Right虚线│
+ 8  └───────Bottom虚线─────────┘
+
+<span class="cmt">算法检测结果：</span>
+  区域1: CellRangeAddress(第2行, 第4行, B列, F列)
+  区域2: CellRangeAddress(第6行, 第8行, B列, F列)</pre>
+
+    <div class="info-box">
+        <div class="label">🔍 为什么算法能正确区分两个相邻区域？</div>
+        因为算法以 <strong>Top虚线 + Left虚线同时存在</strong> 作为"左上角"的识别标志。区域1的第2行B列有Top+Left虚线 → 左上角。然后在找下边界时，第4行有Bottom虚线 → 下边界。接着从第5行扫描，跳过没有Top虚线的行，到第6行又发现B-F有Top虚线 → 下一个区域的开始。两个区域互不干扰。
+    </div>
+</div>
+
+<!-- ==================== 5. 区域截图生成 ==================== -->
+<div class="card" id="capture">
+    <h2>五、区域截图生成流程</h2>
+
+    <h3>5.1 为什么用"临时文件法"？</h3>
+    <p>有两种方案可以实现区域截图：</p>
+    <table>
+        <tr><th>方案</th><th>方法</th><th>优点</th><th>缺点</th></tr>
+        <tr style="background:#fef2f2;">
+            <td>像素坐标法</td>
+            <td>将整张Excel转为一张大图 → 根据列宽/行高计算像素坐标 → getSubimage裁剪</td>
+            <td>只需1次LibreOffice转换</td>
+            <td><strong>列宽单位(1/256字符宽)和行高(磅)到600DPI像素的映射误差大，不同平台不一致</strong></td>
+        </tr>
+        <tr style="background:#f0fdf4;">
+            <td><strong>临时文件法 ✅</strong></td>
+            <td>对每个区域创建临时XLSX（只含该区域单元格） → LibreOffice转PDF → 600DPI渲染 → PNG</td>
+            <td><strong>精确、可靠、跨平台一致</strong></td>
+            <td>多个区域时需要多次LibreOffice调用（性能稍差）</td>
+        </tr>
+    </table>
+
+    <h3>5.2 单区域截图步骤</h3>
+    <div class="flow-container">
+        <div class="flow-step">
+            <div class="step-num">A</div>
+            <div class="step-content">
+                <div class="step-title">createRegionOnlyWorkbook() — 创建临时Excel</div>
+                <div class="step-desc">打开原始Excel → 读取指定区域单元格 → 复制值、样式、字体、合并单元格 → 保存为临时 .xlsx<br>
+                临时文件只包含该区域的单元格，其他全部丢弃</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">B</div>
+            <div class="step-content">
+                <div class="step-title">LibreOffice 转换 Excel→PDF</div>
+                <div class="step-desc">调用 <code>ExcelSheetToPdfUtils.convertAllVisibleSheets()</code> — 复用项目现有的 LibreOffice 基础设施<br>
+                因为临时Excel只有一个Sheet且只有该区域的单元格，转换后PDF就是该区域的精确呈现</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">C</div>
+            <div class="step-content">
+                <div class="step-title">PDFBox 600DPI 渲染</div>
+                <div class="step-desc"><code>renderer.renderImageWithDPI(0, 600)</code> — 与 PdfCertCleanConverter 相同的高清渲染标准</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">D</div>
+            <div class="step-content">
+                <div class="step-title">cropWhiteBorders() — 智能裁剪白边</div>
+                <div class="step-desc">扫描四个方向的白边并裁剪 — 与 PdfCertCleanConverter 相同的算法<br>
+                保证截图中没有无用的白色边框</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">E</div>
+            <div class="step-content">
+                <div class="step-title">ImageIO.write() — 输出PNG + 清理临时文件</div>
+                <div class="step-desc">输出 PNG 到 result 目录 → 删除临时 .xlsx 和 .pdf 文件</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 6. 集成 ==================== -->
+<div class="card" id="integration">
+    <h2>六、集成到现有保存流程</h2>
+
+    <h3>6.1 修改位置</h3>
+    <p>修改了 <code>OfficeOnlineApi.excelToImgFile()</code> 方法（原第290-320行），改动策略：</p>
+    <ul style="padding-left: 20px;">
+        <li><strong>不删除旧逻辑</strong>，保留为 else 分支的降级策略</li>
+        <li>新增 if 分支检测虚线框，有虚线框走新模式，没有走旧模式</li>
+        <li>数据页PDF转换保持不变（始终执行）</li>
+    </ul>
+
+    <h3>6.2 新流程</h3>
+    <div class="flow-container">
+        <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <div class="step-title">始终转换数据页 PDF</div>
+                <div class="step-desc"><code>ExcelSheetToPdfUtils.convertSingleSheet(filePath, dataPdfPath, "数据页")</code> — 不受影响</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <div class="step-title">检测虚线框 ← 新增</div>
+                <div class="step-desc"><code>ExcelRegionScreenshotUtils.detectDashedBorderRegions(filePath)</code></div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">3a</div>
+            <div class="step-content">
+                <div class="step-title">有虚线框 → 区域截图模式 ← 新增</div>
+                <div class="step-desc"><code>captureAllRegions()</code> → 每个框一张 region_N.png</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">3b</div>
+            <div class="step-content">
+                <div class="step-title">无虚线框 → 整页截图模式 ← 原有逻辑</div>
+                <div class="step-desc"><code>PdfCertCleanConverter.convertPdfPages()</code> → 每页一张 page_N.png</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <div class="step-title">返回结果</div>
+                <div class="step-desc">
+                    <code>croppedResultImages</code>: PNG路径列表 | 
+                    <code>regionLabels</code>: 区域标签列表（新模式有，旧模式无）| 
+                    <code>dataPdfPath</code>: 数据页PDF路径
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>6.3 关键代码</h3>
+    <pre>
+<span class="cmt">// codes fix from xzyPC: OfficeOnlineApi.excelToImgFile() 核心改动</span>
+List&lt;CellRangeAddress&gt; dashedRegions = ExcelRegionScreenshotUtils.detectDashedBorderRegions(filePath);
+
+<span class="kw">if</span> (!dashedRegions.isEmpty()) {
+    <span class="cmt">// codes fix from xzyPC: 【新模式】有虚线框→逐个区域截图</span>
+    Map&lt;String, String&gt; regionResult = ExcelRegionScreenshotUtils.captureAllRegions(filePath, resultImgDir);
+    List&lt;String&gt; resultImages = <span class="kw">new</span> ArrayList&lt;&gt;(regionResult.values());
+    resultMap.put(<span class="str">"croppedResultImages"</span>, resultImages);
+    resultMap.put(<span class="str">"regionLabels"</span>, <span class="kw">new</span> ArrayList&lt;&gt;(regionResult.keySet()));
+} <span class="kw">else</span> {
+    <span class="cmt">// codes fix from xzyPC: 【旧模式】无虚线框→整页截图（原有逻辑）</span>
+    String resultPdfPath = FilePathUtil.getPdfPath(filePath, <span class="str">"_result"</span>);
+    ExcelSheetToPdfUtils.convertSingleSheet(filePath, resultPdfPath, <span class="str">"结果页"</span>);
+    List&lt;String&gt; resultImages = PdfCertCleanConverter.convertPdfPages(resultPdfPath, resultImgDir);
+    resultMap.put(<span class="str">"croppedResultImages"</span>, resultImages);
+}</pre>
+</div>
+
+<!-- ==================== 7. 文件清单 ==================== -->
+<div class="card" id="files">
+    <h2>七、新增/修改的文件清单</h2>
+
+    <div class="file-tree">
+        <div class="dir">📁 xiziyigit/xiziyi-lims-service/</div>
+        <br>
+        <div class="indent dir">📁 xzy-common/src/main/java/com/xzy/common/utils/</div>
+        <div class="indent indent file new-file">✨ <strong>ExcelRegionScreenshotUtils.java</strong> <span class="badge badge-green">新建</span></div>
+        <div class="indent indent" style="color:#94a3b8; font-size:12px;">→ 虚线框检测 + 区域截图核心工具类（~435行）</div>
+        <br>
+        <div class="indent dir">📁 xzy-admin/src/main/java/com/xzy/web/controller/common/</div>
+        <div class="indent indent file" style="color:#d97706;">📝 <strong>OfficeOnlineApi.java</strong> <span class="badge badge-amber">修改</span></div>
+        <div class="indent indent" style="color:#94a3b8; font-size:12px;">→ excelToImgFile() 方法集成虚线框检测逻辑</div>
+        <br>
+        <div class="indent dir">📁 xzy-admin/src/main/resources/</div>
+        <div class="indent indent file" style="color:#d97706;">📝 <strong>application.yml</strong> <span class="badge badge-amber">修改</span></div>
+        <div class="indent indent" style="color:#94a3b8; font-size:12px;">→ updateTime 更新</div>
+    </div>
+
+    <h3 style="margin-top: 20px;">未修改的文件</h3>
+    <p>以下文件<strong>完全未动</strong>，保持原有逻辑不变：</p>
+    <ul style="padding-left: 20px;">
+        <li><code>PdfCertCleanConverter.java</code> — 作为旧模式的降级方案保留</li>
+        <li><code>ExcelSheetToPdfUtils.java</code> — Excel→PDF转换基础设施仍被复用</li>
+        <li><code>saveOriginalFile()</code> 方法 — 调用入口完全不变</li>
+        <li>数据库 Mapper/Service — 仍然接收 croppedResultImages List 存入 DB</li>
+    </ul>
+</div>
+
+<!-- ==================== 8. 数据库 ==================== -->
+<div class="card" id="db">
+    <h2>八、数据库存储变化</h2>
+
+    <h3>8.1 兼容性设计</h3>
+    <p>数据库存储格式<strong>完全不变</strong>。无论新旧模式，返回的都是 <code>List&lt;String&gt;</code>（PNG路径列表），序列化为JSON存入 <code>result_file_url</code> 字段。</p>
+
+    <table>
+        <tr><th>场景</th><th>result_file_url 存储示例</th></tr>
+        <tr>
+            <td>旧模式（整页截图）</td>
+            <td><code>["/profile/upload/.../page_1.png", "/profile/upload/.../page_2.png"]</code></td>
+        </tr>
+        <tr style="background:#f0fdf4;">
+            <td><strong>新模式（虚线框截图）</strong></td>
+            <td><code>["/profile/upload/.../region_1.png", "/profile/upload/.../region_2.png", "/profile/upload/.../region_3.png"]</code></td>
+        </tr>
+    </table>
+
+    <div class="highlight-box">
+        <div class="label">⚠ 新增字段：regionLabels</div>
+        新模式下，<code>excelToImgFile()</code> 的返回 Map 中新增 <code>regionLabels</code> key，值为 <code>["区域1(R2C2-R5C5)", "区域2(R7C2-R12C5)"]</code>。<br>
+        这是一个<strong>附加信息</strong>，用于日志和调试，当前不存入数据库。如果需要前端显示区域名称，可后续存入。
+    </div>
+
+    <h3>8.2 数据库SQL不变</h3>
+    <p>以下两个 Mapper 方法完全不需修改：</p>
+    <ul style="padding-left: 20px;">
+        <li><code>testTaskAllotMapper.updateTestTaskAllot(taskCaretInfo)</code> — UPDATE test_task_allot</li>
+        <li><code>msOuterTaskAllotMapper.updateMsOuterTaskAllot(taskCaretInfo)</code> — UPDATE ms_outer_task_allot</li>
+    </ul>
+</div>
+
+<!-- ==================== 9. 测试 ==================== -->
+<div class="card" id="test">
+    <h2>九、测试验证步骤</h2>
+
+    <h3>9.1 本地快速测试（不启动项目）</h3>
+    <div class="flow-container">
+        <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <div class="step-title">准备测试Excel</div>
+                <div class="step-desc">找一个 Excel 文件，选中几个区域手动设置虚线边框（或运行 VBA 宏）<br>
+                至少画2个虚线框，方便验证多区域检测</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <div class="step-title">修改 main 方法的路径</div>
+                <div class="step-desc">打开 <code>ExcelRegionScreenshotUtils.java</code>，修改 main 方法中的 <code>testExcel</code> 和 <code>outDir</code> 路径</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <div class="step-title">在 IDE 中右键运行 main 方法</div>
+                <div class="step-desc">观察控制台输出：应该看到"检测到 N 个虚线框区域"→"区域N截图成功"</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <div class="step-title">检查输出目录</div>
+                <div class="step-desc">应该看到 region_1.png, region_2.png... 打开图片检查内容是否正确</div>
+            </div>
+        </div>
+    </div>
+
+    <h3>9.2 集成测试（启动项目）</h3>
+    <table>
+        <tr><th>步骤</th><th>操作</th><th>预期结果</th></tr>
+        <tr><td>1</td><td>启动 SpringBoot 项目</td><td>LibreOffice 正常启动</td></tr>
+        <tr><td>2</td><td>前端进入记录编制，打开有虚线框的 Excel 模板</td><td>PageOffice 加载正常</td></tr>
+        <tr><td>3</td><td>填入数据后点击保存</td><td>保存成功，返回 "ok"</td></tr>
+        <tr><td>4</td><td>查看日志</td><td>出现"检测到 N 个虚线框区域"→"区域截图成功"</td></tr>
+        <tr><td>5</td><td>检查 result/ 目录</td><td>有 region_1.png, region_2.png... 而非 page_1.png</td></tr>
+        <tr><td>6</td><td>查看数据库</td><td>result_file_url 字段存的是 region_N.png 的 JSON 数组</td></tr>
+    </table>
+
+    <h3>9.3 降级测试（确保旧模式正常）</h3>
+    <p>打开一个<strong>没有虚线框</strong>的 Excel 模板，保存后确认：</p>
+    <ul style="padding-left: 20px;">
+        <li>日志出现"未检测到虚线框区域，自动使用整页截图模式"</li>
+        <li>result/ 目录下是 page_1.png（而非 region_1.png）</li>
+    </ul>
+</div>
+
+<!-- ==================== 10. 常见问题 ==================== -->
+<div class="card" id="qa">
+    <h2>十、常见问题</h2>
+
+    <table>
+        <tr>
+            <th style="width:40%;">问题</th>
+            <th>解答</th>
+        </tr>
+        <tr>
+            <td><strong>虚线框画了但检测不到？</strong></td>
+            <td>
+                1. 确认是虚线（VBA: xlDash），不是实线（xlContinuous）<br>
+                2. 确认四个边都有虚线（不是只画了部分边）<br>
+                3. 用 Excel 打开，右键单元格→设置单元格格式→边框，确认边框样式是虚线<br>
+                4. 查看日志：<code>detectDashedBorderRegions</code> 输出的检测结果
+            </td>
+        </tr>
+        <tr>
+            <td><strong>虚线框在Sheet2上检测不到？</strong></td>
+            <td>
+                当前实现<strong>只检测第一个Sheet</strong>（<code>createRegionOnlyWorkbook</code> 中 <code>srcWorkbook.getSheetAt(0)</code>）。<br>
+                如果你的虚线框在Sheet2上，需要修改代码指定 Sheet 索引。<br>
+                或者确保虚线框在第一个 Sheet 中。
+            </td>
+        </tr>
+        <tr>
+            <td><strong>区域截图与原始Excel排版不一致？</strong></td>
+            <td>
+                可能原因：临时Excel中没有复制列宽和行高。<br>
+                查看 <code>createRegionOnlyWorkbook()</code> 是否调用了 <code>setColumnWidth</code> 和 <code>setHeight</code>。<br>
+                当前实现已包含列宽和行高的复制。
+            </td>
+        </tr>
+        <tr>
+            <td><strong>截图中有多余的白色边距？</strong></td>
+            <td>
+                正常现象。临时Excel渲染时四周会有少量白边，<code>cropWhiteBorders()</code> 会自动裁剪。<br>
+                如果白边仍然很多，可以减小 <code>MARGIN</code> 常量（当前为10像素）。
+            </td>
+        </tr>
+        <tr>
+            <td><strong>多个虚线框截图很慢？</strong></td>
+            <td>
+                因为每个区域都要走一次"创建临时Excel→LibreOffice转换→PDFBox渲染"的流程。<br>
+                如果区域数量较多（>5个），可以考虑以下优化：<br>
+                1. 合并小的相邻区域<br>
+                2. 或者改用"像素坐标计算法"（但精度会降低）<br>
+                通常检验记录中只需要2-4个区域，性能可以接受。
+            </td>
+        </tr>
+        <tr>
+            <td><strong>保存后的图片文件名是 region_1.png 而不是 page_1.png 了？</strong></td>
+            <td>
+                这是预期行为。新模式下每个区域生成 <code>region_N.png</code>（N从1开始）。<br>
+                数据库存储的JSON中路径会相应变化，前端展示需要适配这个命名变化（或者不改前端，因为都是通过JSON读取路径）。
+            </td>
+        </tr>
+    </table>
+</div>
+
+<!-- Footer -->
+<div style="text-align: center; color: #94a3b8; font-size: 13px; margin-top: 40px;">
+    <p>📋 本报告由代码分析自动生成 — 2026-05-08</p>
+    <p>📂 报告路径：/Users/sunnicholas/xiziyigit/info/Excel虚线框区域截图方案.html</p>
+    <p>🏷 所有代码变动标签：codes fix from xzyPC</p>
+</div>
+
+</div>
+</body>
+</html>

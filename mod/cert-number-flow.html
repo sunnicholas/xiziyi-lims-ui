@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>证书编号业务流程图</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f7fa; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        
+        .flow-chart { position: relative; padding: 40px; background: white; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+        
+        .flow-node { 
+            background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%);
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            position: relative;
+            min-height: 120px;
+        }
+        
+        .flow-node::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid #667eea;
+        }
+        
+        .flow-node:last-child::after { display: none; }
+        
+        .node-header { display: flex; align-items: center; margin-bottom: 12px; }
+        .node-number { 
+            width: 32px; height: 32px; 
+            background: #667eea; color: white; 
+            border-radius: 50%; display: flex; 
+            align-items: center; justify-content: center;
+            font-weight: bold; margin-right: 12px;
+        }
+        .node-title { font-size: 16px; font-weight: bold; color: #333; }
+        .node-type { 
+            margin-left: auto; 
+            padding: 4px 12px; 
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .type-start { background: #d1fae5; color: #065f46; }
+        .type-process { background: #dbeafe; color: #1e40af; }
+        .type-decision { background: #fef3c7; color: #92400e; }
+        .type-action { background: #fce7f3; color: #9d174d; }
+        .type-end { background: #d1fae5; color: #065f46; }
+        
+        .node-content { padding-left: 44px; }
+        .content-section { margin-bottom: 10px; }
+        .section-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+        .section-value { font-size: 14px; color: #333; }
+        .code-path { 
+            background: #f8f9fa; 
+            padding: 8px 12px; 
+            border-radius: 4px; 
+            font-family: 'Consolas', monospace; 
+            font-size: 12px; 
+            color: #dc3545;
+            overflow-x: auto;
+        }
+        
+        .decision-branch { display: flex; gap: 20px; padding-left: 44px; margin-top: -15px; }
+        .branch { 
+            flex: 1; 
+            background: #f8f9fa; 
+            border-left: 4px solid; 
+            padding: 15px; 
+            border-radius: 0 4px 4px 0;
+            margin-bottom: 20px;
+        }
+        .branch.yes { border-color: #28a745; }
+        .branch.no { border-color: #dc3545; }
+        .branch-title { font-weight: bold; margin-bottom: 8px; }
+        
+        .legend { 
+            display: flex; 
+            gap: 20px; 
+            padding: 20px; 
+            background: #f8f9fa; 
+            border-radius: 8px; 
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; }
+        .legend-color { width: 20px; height: 20px; border-radius: 4px; }
+        
+        .code-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 13px;
+            margin-top: 10px;
+            overflow-x: auto;
+            border-left: 4px solid #667eea;
+        }
+        
+        .format-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+        .format-section h2 { color: #333; margin-bottom: 20px; padding-left: 12px; border-left: 4px solid #667eea; }
+        .format-table { width: 100%; border-collapse: collapse; }
+        .format-table th, .format-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        .format-table th { background: #f8f9fa; font-weight: 600; }
+        .format-example { font-family: 'Consolas', monospace; color: #dc3545; }
+        
+        .footer { text-align: center; padding: 20px; color: #999; font-size: 14px; margin-top: 30px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📄 证书编号业务流程图</h1>
+            <p>从创建到组装的完整业务流程 | 代码位置追踪</p>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #d1fae5;"></div>
+                <span>开始/结束</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #dbeafe;"></div>
+                <span>流程处理</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #fef3c7;"></div>
+                <span>判断分支</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #fce7f3;"></div>
+                <span>数据库操作</span>
+            </div>
+        </div>
+
+        <div class="flow-chart">
+            <!-- 节点1: 开始 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">1</div>
+                    <div class="node-title">开始编制证书</div>
+                    <span class="node-type type-start">开始</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">触发场景</div>
+                        <div class="section-value">用户在系统中点击"编制证书"按钮</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">入口代码</div>
+                        <div class="code-path">xzy-admin/src/main/java/com/xzy/web/controller/measure/TestTaskAllotController.java:288</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点2: 获取或生成证书编号 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">2</div>
+                    <div class="node-title">调用 getOrGenerateCertNumber</div>
+                    <span class="node-type type-process">流程处理</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">逻辑说明</div>
+                        <div class="section-value">统一入口方法，处理证书编号的获取或生成</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">xzy-admin/src/main/java/com/xzy/web/controller/measure/TestTaskAllotController.java:462</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点3: 判断是否存在证书编号 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">3</div>
+                    <div class="node-title">检查已存在证书编号</div>
+                    <span class="node-type type-decision">判断分支</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">判断条件</div>
+                        <div class="section-value">1. 查询 ms_task_cert_number 表是否存在记录<br>2. 任务状态 ≥ 20</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">调用方法</div>
+                        <div class="code-path">IMsTaskCertNumberService.selectMsTaskCertNumberByTaskId(taskId)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 判断分支 -->
+            <div class="decision-branch">
+                <div class="branch yes">
+                    <div class="branch-title">✅ 存在有效编号</div>
+                    <div style="font-size: 13px; color: #666;">直接返回已存在的证书编号，跳过生成流程</div>
+                </div>
+                <div class="branch no">
+                    <div class="branch-title">❌ 不存在或无效</div>
+                    <div style="font-size: 13px; color: #666;">继续执行编号生成流程</div>
+                </div>
+            </div>
+
+            <!-- 节点4: 参数验证 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">4</div>
+                    <div class="node-title">参数验证</div>
+                    <span class="node-type type-process">流程处理</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">验证项</div>
+                        <div class="section-value">
+                            <ul style="margin-left: 20px; color: #333;">
+                                <li>任务分配信息 (testTaskAllot) 不能为空</li>
+                                <li>委托单ID (entrustId) 不能为空</li>
+                                <li>模板分类信息 (templateClassifyId) 不能为空</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点5: 查询委托单信息 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">5</div>
+                    <div class="node-title">查询委托单信息</div>
+                    <span class="node-type type-process">流程处理</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">获取数据</div>
+                        <div class="section-value">registerType（委托类型）、entrustTwoLevel（报告类型）</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">IMsEntrustTaskService.selectMsEntrustTaskById(entrustId)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点6: 递归查询父分类 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">6</div>
+                    <div class="node-title">递归查询模板分类</div>
+                    <span class="node-type type-process">流程处理</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">递归深度</div>
+                        <div class="section-value">最多3层（专业 → 科室 → 证书类型）</div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">TestTaskAllotController.java:605 findAllParentClassifies()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点7: 提取分类信息 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">7</div>
+                    <div class="node-title">提取分类信息</div>
+                    <span class="node-type type-process">流程处理</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">提取字段</div>
+                        <div class="section-value">
+                            <table style="width: 100%; font-size: 13px; margin-top: 8px;">
+                                <tr><td style="width: 120px; color: #666;">zyCode</td><td>第1层：专业代码</td></tr>
+                                <tr><td style="color: #666;">ksCode</td><td>第2层：科室代码</td></tr>
+                                <tr><td style="color: #666;">certCode</td><td>第3层：证书类型代码</td></tr>
+                                <tr><td style="color: #666;">cmaFlag</td><td>CMA标志（机械/其他为true）</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">TestTaskAllotController.java:505 extractClassifyInfo()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点8: 获取类型代码 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">8</div>
+                    <div class="node-title">获取委托类型代码</div>
+                    <span class="node-type type-process">流程处理</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">委托类型 (wtCode)</div>
+                        <div class="section-value">
+                            <table style="width: 100%; font-size: 13px; margin-top: 8px;">
+                                <tr><td style="width: 60px;">S</td><td>送检 (registerType = "1")</td></tr>
+                                <tr><td>X</td><td>现场 (registerType = "2")</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">报告类型 (reportCode)</div>
+                        <div class="section-value">
+                            <table style="width: 100%; font-size: 13px; margin-top: 8px;">
+                                <tr><td style="width: 60px;">G</td><td>检定 (entrustTwoLevel = "1")</td></tr>
+                                <tr><td>F</td><td>校准 (entrustTwoLevel = "2", "3")</td></tr>
+                                <tr><td>C</td><td>CNAS (entrustTwoLevel = "5")</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点9: 判断CMA类型 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">9</div>
+                    <div class="node-title">判断CMA类型</div>
+                    <span class="node-type type-decision">判断分支</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">判断条件</div>
+                        <div class="section-value">classifyInfo.cmaFlag 是否为 true（专业为"机械"或"其他"）</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CMA判断分支 -->
+            <div class="decision-branch">
+                <div class="branch yes">
+                    <div class="branch-title">✅ CMA类型</div>
+                    <div style="font-size: 13px; color: #666; margin-top: 8px;">
+                        <div><strong>编号格式：</strong>XZYJC + 年份(4位) + 递增数(4位) + 专业代码</div>
+                        <div><strong>示例：</strong><code>XZYJC20260001JJG</code></div>
+                    </div>
+                    <div class="code-box" style="margin-top: 10px;">
+String currentYear = DateUtils.parseDateToStr(DateUtils.YYYY, new Date());<br>
+String increment = configService.incrNumber("cma_zs", 4, "_no");<br>
+testPost = "XZYJC" + currentYear + increment + classifyInfo.zyCode;
+                    </div>
+                </div>
+                <div class="branch no">
+                    <div class="branch-title">❌ 非CMA类型</div>
+                    <div style="font-size: 13px; color: #666; margin-top: 8px;">
+                        <div><strong>编号格式：</strong>科室代码 + 委托类型 + 专业代码 + 证书类型 + 报告类型</div>
+                        <div><strong>示例：</strong><code>LXSEJJG20260200001</code></div>
+                    </div>
+                    <div class="code-box" style="margin-top: 10px;">
+testPost = String.join("", ksCode, wtCode, zyCode, certCode, reportCode);<br>
+return configService.getZsCode(testPost, null, entrustTime, 5);
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点10: 保存证书编号 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">10</div>
+                    <div class="node-title">保存证书编号</div>
+                    <span class="node-type type-action">数据库操作</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">操作步骤</div>
+                        <div class="section-value">
+                            <ol style="margin-left: 20px; color: #333;">
+                                <li>删除已存在的记录（保证幂等性）</li>
+                                <li>创建 MsTaskCertNumber 对象</li>
+                                <li>设置 taskId 和 certNumber</li>
+                                <li>插入 ms_task_cert_number 表</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="content-section">
+                        <div class="section-label">代码位置</div>
+                        <div class="code-path">TestTaskAllotController.java:594 saveCertNumber()</div>
+                    </div>
+                    <div class="code-box">
+// 先删除已存在的记录<br>
+msTaskCertNumberService.deleteMsTaskCertNumberByTaskId(taskId);<br>
+// 创建新记录<br>
+MsTaskCertNumber taskCertNumber = new MsTaskCertNumber();<br>
+taskCertNumber.setId(IdWorker.getId());<br>
+taskCertNumber.setTaskId(taskId);<br>
+taskCertNumber.setCertNumber(certNumber);<br>
+msTaskCertNumberService.insertMsTaskCertNumber(taskCertNumber);
+                    </div>
+                </div>
+            </div>
+
+            <!-- 节点11: 返回证书编号 -->
+            <div class="flow-node">
+                <div class="node-header">
+                    <div class="node-number">11</div>
+                    <div class="node-title">返回证书编号</div>
+                    <span class="node-type type-end">结束</span>
+                </div>
+                <div class="node-content">
+                    <div class="content-section">
+                        <div class="section-label">返回值</div>
+                        <div class="section-value">生成的证书编号字符串，供后续业务使用</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 编号格式说明 -->
+        <div class="format-section">
+            <h2>📊 证书编号格式说明</h2>
+            <table class="format-table">
+                <thead>
+                    <tr>
+                        <th>编号类型</th>
+                        <th>格式组成</th>
+                        <th>示例</th>
+                        <th>适用场景</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CMA类型</td>
+                        <td>XZYJC + 年份(4位) + 递增数(4位) + 专业代码</td>
+                        <td class="format-example">XZYJC20260001JJG</td>
+                        <td>专业为"机械"或"其他"</td>
+                    </tr>
+                    <tr>
+                        <td>非CMA检定</td>
+                        <td>科室 + 委托 + 专业 + 类型 + 报告类型 + 日期 + 递增</td>
+                        <td class="format-example">LXSEJJG20260200001</td>
+                        <td>entrustTwoLevel = "1"</td>
+                    </tr>
+                    <tr>
+                        <td>非CMA校准</td>
+                        <td>科室 + 委托 + 专业 + 类型 + 报告类型 + 日期 + 递增</td>
+                        <td class="format-example">LXSCJJF20260200001</td>
+                        <td>entrustTwoLevel = "2", "3"</td>
+                    </tr>
+                    <tr>
+                        <td>CNAS类型</td>
+                        <td>科室 + 委托 + 专业 + 类型 + 报告类型 + 日期 + 递增</td>
+                        <td class="format-example">JJGSHX20260200001</td>
+                        <td>entrustTwoLevel = "5"</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 核心代码位置汇总 -->
+        <div class="format-section">
+            <h2>📍 核心代码位置汇总</h2>
+            <table class="format-table">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>方法名</th>
+                        <th>文件路径</th>
+                        <th>行号</th>
+                        <th>功能说明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>getOrGenerateCertNumber</td>
+                        <td>TestTaskAllotController.java</td>
+                        <td>462</td>
+                        <td>主入口：获取或生成证书编号</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>extractClassifyInfo</td>
+                        <td>TestTaskAllotController.java</td>
+                        <td>505</td>
+                        <td>提取分类信息和CMA标志</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>getWtCode</td>
+                        <td>TestTaskAllotController.java</td>
+                        <td>554</td>
+                        <td>获取委托类型代码</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>getReportCode</td>
+                        <td>TestTaskAllotController.java</td>
+                        <td>538</td>
+                        <td>获取报告类型代码</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>generateCertNumber</td>
+                        <td>TestTaskAllotController.java</td>
+                        <td>568</td>
+                        <td>根据类型生成编号</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>saveCertNumber</td>
+                        <td>TestTaskAllotController.java</td>
+                        <td>594</td>
+                        <td>保存证书编号到数据库</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>insertMsTaskCertNumber</td>
+                        <td>MsTaskCertNumberServiceImpl.java</td>
+                        <td>57</td>
+                        <td>数据库插入操作</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>selectMsTaskCertNumberByTaskId</td>
+                        <td>MsTaskCertNumberServiceImpl.java</td>
+                        <td>35</td>
+                        <td>根据任务ID查询证书编号</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>getZsCode</td>
+                        <td>ConfigServiceImpl.java</td>
+                        <td>37</td>
+                        <td>获取证书编号入口方法</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>incrZsNumberStr</td>
+                        <td>ConfigServiceImpl.java</td>
+                        <td>158</td>
+                        <td>核心：生成带年月的递增流水号</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 核心方法详解 -->
+        <div class="format-section">
+            <h2>🔧 核心方法详解 - incrZsNumberStr</h2>
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 13px; color: #666; margin-bottom: 10px;"><strong>文件位置：</strong>xzy-common/src/main/java/com/xzy/common/service/impl/ConfigServiceImpl.java:158-200</div>
+                <div style="font-size: 13px; color: #666; margin-bottom: 15px;"><strong>功能说明：</strong>生成带年月前缀的递增流水号，确保每月重置，使用Redis原子操作保证并发安全</div>
+            </div>
+
+            <!-- 方法签名 -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; color: #333; margin-bottom: 10px;">方法签名</h3>
+                <div class="code-box">
+private String incrZsNumberStr(String pre, String entrustTime, int length, String redisKey)
+                </div>
+            </div>
+
+            <!-- 参数说明 -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; color: #333; margin-bottom: 10px;">参数说明</h3>
+                <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                    <tr style="background: #f8f9fa;">
+                        <th style="padding: 8px; text-align: left; width: 120px;">参数</th>
+                        <th style="padding: 8px; text-align: left; width: 80px;">类型</th>
+                        <th style="padding: 8px; text-align: left;">说明</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">pre</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">String</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">编号前缀（如 LXSEJJG）</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">entrustTime</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">String</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">委托时间（格式：yyMM，如 2604）</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">length</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">int</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">流水号位数（如5表示00001格式）</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">redisKey</td>
+                        <td style="padding: 8px;">String</td>
+                        <td style="padding: 8px;">Redis基础键（如 MEASURE）</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 核心逻辑 -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; color: #333; margin-bottom: 10px;">核心处理流程</h3>
+                <ol style="margin-left: 20px; font-size: 14px; color: #333;">
+                    <li><strong>参数校验：</strong>检查前缀和Redis键不为空，位数在1-10之间</li>
+                    <li><strong>生成Redis键：</strong>格式为 `{redisKey}:{pre}:incr:{entrustTime}`，确保每月独立计数</li>
+                    <li><strong>原子递增：</strong>使用Redis INCR命令保证并发安全，自动创建不存在的键</li>
+                    <li><strong>容错处理：</strong>如果是新创建的键且不是当月第一天，强制重置为1</li>
+                    <li><strong>设置过期：</strong>键的过期时间设为40天，确保覆盖整月并留缓冲</li>
+                    <li><strong>格式化输出：</strong>流水号补0到指定位数，拼接前缀+年月+流水号</li>
+                </ol>
+            </div>
+
+            <!-- 代码实现 -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; color: #333; margin-bottom: 10px;">核心代码实现</h3>
+                <div class="code-box" style="max-height: 400px; overflow-y: auto;">
+// 生成带年月的唯一键（确保每月重置）<br>
+String monthlyKey = String.format("%s:%s:incr:%s", redisKey, pre, entrustTime);<br>
+<br>
+// Redis原子递增操作<br>
+Long sequence = redisTemplate.execute((RedisCallback&lt;Long&gt;) connection -&gt; {<br>
+    byte[] keyBytes = redisTemplate.getStringSerializer().serialize(monthlyKey);<br>
+    Boolean exists = connection.exists(keyBytes);<br>
+    Long seqValue = connection.incr(keyBytes);<br>
+    // 容错处理：新键且不是1号则强制重置<br>
+    if (seqValue == 1 &amp;&amp; (exists == null || !exists)) {<br>
+        int dayOfMonth = LocalDate.now().getDayOfMonth();<br>
+        if (dayOfMonth != 1) {<br>
+            connection.del(keyBytes);<br>
+            seqValue = connection.incr(keyBytes);<br>
+        }<br>
+    }<br>
+    // 设置40天过期时间<br>
+    connection.expire(keyBytes, TimeUnit.DAYS.toSeconds(40));<br>
+    return seqValue;<br>
+});<br>
+<br>
+// 格式化为指定位数<br>
+String sequenceStr = String.format("%0" + length + "d", sequence);<br>
+return pre + entrustTime + sequenceStr;
+                </div>
+            </div>
+
+            <!-- 设计亮点 -->
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; color: #333; margin-bottom: 10px;">设计亮点</h3>
+                <ul style="margin-left: 20px; font-size: 14px; color: #333;">
+                    <li><strong>并发安全：</strong>使用Redis INCR原子操作，避免并发冲突</li>
+                    <li><strong>月度重置：</strong>根据entrustTime（年月）生成独立的Redis键，自动实现每月流水号从1开始</li>
+                    <li><strong>容错机制：</strong>检测异常情况（非月初但键不存在），自动修复</li>
+                    <li><strong>资源清理：</strong>设置40天过期时间，自动清理历史数据</li>
+                </ul>
+            </div>
+
+            <!-- 输入输出示例 -->
+            <div>
+                <h3 style="font-size: 16px; color: #333; margin-bottom: 10px;">输入输出示例</h3>
+                <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                    <tr style="background: #f8f9fa;">
+                        <th style="padding: 8px; text-align: left;">输入参数</th>
+                        <th style="padding: 8px; text-align: left;">输出结果</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">pre="LXSEJJG", entrustTime="2604", length=5</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">LXSEJJG260400001</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">pre="LXSEJJG", entrustTime="2604", length=5（第二次调用）</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #eee;">LXSEJJG260400002</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px;">pre="LXSCJJF", entrustTime="2604", length=5</td>
+                        <td style="padding: 8px;">LXSCJJF260400001</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 西自仪云检测一体化平台 - 证书编号业务流程图</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记录编制 - 保存Excel完整链路分析报告</title>
+<style>
+:root {
+  --primary: #1a73e8;
+  --primary-light: #e8f0fe;
+  --success: #34a853;
+  --warning: #fbbc04;
+  --danger: #ea4335;
+  --dark: #202124;
+  --gray: #5f6368;
+  --border: #dadce0;
+  --bg: #f8f9fa;
+  --code-bg: #1e1e1e;
+  --code-text: #d4d4d4;
+  --card-bg: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif; background: var(--bg); color: var(--dark); line-height: 1.8; padding: 20px; }
+.container { max-width: 1300px; margin: 0 auto; }
+
+.header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; text-align: center; }
+.header h1 { font-size: 2rem; margin-bottom: 10px; }
+.header p { opacity: 0.9; font-size: 1rem; }
+.header .badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 16px; border-radius: 20px; font-size: 0.85rem; margin: 0 6px; }
+
+.section { background: var(--card-bg); border-radius: 12px; padding: 30px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+.section h2 { font-size: 1.5rem; color: var(--primary); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 3px solid var(--primary); display: flex; align-items: center; gap: 10px; }
+.section h3 { font-size: 1.2rem; color: var(--dark); margin: 24px 0 12px; }
+.section h3:before { content: "▸ "; color: var(--primary); }
+
+.flow-steps { counter-reset: step; }
+.flow-step { position: relative; padding-left: 60px; margin-bottom: 28px; }
+.flow-step:before { counter-increment: step; content: counter(step); position: absolute; left: 0; top: 0; width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; text-align: center; line-height: 40px; font-weight: bold; font-size: 1.1rem; }
+.flow-step:not(:last-child):after { content: ""; position: absolute; left: 19px; top: 48px; width: 2px; height: calc(100% + 12px); background: var(--border); }
+.flow-step h4 { font-size: 1.05rem; color: var(--primary); margin-bottom: 6px; }
+.flow-step .file-ref { font-size: 0.85rem; color: var(--gray); margin-bottom: 4px; }
+.flow-step .file-ref a { color: var(--primary); text-decoration: none; font-family: monospace; }
+
+.code-block { background: var(--code-bg); color: var(--code-text); border-radius: 8px; margin: 10px 0; overflow: hidden; }
+.code-block .code-title { background: #333; padding: 8px 16px; font-size: 0.8rem; color: #aaa; display: flex; justify-content: space-between; align-items: center; }
+.code-block pre { padding: 16px; overflow-x: auto; font-size: 0.82rem; line-height: 1.5; margin: 0; }
+.code-block code { font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace; }
+
+.highlight { background: rgba(255,235,59,0.3); padding: 2px 4px; border-radius: 3px; font-weight: 500; }
+.tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 500; margin-right: 6px; }
+.tag-file { background: #e8f0fe; color: #1a73e8; }
+.tag-db { background: #e6f4ea; color: #137333; }
+.tag-img { background: #fef7e0; color: #e37400; }
+.tag-api { background: #fce8e6; color: #c5221f; }
+.tag-sql { background: #f3e8fd; color: #7b1fa2; }
+
+.info-box { background: var(--primary-light); border-left: 4px solid var(--primary); padding: 14px 18px; border-radius: 6px; margin: 12px 0; font-size: 0.92rem; }
+.warn-box { background: #fef7e0; border-left: 4px solid var(--warning); padding: 14px 18px; border-radius: 6px; margin: 12px 0; font-size: 0.92rem; }
+
+.data-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+.data-table th { background: var(--bg); padding: 10px 14px; text-align: left; border: 1px solid var(--border); font-weight: 600; }
+.data-table td { padding: 8px 14px; border: 1px solid var(--border); }
+.data-table tr:hover { background: var(--primary-light); }
+
+.file-tree { background: var(--code-bg); color: #aaa; border-radius: 8px; padding: 16px 20px; font-family: monospace; font-size: 0.82rem; line-height: 2; margin: 10px 0; }
+.file-tree .dir { color: #569cd6; }
+.file-tree .file { color: #dcdcaa; }
+.file-tree .arrow { color: #888; }
+
+.sequence { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+.sequence-item { display: flex; align-items: flex-start; gap: 12px; }
+.sequence-num { min-width: 28px; height: 28px; background: var(--primary); color: white; border-radius: 50%; text-align: center; line-height: 28px; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; }
+.sequence-content { flex: 1; padding: 10px 14px; background: var(--bg); border-radius: 8px; font-size: 0.9rem; }
+
+.toc { background: var(--card-bg); border-radius: 12px; padding: 24px 30px; margin-bottom: 24px; border: 1px solid var(--border); }
+.toc h3 { margin-top: 0 !important; }
+.toc ol { padding-left: 24px; line-height: 2.2; }
+.toc a { color: var(--primary); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+.top-btn { position: fixed; bottom: 30px; right: 30px; width: 44px; height: 44px; background: var(--primary); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: 0.2s; }
+.top-btn:hover { background: #1557b0; transform: scale(1.05); }
+
+@media (max-width: 768px) {
+  .header h1 { font-size: 1.4rem; }
+  .section { padding: 20px; }
+  .flow-step { padding-left: 48px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>📋 记录编制 — 保存Excel完整后端链路分析</h1>
+  <p>从"点击保存"到数据库持久化的全链路追踪</p>
+  <div style="margin-top:12px">
+    <span class="badge">PageOffice</span>
+    <span class="badge">Excel → PDF → 图片</span>
+    <span class="badge">MyBatis</span>
+    <span class="badge">文件系统</span>
+  </div>
+</div>
+
+<!-- 目录 -->
+<div class="toc">
+  <h3>📑 目录</h3>
+  <ol>
+    <li><a href="#overview">总体概览：保存时发生了什么</a></li>
+    <li><a href="#frontend">前端：从页面点击到发送请求</a></li>
+    <li><a href="#controller">后端Controller：saveOriginalFile 入口</a></li>
+    <li><a href="#excel-convert">Excel → PDF → 图片 转换流程</a></li>
+    <li><a href="#service">Service层：updateTaskAllotWithResultTemplate</a></li>
+    <li><a href="#sql">数据库操作：完整SQL语句</a></li>
+    <li><a href="#files">文件系统操作概览</a></li>
+    <li><a href="#form-save">附带：记录主页表单保存</a></li>
+    <li><a href="#summary">总结：完整时序图</a></li>
+  </ol>
+</div>
+
+<!-- ============ 1. 总体概览 ============ -->
+<div class="section" id="overview">
+  <h2>🔍 1. 总体概览：保存时发生了什么</h2>
+  <p>当用户在PageOffice编辑完Excel后点击<strong>"保存"</strong>按钮，系统会<strong>依次</strong>执行以下5大操作：</p>
+
+  <div class="sequence">
+    <div class="sequence-item">
+      <div class="sequence-num">①</div>
+      <div class="sequence-content">
+        <strong>PageOffice保存Excel文件</strong><br>
+        浏览器通过<code>WebSave()</code>将Excel文件内容提交到后端 <code>/office/api/saveOriginalFile</code>
+      </div>
+    </div>
+    <div class="sequence-item">
+      <div class="sequence-num">②</div>
+      <div class="sequence-content">
+        <strong>Excel转图片 &amp; PDF</strong><br>
+        后端将Excel的"结果页"转为多张PNG图片，将"数据页"转为PDF文件
+      </div>
+    </div>
+    <div class="sequence-item">
+      <div class="sequence-num">③</div>
+      <div class="sequence-content">
+        <strong>更新数据库</strong><br>
+        将图片路径和PDF路径写入 <code>ms_outer_task_allot</code> 表的对应"证书"记录中
+      </div>
+    </div>
+    <div class="sequence-item">
+      <div class="sequence-num">④</div>
+      <div class="sequence-content">
+        <strong>保存表单数据</strong><br>
+        将"记录模板页"中的委托信息、技术依据、计量标准、计量器具等保存到数据库
+      </div>
+    </div>
+    <div class="sequence-item">
+      <div class="sequence-num">⑤</div>
+      <div class="sequence-content">
+        <strong>文件落盘</strong><br>
+        Excel原始文件保存到服务器磁盘指定目录
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    ⚠️ <strong>关键点</strong>：保存Excel时不会更新"记录"（JL）记录本身，而是更新<strong>对应的"证书"（ZS）记录</strong>。因为结果页图片和数据页PDF会在后续"证书编制"工序中用到。
+  </div>
+</div>
+
+<!-- ============ 2. 前端 ============ -->
+<div class="section" id="frontend">
+  <h2>🖥️ 2. 前端：从页面点击到发送请求</h2>
+
+  <h3>2.1 页面入口</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <h4>用户进入记录编制列表页</h4>
+      <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-web/src/views/establishment/msRecordEstablish/EquipmentForInspection.vue">EquipmentForInspection.vue</a> — 表格/卡片视图展示待编制任务</p>
+      <p>用户点击某行的<strong>"编写记录"</strong>按钮 → 触发 <code>handleUpdate(row)</code>（第741行）</p>
+    </div>
+    <div class="flow-step">
+      <h4>选择记录模板</h4>
+      <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-web/src/views/establishment/msRecordEstablish/EquipmentForInspection.vue">EquipmentForInspection.vue</a> — 第596行 <code>dblclickchange()</code></p>
+      <p>弹出模板选择弹窗，用户<strong>双击某个模板</strong> → 调用 <code>getRecordEcho()</code> API 获取模板回显数据</p>
+    </div>
+    <div class="flow-step">
+      <h4>打开 PageOffice 编辑窗口</h4>
+      <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-web/src/components/pageoffice/JLupdate.vue">JLupdate.vue</a> — PageOffice容器组件</p>
+      <p>通过 <code>POBrowser.openWindow('/JLupdate', ...)</code> 在新窗口中打开JLupdate.vue</p>
+      <p>传入参数：<code>allotId</code>（任务分配ID）、<code>templateChildId</code>（模板ID）、<code>configTemplateUrl</code>（Excel模板路径）等</p>
+    </div>
+  </div>
+
+  <h3>2.2 JLupdate.vue — 双Tab页面结构</h3>
+  <div class="info-box">
+    窗口包含两个Tab页签：<br>
+    📝 <strong>Tab1："记录模板页"</strong> — HTML表单（委托单位、仪器信息、技术依据、计量标准、检定结论等）<br>
+    📊 <strong>Tab2："数据页"</strong> — 嵌入PageOffice的Excel在线编辑器
+  </div>
+
+  <h3>2.3 切换到"数据页"Tab → 加载Excel</h3>
+  <div class="flow-step" style="margin-bottom:12px">
+    <h4>调用 recordEditExcel 接口</h4>
+    <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-web/src/components/pageoffice/JLupdate.vue">JLupdate.vue</a> — 第1252行 <code>loadDocument()</code></p>
+    <div class="code-block">
+      <div class="code-title">前端代码 — 加载Excel（编辑模式）</div>
+      <pre><code>// api: recordEditExcel（编辑模式） 或 openexcelView（查看模式）
+const api = isViewMode ? openexcelView : recordEditExcel;
+api({ filePath: path, templateChildId: this.form.templateChildId })
+  .then((response) => {
+    this.poHtml = response.pageoffice; // 渲染PageOffice控件HTML
+  });</code></pre>
+    </div>
+    <p>请求发送到：<code>GET /office/api/recordEditExcel?filePath=...&templateChildId=...</code></p>
+  </div>
+
+  <h3>2.4 ⭐ 点击"保存"按钮</h3>
+  <div class="flow-step" style="margin-bottom:12px">
+    <h4>submitForm(10) — 保存核心逻辑</h4>
+    <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-web/src/components/pageoffice/JLupdate.vue">JLupdate.vue</a> — 第1588行</p>
+    <div class="code-block">
+      <div class="code-title">前端核心代码 — submitForm(10)保存</div>
+      <pre><code>// 1. 先保存PageOffice中的Excel
+const paramJson = {
+  filePath: templateMasterConfig.configTemplateUrl, // Excel文件路径
+  allotId,                                          // 任务分配ID
+  type: '1',                                        // '1'=送检 / '2'=现场
+};
+const paramValue = new URLSearchParams(paramJson);
+pageofficectrl.word.RefreshDataRegionList();  // 刷新数据区域
+pageofficectrl.SaveFilePage = `/office/api/saveOriginalFile?${paramValue.toString()}`;
+pageofficectrl.WebSave();                     // 提交Excel内容到后端保存
+
+// 2. 然后保存记录主页的表单数据
+if (this.status == '10') {
+  response = await PosttestTaskAllot(submitData);  // 新增POST
+} else {
+  response = await PuttestTaskAllot(submitData);   // 修改PUT
+}</code></pre>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    ⚠️ <strong>注意顺序</strong>：<code>pageofficectrl.WebSave()</code> 和后续表单API调用是<strong>并行执行</strong>的（没有await），两者互不阻塞。实际效果是Excel保存和表单保存几乎同时进行。
+  </div>
+</div>
+
+<!-- ============ 3. Controller ============ -->
+<div class="section" id="controller">
+  <h2>⚙️ 3. 后端Controller：saveOriginalFile 入口</h2>
+  <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-admin/src/main/java/com/xzy/web/controller/common/OfficeOnlineApi.java">OfficeOnlineApi.java</a> — 第198~246行</p>
+
+  <div class="code-block">
+    <div class="code-title">完整代码 — POST /office/api/saveOriginalFile</div>
+    <pre><code>@PostMapping("/saveOriginalFile")
+public void saveOriginalFile(HttpServletRequest request, HttpServletResponse response,
+                             String filePath, String type, Long allotId) throws IOException {
+    response.setCharacterEncoding("utf-8");
+    // 1. 参数校验
+    if (StringUtils.isEmpty(filePath)) {
+        throw new CustomException("文件路径不能为空", HttpStatus.SC_NOT_FOUND);
+    }
+    if (allotId == null) {
+        throw new CustomException("任务明细ID不能为空!", HttpStatus.SC_NOT_FOUND);
+    }
+    // 2. 初始化PageOffice文件保存器（从请求中读取Excel内容）
+    FileSaver fs = new FileSaver(request, response);
+    // 3. 路径标准化
+    String normalizedPath = FileUtils.normalizeOriginalFilePath(filePath);
+    // 4. 判断是否为Excel文件，执行转换
+    if (FileUtils.isExcelFile(normalizedPath)) {
+        Map&lt;String, Object&gt; amap = excelToImgFile(normalizedPath);     // Excel→图片+PDF
+        List&lt;String&gt; croppedResultImages = (List&lt;String&gt;) amap.get("croppedResultImages");
+        String dataPdfPath = (String) amap.get("dataPdfPath");
+        String resultImgJson = new ObjectMapper().writeValueAsString(croppedResultImages);
+        // 5. 更新数据库（区分送检和现场）
+        if (Constants.SET_STATUS_1.equals(type)) {  // type='1'=送检
+            testTaskAllotService.updateTaskAllotWithResultTemplate(
+                allotId, resultImgJson, null, dataPdfPath, filePath);
+        } else {                                     // type='2'=现场
+            msOuterTaskAllotService.updateTaskAllotWithResultTemplate(
+                allotId, resultImgJson, null, dataPdfPath, filePath);
+        }
+    }
+    // 6. 文件写入磁盘
+    fs.saveToFile(normalizedPath);
+    fs.close();
+}</code></pre>
+  </div>
+
+  <table class="data-table">
+    <tr><th>步骤</th><th>操作</th><th>说明</th></tr>
+    <tr><td>1</td><td><span class="tag tag-api">参数校验</span></td><td>校验 filePath 和 allotId 非空</td></tr>
+    <tr><td>2</td><td><span class="tag tag-file">FileSaver</span></td><td>PageOffice的 FileSaver 从HTTP请求中读取Excel二进制内容</td></tr>
+    <tr><td>3</td><td><span class="tag tag-file">路径标准化</span></td><td><code>FileUtils.normalizeOriginalFilePath()</code> 将web路径转为本地绝对路径</td></tr>
+    <tr><td>4</td><td><span class="tag tag-img">Excel→图片</span></td><td>调用 <code>excelToImgFile()</code> 执行转换（详见第4节）</td></tr>
+    <tr><td>5</td><td><span class="tag tag-db">更新数据库</span></td><td>调用 Service 层的 <code>updateTaskAllotWithResultTemplate()</code></td></tr>
+    <tr><td>6</td><td><span class="tag tag-file">文件落盘</span></td><td><code>fs.saveToFile()</code> 将Excel写入服务器磁盘</td></tr>
+  </table>
+</div>
+
+<!-- ============ 4. 转换 ============ -->
+<div class="section" id="excel-convert">
+  <h2>🖼️ 4. Excel → PDF → 图片 转换流程</h2>
+  <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-admin/src/main/java/com/xzy/web/controller/common/OfficeOnlineApi.java">OfficeOnlineApi.java</a> — 第249~296行，私有方法 <code>excelToImgFile()</code></p>
+
+  <h3>4.1 转换流程图</h3>
+  <div style="text-align:center; margin:20px 0; background:#fff; padding:20px; border:1px solid var(--border); border-radius:8px; font-family:monospace; font-size:0.9rem; line-height:2.5;">
+    📄 <strong>Excel文件</strong> (xxx.xlsx)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├─ Sheet "结果页" ──→ <code>ExcelSheetToPdfUtils.convertSingleSheet()</code> ──→ 📄 result.pdf<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─→ <code>PdfCertCleanConverter.convertPdfPages()</code> ──→ 🖼️ result/page_0.png<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─→ 🖼️ result/page_1.png<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;└─ Sheet "数据页" ──→ <code>ExcelSheetToPdfUtils.convertSingleSheet()</code> ──→ 📄 data.pdf<br>
+  </div>
+
+  <h3>4.2 完整代码</h3>
+  <div class="code-block">
+    <div class="code-title">excelToImgFile() 完整实现</div>
+    <pre><code>private Map&lt;String, Object&gt; excelToImgFile(String filePath) {
+    Map&lt;String, Object&gt; resultMap = new HashMap&lt;&gt;();
+    File originalFile = new File(filePath);
+    // 输出目录：和原文件同目录下的 result/ 子目录
+    String parentDir = originalFile.getParent();
+    String resultImgDir = parentDir + File.separator + "result";
+    mkDir(resultImgDir);   // 创建 result/ 目录（例如 D:\uploadPath\original\xxx\result\）
+    // 生成PDF文件名（在原Excel名基础上加后缀）
+    String dataPdfPath = FilePathUtil.getPdfPath(filePath, "_data");     // 如 xxx_data.pdf
+    String resultPdfPath = FilePathUtil.getPdfPath(filePath, "_result"); // 如 xxx_result.pdf
+    try {
+        // 步骤1：Excel "结果页" sheet → result.pdf
+        ExcelSheetToPdfUtils.convertSingleSheet(filePath, resultPdfPath, "结果页");
+        // 步骤2：Excel "数据页" sheet → data.pdf
+        ExcelSheetToPdfUtils.convertSingleSheet(filePath, dataPdfPath, "数据页");
+        // 步骤3：result.pdf 每一页 → PNG图片
+        List&lt;String&gt; resultImages = PdfCertCleanConverter.convertPdfPages(resultPdfPath, 
+                                                                           resultImgDir);
+        // 返回结果
+        resultMap.put("croppedResultImages", resultImages); // [".../result/page_0.png", ...]
+        resultMap.put("dataPdfPath", dataPdfPath);          // ".../xxx_data.pdf"
+    } catch (Exception e) {
+        log.error("Excel转多图处理失败", e);
+        throw new CustomException("Excel转图片处理失败", e);
+    }
+    return resultMap;
+}</code></pre>
+  </div>
+
+  <h3>4.3 使用的工具类</h3>
+  <table class="data-table">
+    <tr><th>工具类</th><th>方法</th><th>作用</th></tr>
+    <tr>
+      <td><code>ExcelSheetToPdfUtils</code></td>
+      <td><code>convertSingleSheet(filePath, pdfPath, sheetName)</code></td>
+      <td>使用Aspose.Cells库，将Excel的<strong>指定Sheet</strong>转换为PDF文件</td>
+    </tr>
+    <tr>
+      <td><code>PdfCertCleanConverter</code></td>
+      <td><code>convertPdfPages(pdfPath, outputDir)</code></td>
+      <td>使用PDFBox，将PDF的<strong>每一页</strong>渲染为高分辨率PNG图片</td>
+    </tr>
+    <tr>
+      <td><code>FilePathUtil</code></td>
+      <td><code>getPdfPath(filePath, suffix)</code></td>
+      <td>根据Excel路径生成对应的PDF文件路径（替换扩展名为.pdf并加后缀）</td>
+    </tr>
+  </table>
+
+  <h3>4.4 生成的文件示例</h3>
+  <div class="file-tree">
+    <span class="dir">D:\uploadPath\original\2026\05\</span><br>
+    &nbsp;&nbsp;<span class="arrow">├──</span> <span class="file">记录模板_20260508120000.xlsx</span> &nbsp;&nbsp;<span style="color:#888">← 原始Excel（用户编辑的）</span><br>
+    &nbsp;&nbsp;<span class="arrow">├──</span> <span class="file">记录模板_20260508120000_result.pdf</span> &nbsp;&nbsp;<span style="color:#888">← "结果页"的PDF</span><br>
+    &nbsp;&nbsp;<span class="arrow">├──</span> <span class="file">记录模板_20260508120000_data.pdf</span> &nbsp;&nbsp;<span style="color:#888">← "数据页"的PDF</span><br>
+    &nbsp;&nbsp;<span class="arrow">└──</span> <span class="dir">result/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">├──</span> <span class="file">page_0.png</span> &nbsp;&nbsp;<span style="color:#888">← 结果页第1张图片</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">├──</span> <span class="file">page_1.png</span> &nbsp;&nbsp;<span style="color:#888">← 结果页第2张图片</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="arrow">└──</span> <span class="file">...</span><br>
+  </div>
+</div>
+
+<!-- ============ 5. Service ============ -->
+<div class="section" id="service">
+  <h2>🗄️ 5. Service层：updateTaskAllotWithResultTemplate</h2>
+
+  <h3>5.1 送检模式（TestTaskAllotServiceImpl）</h3>
+  <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-measure/src/main/java/com/xzy/measure/service/impl/TestTaskAllotServiceImpl.java">TestTaskAllotServiceImpl.java</a> — 第325~354行</p>
+  <div class="code-block">
+    <div class="code-title">送检 — updateTaskAllotWithResultTemplate</div>
+    <pre><code>@Override
+public void updateTaskAllotWithResultTemplate(Long allotId, String resultImgJson, 
+        String dataImgPath, String dataPdfPath, String normalizedPath) {
+    try {
+        // 1. 根据 allotId 查询当前"记录"任务
+        TestTaskAllot taskAllot = testTaskAllotMapper.selectTestTaskAllotByAllotId(allotId);
+        // 2. 根据 taskId 找到对应的"证书"（ZS）记录
+        TestTaskAllot taskCaretInfo = getTestTaskAllot(
+            taskAllot.getTaskId(), Constants.TEMPLATE_CLASSIFY_ZS);  // ZS = 证书
+        if (ObjectUtils.isEmpty(taskCaretInfo)) {
+            log.info("未找到对应的任务证书记录，allotId: {}", allotId);
+            return;
+        }
+        // 3. 路径转换：本地绝对路径 → Web访问路径
+        String dataPath = PathConverter.convertToOriginalWebPath(dataPdfPath);
+        // 4. 多图片路径整体转换
+        String resultFileUrl = convertPathsToWebJson(resultImgJson); // 结果页图片路径(Json)
+        String dataFileUrl  = convertPathsToWebJson(dataImgPath);    // 数据页图片路径(Json)
+        // 5. 设置证书记录的字段
+        taskCaretInfo.setResultFileUrl(resultFileUrl);    // 结果页图片文件
+        taskCaretInfo.setDataFileUrl(dataFileUrl);        // 数据页图片文件
+        taskCaretInfo.setDataPdfUrl(dataPath);            // 数据页PDF文件
+        taskCaretInfo.setOriginalExcelFileUrl(normalizedPath); // Excel原始文件
+        // 6. 执行数据库更新
+        testTaskAllotMapper.updateTestTaskAllot(taskCaretInfo);
+    } catch (Exception e) {
+        log.error("更新任务分配记录失败，taskId: {}", allotId, e);
+    }
+}</code></pre>
+  </div>
+
+  <h3>5.2 现场模式（MsOuterTaskAllotServiceImpl）</h3>
+  <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-measure/src/main/java/com/xzy/measure/service/impl/MsOuterTaskAllotServiceImpl.java">MsOuterTaskAllotServiceImpl.java</a> — 第214~246行</p>
+  <div class="code-block">
+    <div class="code-title">现场 — updateTaskAllotWithResultTemplate</div>
+    <pre><code>public void updateTaskAllotWithResultTemplate(Long allotId, String resultImgJson, 
+        String dataImgPath, String dataPdfPath, String normalizedPath) {
+    try {
+        // 1. 查询当前"记录"任务
+        MsOuterTaskAllot taskAllot = msOuterTaskAllotMapper.selectMsOuterTaskAllotByAllotId(allotId);
+        Long sampleId = taskAllot.getSampleId();
+        // 2. 根据 sampleId + compileType='ZS' 找到对应"证书"记录
+        MsOuterTaskAllot taskCaretInfo = msOuterTaskAllotMapper.selectMsOuterTaskAllotList(
+            new MsOuterTaskAllot().setSampleId(sampleId)
+                .setCompileType(Constants.TEMPLATE_CLASSIFY_ZS)
+        ).stream().findFirst().orElseThrow(() -> new CustomException(
+            "未找到任务ID为 " + sampleId + " 的记录类型 " + Constants.TEMPLATE_CLASSIFY_ZS));
+        // 3. 路径转换
+        String dataPath = PathConverter.convertToOriginalWebPath(dataPdfPath);
+        String resultFileUrl = convertPathsToWebJson(resultImgJson);
+        String dataFileUrl  = convertPathsToWebJson(dataImgPath);
+        // 4. 设置字段并更新
+        taskCaretInfo.setResultFileUrl(resultFileUrl);
+        taskCaretInfo.setDataFileUrl(dataFileUrl);
+        taskCaretInfo.setDataPdfUrl(dataPath);
+        taskCaretInfo.setOriginalExcelFileUrl(normalizedPath);
+        msOuterTaskAllotMapper.updateMsOuterTaskAllot(taskCaretInfo);
+    } catch (Exception e) {
+        log.error("更新任务分配记录失败，taskId: {}", allotId, e);
+    }
+}</code></pre>
+  </div>
+
+  <h3>5.3 路径转换工具方法</h3>
+  <p class="file-ref">📄 TestTaskAllotServiceImpl.java / MsOuterTaskAllotServiceImpl.java — <code>convertPathsToWebJson()</code></p>
+  <div class="code-block">
+    <div class="code-title">convertPathsToWebJson — 批量路径转换</div>
+    <pre><code>private String convertPathsToWebJson(String json) throws Exception {
+    if (ObjectUtils.isEmpty(json)) {
+        return null;
+    }
+    // 1. 解析JSON数组（例如：["D:\\uploadPath\\xxx\\page_0.png", ...]）
+    ObjectMapper objectMapper = new ObjectMapper();
+    var list = objectMapper.readValue(json, List.class);
+    // 2. 将每个本地路径转为Web路径（例如："/profile/original/xxx/page_0.png"）
+    var webList = list.stream()
+        .map(path -> PathConverter.convertToOriginalWebPath(path.toString()))
+        .toList();
+    // 3. 重新序列化为JSON存储
+    return objectMapper.writeValueAsString(webList);
+}</code></pre>
+  </div>
+
+  <div class="info-box">
+    <strong>路径转换示例</strong>：<br>
+    本地路径：<code>D:\home\xiziyi\uploadPath\original\2026\05\result\page_0.png</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;↓ <code>PathConverter.convertToOriginalWebPath()</code><br>
+    Web路径：<code>/profile/original/2026/05/result/page_0.png</code><br>
+    <br>
+    （这个Web路径存到数据库，前端通过这个路径访问文件）
+  </div>
+</div>
+
+<!-- ============ 6. SQL ============ -->
+<div class="section" id="sql">
+  <h2>📊 6. 数据库操作：完整SQL语句</h2>
+
+  <h3>6.1 涉及的数据库表</h3>
+  <table class="data-table">
+    <tr><th>表名</th><th>字段</th><th>说明</th></tr>
+    <tr>
+      <td><code>test_task_allot</code>（送检）</td>
+      <td><code>result_file_url</code>, <code>data_file_url</code>, <code>data_pdf_url</code>, <code>original_excel_file_url</code></td>
+      <td>任务分配记录。每条记录有 <code>compile_type</code> 区分是 "JL"（记录）还是 "ZS"（证书）</td>
+    </tr>
+    <tr>
+      <td><code>ms_outer_task_allot</code>（现场）</td>
+      <td>同上</td>
+      <td>现场检测的任务分配记录</td>
+    </tr>
+  </table>
+
+  <h3>6.2 查询SQL — 找到"证书"记录</h3>
+  <div class="code-block">
+    <div class="code-title">selectTestTaskAllotByAllotId — 查询当前"记录"</div>
+    <pre><code>-- 根据 allotId 查询当前"记录"（JL）任务（获取其 taskId/sampleId）
+SELECT tta.allot_id, tta.task_id, tta.compile_type, ...
+FROM test_task_allot tta
+LEFT JOIN test_task_info tti ON tta.task_id = tti.task_id
+LEFT JOIN sample_library_info sli ON sli.id = tti.sample_id
+... 
+WHERE tta.allot_id = #{allotId}
+GROUP BY tta.allot_id, met.id;</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-title">getTestTaskAllot / selectMsOuterTaskAllotList — 找到对应的"证书"（ZS）记录</div>
+    <pre><code>-- 送检：根据 taskId + compileType='ZS' 找到证书记录
+SELECT * FROM test_task_allot tta
+WHERE tta.task_id = #{taskId} AND tta.compile_type = 'ZS';
+
+-- 现场：根据 sampleId + compileType='ZS' 找到证书记录
+SELECT mota.* FROM ms_outer_task_allot mota
+WHERE mota.sample_id = #{sampleId} AND mota.compile_type = 'ZS';</code></pre>
+  </div>
+
+  <h3>6.3 ⭐ 核心UPDATE SQL — 保存时执行的SQL</h3>
+  <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-measure/src/main/resources/mapper/measure/TestTaskAllotMapper.xml">TestTaskAllotMapper.xml</a> — 第711~745行 | <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-measure/src/main/resources/mapper/measure/MsOuterTaskAllotMapper.xml">MsOuterTaskAllotMapper.xml</a> — 第227~261行</p>
+  <div class="code-block">
+    <div class="code-title"><span class="tag tag-sql">核心UPDATE</span> — 实际执行的SQL（以送检为例）</div>
+    <pre><code>UPDATE test_task_allot SET
+    result_file_url         = '["/profile/original/2026/05/result/page_0.png", 
+                                "/profile/original/2026/05/result/page_1.png"]',  -- 结果页多张图片路径(JSON数组)
+    data_file_url           = NULL,                                               -- 数据页图片路径（本次传null）
+    data_pdf_url            = '/profile/original/2026/05/xxx_data.pdf',          -- 数据页PDF路径
+    original_excel_file_url = 'D:\uploadPath\original\2026\05\xxx.xlsx'          -- Excel原始文件绝对路径
+WHERE allot_id = #{allotId};   -- 这条 WHERE 更新的是"证书"（ZS）记录的 allotId</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-title">MyBatis动态SQL模板（实际运行时只有非null字段被SET）</div>
+    <pre><code>&lt;update id="updateTestTaskAllot" parameterType="TestTaskAllot"&gt;
+    update test_task_allot
+    &lt;trim prefix="SET" suffixOverrides=","&gt;
+        &lt;if test="resultFileUrl != null"&gt;result_file_url = #{resultFileUrl},&lt;/if&gt;
+        &lt;if test="dataFileUrl != null"&gt;data_file_url = #{dataFileUrl},&lt;/if&gt;
+        &lt;if test="dataPdfUrl != null"&gt;data_pdf_url = #{dataPdfUrl},&lt;/if&gt;
+        &lt;if test="originalExcelFileUrl != null"&gt;
+            original_excel_file_url = #{originalExcelFileUrl},
+        &lt;/if&gt;
+        ...
+    &lt;/trim&gt;
+    where allot_id = #{allotId}
+&lt;/update&gt;</code></pre>
+  </div>
+
+  <div class="warn-box">
+    ⚠️ <strong>重要</strong>：你可能会疑惑"为什么不是保存到一个单独的记录表，而是更新证书记录？"
+    答案：保存Excel的<strong>结果页图片</strong>是在为后续"证书编制"做准备。在流程中，先做"记录编制"（JL），再做"证书编制"（ZS）。证书模板（Word）的结果页区域需要引用这些图片。所以提前存到<strong>证书记录</strong>的 <code>result_file_url</code> 字段中。
+  </div>
+</div>
+
+<!-- ============ 7. 文件操作 ============ -->
+<div class="section" id="files">
+  <h2>📁 7. 文件系统操作概览</h2>
+
+  <h3>7.1 保存过程中涉及的文件操作</h3>
+  <table class="data-table">
+    <tr><th>序号</th><th>操作类型</th><th>源</th><th>目标</th><th>位置（代码）</th></tr>
+    <tr>
+      <td>1</td><td><span class="tag tag-file">文件写入</span></td>
+      <td>HTTP请求体（Excel二进制）</td>
+      <td>服务器磁盘 <code>normalizedPath</code></td>
+      <td><code>fs.saveToFile()</code> 第244行</td>
+    </tr>
+    <tr>
+      <td>2</td><td><span class="tag tag-file">目录创建</span></td>
+      <td>—</td>
+      <td><code>{excel所在目录}/result/</code></td>
+      <td><code>mkDir()</code> 第269行</td>
+    </tr>
+    <tr>
+      <td>3</td><td><span class="tag tag-img">Excel→PDF</span></td>
+      <td>Excel "结果页" Sheet</td>
+      <td><code>xxx_result.pdf</code></td>
+      <td><code>ExcelSheetToPdfUtils</code> 第273行</td>
+    </tr>
+    <tr>
+      <td>4</td><td><span class="tag tag-img">Excel→PDF</span></td>
+      <td>Excel "数据页" Sheet</td>
+      <td><code>xxx_data.pdf</code></td>
+      <td><code>ExcelSheetToPdfUtils</code> 第274行</td>
+    </tr>
+    <tr>
+      <td>5</td><td><span class="tag tag-img">PDF→PNG图片</span></td>
+      <td><code>xxx_result.pdf</code>每一页</td>
+      <td><code>result/page_0.png, page_1.png...</code></td>
+      <td><code>PdfCertCleanConverter</code> 第275行</td>
+    </tr>
+  </table>
+
+  <h3>7.2 recordEditExcel — 打开Excel时的预配置</h3>
+  <p class="file-ref">📄 <a href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-admin/src/main/java/com/xzy/web/controller/common/OfficeOnlineApi.java">OfficeOnlineApi.java</a> — 第437~489行</p>
+  <p>在打开Excel进行编辑前，会读取模板子表的 <code>reg_content</code> 字段（区域配置），设置对应的<strong>只读区域</strong>。模板中配置的只读区域（如委托单位名称区域），用户在Excel中<strong>不可编辑</strong>，只有"数据区域"可以编辑。</p>
+  <div class="code-block">
+    <div class="code-title">recordEditExcel — 打开时的关键配置</div>
+    <pre><code>@GetMapping("/recordEditExcel")
+public Map&lt;Object, Object&gt; recordEditExcel(HttpServletRequest request, 
+        String filePath, Long templateChildId) {
+    // 1. 查询模板子配置
+    MsTemplateChild templateChild = msTemplateChildService.selectMsTemplateChildByTemplateChildId(templateChildId);
+    // 2. 解析可编辑区域配置(reg_content字段)
+    List&lt;RegionalDto&gt; convertedList = JSON.parseObject(templateChild.getRegContent(), ...);
+    // 3. 设置Excel的只读/可编辑区域
+    WorkbookWriter wb = new WorkbookWriter();
+    convertedList.forEach(reg -> {
+        SheetWriter sheet = wb.openSheet(reg.getSheetName());
+        List&lt;String&gt; valueList = Arrays.asList(reg.getRegionalValues().split(","));
+        valueList.forEach(value -> {
+            ExcelTableWriter tableA = sheet.openTable(value);
+            tableA.setReadOnly(false);  // 标记为"可编辑"，其余区域只读
+        });
+    });
+    // 4. 打开Excel（提交模式）
+    poCtrl.setWriter(wb);
+    openSubmitExcelument(poCtrl, normalizedPath, currentUser.getNickName());
+    // OpenModeType.xlsSubmitForm → Excel以"提交表单"模式打开，支持保存回调
+}</code></pre>
+  </div>
+</div>
+
+<!-- ============ 8. 附带表单保存 ============ -->
+<div class="section" id="form-save">
+  <h2>📝 8. 附带：记录主页表单保存</h2>
+  <p>保存按钮同时也触发了<strong>记录模板页</strong>中表单数据的保存（委托信息、技术依据、计量标准、计量器具等）。虽然这是独立的API调用，但和Excel保存在同一按钮操作中触发。</p>
+
+  <h3>8.1 API接口</h3>
+  <table class="data-table">
+    <tr><th>状态</th><th>HTTP方法</th><th>API路径</th><th>说明</th></tr>
+    <tr><td>status='10'（待检测）</td><td>POST</td><td><code>/measure/testTaskAllot</code></td><td>首次新增编制记录</td></tr>
+    <tr><td>status='20'/'70' 等</td><td>PUT</td><td><code>/measure/testTaskAllot</code></td><td>修改已存在的编制记录</td></tr>
+    <tr><td>status='20'/'70'（提交）</td><td>GET</td><td><code>/measure/testTaskAllot/JLsubmit?allotId=?</code></td><td>核验提交</td></tr>
+  </table>
+
+  <h3>8.2 提交的数据结构（TestTaskDto）</h3>
+  <div class="code-block">
+    <div class="code-title">POST/PUT 请求体JSON结构</div>
+    <pre><code>{
+  "allotId": 12345,                    // 任务分配ID
+  "templateId": 678,                   // 模板ID
+  "status": "20",                      // 状态：20=检测中
+  "deviceInfoList": [                  // 主要计量器具集合
+    {
+      "deviceId": 1, "deviceName": "数字万用表",
+      "measureRange": "0~1000V", "degreeGrade": "0.05级",
+      "certNumber": "2026-001", "certValidityTime": "2026-12-31", ...
+    }
+  ],
+  "standardInfoList": [                // 计量标准集合
+    { "standardId": 1, "standardName": "标准电阻", "measureRange": "1Ω", ... }
+  ],
+  "technicalInfoList": [               // 技术依据集合
+    { "technicalId": 1, "name": "JJG 124-2005", "code": "JJG124", ... }
+  ],
+  "testMasterInfo": {                  // 记录主页信息
+    "checkUserId": 100,                // 核验人
+    "testUserId": 101,                 // 检定员
+    "approveUserId": 102,              // 批准人
+    "customerName": "XX公司",
+    "deviceName": "压力表", "spec": "0~1.6MPa",
+    "factoryCode": "2026A001", "deviceCode": "SB-001",
+    "degreeGrade": "1.6级", "checkPlaceType": "1",
+    "temperature": "20", "humidity": "60",
+    "checkTime": "2026-05-08",         // 检定日期
+    "checkResult": "1",                // 检定结论：1=合格
+    "certNumber": "2026-XX-001",      // 证书编号
+    ...
+  }
+}</code></pre>
+  </div>
+
+  <h3>8.3 涉及的数据表</h3>
+  <table class="data-table">
+    <tr><th>表名</th><th>保存内容</th></tr>
+    <tr><td><code>test_master_info</code></td><td>记录主页信息（核验人、检定员、环境条件、检定结论等）</td></tr>
+    <tr><td><code>test_device_info</code></td><td>计量器具配置列表</td></tr>
+    <tr><td><code>test_standard_info</code></td><td>计量标准配置列表</td></tr>
+    <tr><td><code>test_technical_info</code></td><td>技术依据配置列表</td></tr>
+    <tr><td><code>test_task_allot</code></td><td>更新编译状态和模板关联</td></tr>
+  </table>
+</div>
+
+<!-- ============ 9. 总结 ============ -->
+<div class="section" id="summary">
+  <h2>🔗 9. 总结：完整时序图</h2>
+
+  <div style="background:#fff;padding:24px;border-radius:8px;border:1px solid var(--border);overflow-x:auto;font-size:0.88rem;line-height:2.2;">
+<pre style="margin:0;">
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐     ┌──────────┐     ┌──────────────┐
+│  浏览器      │     │  Jlupdate.vue     │     │  OfficeOnlineApi     │     │ Service  │     │   MySQL       │
+│  (前端页面)   │     │  (PageOffice容器)  │     │  (Controller)        │     │ (xzy-measure)│   │   Database    │
+└──────┬──────┘     └────────┬─────────┘     └──────────┬──────────┘     └────┬─────┘     └──────┬───────┘
+       │                     │                          │                     │                  │
+       │ 1.点击"保存"         │                          │                     │                  │
+       │────────────────────>│                          │                     │                  │
+       │                     │                          │                     │                  │
+       │                     │ 2.WebSave()             │                     │                  │
+       │                     │ SaveFilePage=           │                     │                  │
+       │                     │ /office/api/saveOriginalFile                    │                  │
+       │                     │─────────────────────────>│                     │                  │
+       │                     │                          │                     │                  │
+       │                     │                          │ 3.excelToImgFile()   │                  │
+       │                     │                          │────┐                 │                  │
+       │                     │                          │    │ Excel→PDF→PNG  │                  │
+       │                     │                          │<───┘(文件系统IO)      │                  │
+       │                     │                          │                     │                  │
+       │                     │                          │ 4.updateTaskAllot    │                  │
+       │                     │                          │ WithResultTemplate() │                  │
+       │                     │                          │─────────────────────>│                  │
+       │                     │                          │                     │ 5.查询"记录"记录    │
+       │                     │                          │                     │───────────────────>│
+       │                     │                          │                     │ SELECT * FROM     │
+       │                     │                          │                     │ test_task_allot   │
+       │                     │                          │                     │ WHERE allot_id=?  │
+       │                     │                          │                     │<───────────────────│
+       │                     │                          │                     │                   │
+       │                     │                          │                     │ 6.查询"证书"记录    │
+       │                     │                          │                     │───────────────────>│
+       │                     │                          │                     │ WHERE task_id=?   │
+       │                     │                          │                     │ AND compile_type='ZS'
+       │                     │                          │                     │<───────────────────│
+       │                     │                          │                     │                   │
+       │                     │                          │                     │ 7.UPDATE "证书"记录  │
+       │                     │                          │                     │───────────────────>│
+       │                     │                          │                     │ SET result_file_url│
+       │                     │                          │                     │     ='[...png...]' │
+       │                     │                          │                     │    ,data_pdf_url  │
+       │                     │                          │                     │     ='...data.pdf' │
+       │                     │                          │                     │    ,original_excel│
+       │                     │                          │                     │     _file_url=?   │
+       │                     │                          │                     │ WHERE allot_id=?  │
+       │                     │                          │                     │<───────────────────│
+       │                     │                          │                     │                   │
+       │                     │                          │ 8.fs.saveToFile()    │                  │
+       │                     │                          │────┐                 │                  │
+       │                     │                          │    │ Excel写入磁盘      │                  │
+       │                     │                          │<───┘                 │                  │
+       │                     │                          │                     │                  │
+       │                     │ 9.表单保存(并行)          │(另一独立的API请求)     │                  │
+       │                     │──────────────────────────────────────────────────>│                  │
+       │                     │ POST /measure/testTaskAllot                      │ INSERT/UPDATE    │
+       │                     │ { deviceInfoList, standardInfoList,              │ test_master_info │
+       │                     │   technicalInfoList, testMasterInfo, ... }       │ test_device_info │
+       │                     │                                                  │ ...等5张表         │
+       │                     │<─────────────────────────────────────────────────│                  │
+       │                     │ 保存成功                                         │                  │
+       │<────────────────────│                                                  │                  │
+       │ "保存成功"提示       │                                                  │                  │
+</pre>
+  </div>
+
+  <h3>9.1 保存流程关键数据流转</h3>
+  <div class="sequence">
+    <div class="sequence-item">
+      <div class="sequence-num">1</div>
+      <div class="sequence-content">
+        <strong>前端传入</strong>：<code>filePath</code>（Excel模板路径）、<code>allotId</code>（任务ID）、<code>type</code>（"1"送检/"2"现场）
+      </div>
+    </div>
+    <div class="sequence-item">
+      <div class="sequence-num">2</div>
+      <div class="sequence-content">
+        <strong>Excel处理输出</strong>：<code>result/page_0.png ... page_N.png</code>（结果页多张PNG）、<code>xxx_data.pdf</code>（数据页PDF）
+      </div>
+    </div>
+    <div class="sequence-item">
+      <div class="sequence-num">3</div>
+      <div class="sequence-content">
+        <strong>存入数据库</strong>：证书（ZS）记录的 <code>result_file_url</code>（图片JSON数组）、<code>data_pdf_url</code>（PDF路径）、<code>original_excel_file_url</code>（Excel路径）
+      </div>
+    </div>
+  </div>
+
+  <h3>9.2 涉及的核心文件一览</h3>
+  <table class="data-table">
+    <tr><th>层级</th><th>文件</th><th>作用</th></tr>
+    <tr><td>前端页面</td><td><code>.../msRecordEstablish/EquipmentForInspection.vue</code></td><td>记录编制任务列表，选择模板入口</td></tr>
+    <tr><td>前端组件</td><td><code>.../pageoffice/JLupdate.vue</code></td><td>PageOffice容器，双Tab（表单+Excel），含保存按钮</td></tr>
+    <tr><td>后端Controller</td><td><code>.../common/OfficeOnlineApi.java</code></td><td><code>saveOriginalFile</code>（保存入口）、<code>excelToImgFile</code>（转换）、<code>recordEditExcel</code>（打开Excel）</td></tr>
+    <tr><td>Service（送检）</td><td><code>.../impl/TestTaskAllotServiceImpl.java</code></td><td><code>updateTaskAllotWithResultTemplate</code>、<code>convertPathsToWebJson</code></td></tr>
+    <tr><td>Service（现场）</td><td><code>.../impl/MsOuterTaskAllotServiceImpl.java</code></td><td><code>updateTaskAllotWithResultTemplate</code>、<code>convertPathsToWebJson</code></td></tr>
+    <tr><td>Mapper XML</td><td><code>.../mapper/measure/TestTaskAllotMapper.xml</code></td><td>送检的核心SQL（SELECT + UPDATE）</td></tr>
+    <tr><td>Mapper XML</td><td><code>.../mapper/measure/MsOuterTaskAllotMapper.xml</code></td><td>现场的核心SQL（SELECT + UPDATE）</td></tr>
+    <tr><td>工具类</td><td><code>ExcelSheetToPdfUtils</code></td><td>Excel单Sheet转PDF（Aspose.Cells）</td></tr>
+    <tr><td>工具类</td><td><code>PdfCertCleanConverter</code></td><td>PDF多页转PNG图片（PDFBox）</td></tr>
+    <tr><td>工具类</td><td><code>PathConverter</code></td><td>本地绝对路径 ↔ Web访问路径转换</td></tr>
+    <tr><td>工具类</td><td><code>FileUtils</code></td><td>文件路径标准化、Excel判断</td></tr>
+    <tr><td>工具类</td><td><code>FilePathUtil</code></td><td>根据Excel路径生成PDF路径</td></tr>
+    <tr><td>前端API</td><td><code>.../api/template/msTemplateInfo.js</code></td><td><code>recordEditExcel</code>（前端API封装）</td></tr>
+    <tr><td>前端API</td><td><code>.../api/establishment/EquipmentForInspection.js</code></td><td><code>PosttestTaskAllot</code>、<code>PuttestTaskAllot</code></td></tr>
+  </table>
+</div>
+
+<div style="text-align:center;padding:30px;color:var(--gray);font-size:0.85rem;">
+  📅 报告生成时间：2026-05-08 | xiziyi-lims 记录编制保存链路分析
+</div>
+
+</div>
+
+<button class="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+</body>
+</html>

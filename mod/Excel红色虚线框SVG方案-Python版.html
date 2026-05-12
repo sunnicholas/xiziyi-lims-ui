@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel红色虚线框 → SVG矢量截图 —— Python最终方案</title>
+    <style>
+        :root {
+            --bg:#f8f9fa;--card-bg:#fff;--text:#2c3e50;--text-secondary:#5a6c7d;
+            --accent:#2563eb;--accent-light:#eff6ff;--border:#e2e8f0;--code-bg:#1e293b;
+            --code-text:#e2e8f0;--success:#059669;--warning:#d97706;--danger:#dc2626;
+            --radius:12px;--shadow:0 1px 3px rgba(0,0,0,0.08);
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);line-height:1.8;font-size:15px}
+        .container{max-width:1100px;margin:0 auto;padding:24px 20px 80px}
+        .header{background:linear-gradient(135deg,#1e40af 0%,#3b82f6 50%,#6366f1 100%);color:#fff;border-radius:var(--radius);padding:40px 48px;margin-bottom:32px;box-shadow:0 4px 24px rgba(37,99,235,0.25)}
+        .header h1{font-size:28px;font-weight:700;margin-bottom:8px}
+        .header .subtitle{font-size:15px;opacity:0.85}
+        .header .meta{margin-top:16px;font-size:13px;opacity:0.7;display:flex;gap:24px;flex-wrap:wrap}
+        .card{background:var(--card-bg);border-radius:var(--radius);padding:32px;margin-bottom:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+        .card h2{font-size:20px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--accent);color:var(--accent)}
+        .card h3{font-size:16px;font-weight:600;margin:24px 0 12px;color:#334155}
+        .card h3::before{content:"▸ ";color:var(--accent)}
+        table{width:100%;border-collapse:collapse;margin:16px 0;font-size:14px}
+        th,td{padding:10px 14px;text-align:left;border:1px solid var(--border)}
+        th{background:#f1f5f9;font-weight:600;color:#334155;white-space:nowrap}
+        tr:hover td{background:#f8fafc}
+        code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;color:#e11d48}
+        pre{background:var(--code-bg);color:var(--code-text);padding:20px 24px;border-radius:var(--radius);overflow-x:auto;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:13px;line-height:1.7;margin:12px 0}
+        .flow-container{display:flex;flex-direction:column;gap:12px;margin:20px 0}
+        .flow-step{display:flex;align-items:flex-start;gap:16px;padding:16px 20px;background:var(--accent-light);border-radius:8px;border-left:4px solid var(--accent)}
+        .flow-step .step-num{background:var(--accent);color:#fff;min-width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+        .flow-step .step-content{flex:1}
+        .flow-step .step-title{font-weight:600;margin-bottom:4px}
+        .flow-step .step-desc{font-size:13px;color:var(--text-secondary);line-height:1.6}
+        .pipeline{display:flex;align-items:center;gap:0;margin:24px 0;flex-wrap:wrap;justify-content:center}
+        .pipeline .node{background:var(--accent-light);border:2px solid var(--accent);border-radius:8px;padding:12px 20px;text-align:center;font-weight:600;font-size:13px;white-space:nowrap}
+        .pipeline .arrow{font-size:20px;color:var(--accent);padding:0 8px;font-weight:700}
+        .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+        .badge-blue{background:#dbeafe;color:#1e40af}.badge-green{background:#dcfce7;color:#166534}
+        .badge-amber{background:#fef3c7;color:#92400e}.badge-red{background:#fee2e2;color:#991b1b}
+        .badge-purple{background:#f3e8ff;color:#7c3aed}
+        .file-tree{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:16px 20px;font-family:'SF Mono','Consolas',monospace;font-size:13px;line-height:2}
+        .file-tree .dir{color:#2563eb;font-weight:600}
+        .file-tree .file{color:#334155}
+        .file-tree .indent{margin-left:20px}
+        .file-tree .new-file{color:#059669;font-weight:600}
+        .highlight-box{background:#fefce8;border:1px solid #facc15;border-radius:8px;padding:16px 20px;margin:16px 0;font-size:14px}
+        .highlight-box .label{font-weight:700;color:#a16207;margin-bottom:6px}
+        .info-box{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px 20px;margin:16px 0;font-size:14px}
+        .info-box .label{font-weight:700;color:#0369a1;margin-bottom:6px}
+        .toc{background:var(--card-bg);border-radius:var(--radius);padding:24px 32px;margin-bottom:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+        .toc h3{margin-bottom:12px;font-size:16px}
+        .toc a{display:block;padding:6px 0;color:var(--accent);text-decoration:none;font-size:14px}
+        .toc a:hover{text-decoration:underline}
+        .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+        @media(max-width:768px){.compare-grid{grid-template-columns:1fr}}
+        .compare-card{padding:20px;border-radius:8px;border:2px solid var(--border)}
+        .compare-card.fail{border-color:#fca5a5;background:#fef2f2}
+        .compare-card.success{border-color:#86efac;background:#f0fdf4}
+        .compare-card h4{margin-bottom:8px;font-size:15px}
+        pre .kw{color:#c084fc}pre .cmt{color:#94a3b8}pre .str{color:#86efac}pre .fn{color:#67e8f9}
+    </style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+    <h1>🐍 Excel红色虚线框 → SVG矢量截图 最终方案（Python版）</h1>
+    <div class="subtitle">openpyxl精确检测 + 内裁剪无红框 + SVG矢量无损 + 1200DPI PNG降级保障</div>
+    <div class="meta">
+        <span>📅 2026-05-08</span><span>📦 xiziyi-lims-service</span><span>🏷 codes fix from xzyPC</span>
+    </div>
+</div>
+
+<div class="toc">
+    <h3>📑 目录</h3>
+    <a href="#why-python">一、为什么换成 Python？Java方案为什么失败？</a>
+    <a href="#compare">二、Java 方案 vs Python 方案 对比</a>
+    <a href="#architecture">三、整体架构</a>
+    <a href="#py-script">四、Python 脚本核心逻辑</a>
+    <a href="#java-wrapper">五、Java 端调用方式</a>
+    <a href="#files">六、文件产出与数据库存储</a>
+    <a href="#deploy">七、服务器部署步骤</a>
+    <a href="#vba">八、VBA 宏（确保红色虚线框正确）</a>
+    <a href="#test">九、测试验证</a>
+    <a href="#trouble">十、常见问题排查</a>
+</div>
+
+<!-- 1. Why Python -->
+<div class="card" id="why-python">
+    <h2>一、为什么换成 Python？Java 方案为什么失败？</h2>
+    <h3>1.1 Java/POI 方案的致命问题</h3>
+    <table>
+        <tr><th>问题</th><th>原因</th><th>表现</th></tr>
+        <tr><td>边框颜色检测不稳定</td><td>POI 的 <code>XSSFCellStyle.getTopBorderXSSFColor()</code> 在 PageOffice 保存后的文件中经常返回 <code>null</code></td><td>检测不到红色边框 → 回退旧 pipeline → 生成多张整页截图</td></tr>
+        <tr><td>检测到多余区域</td><td>POI 读取合并单元格/隐藏单元格的边框时可能产生误判</td><td>生成 page_1.png + page_2.png 两张（而非1张）</td></tr>
+        <tr><td>样式复制丢失</td><td><code>cloneStyleFrom</code> 跨 Workbook 复制时字体/边框/背景可能丢失</td><td>截图排版错乱或内容丢失</td></tr>
+        <tr><td>降级链路复杂</td><td>依赖 LibreOffice + POI + PDFBox 三层，每一层都可能失败</td><td>错误难以定位</td></tr>
+    </table>
+
+    <h3>1.2 openpyxl 为什么更好</h3>
+    <ul style="padding-left:20px;">
+        <li>✅ <strong>直接访问 xlsx 的 XML 内部</strong>：<code>cell.border.top.color.rgb</code> 直接返回 <code>"FFFF0000"</code> 字串，无需类型转换</li>
+        <li>✅ <strong>PageOffice 保存后的文件兼容</strong>：openpyxl 按 OOXML 标准解析，不受 PageOffice 的 xlsx 写入方式影响</li>
+        <li>✅ <strong>单进程即可完成所有操作</strong>：读取→检测→临时Excel→LibreOffice→SVG/PNG，全 Python 控制</li>
+        <li>✅ <strong>代码量少、可读性强</strong>：~200行 Python vs ~400行 Java</li>
+    </ul>
+</div>
+
+<!-- 2. Compare -->
+<div class="card" id="compare">
+    <h2>二、Java 方案 vs Python 方案 对比</h2>
+    <div class="compare-grid">
+        <div class="compare-card fail">
+            <h4>❌ Java POI 方案（上一版）</h4>
+            <table style="font-size:12px;">
+                <tr><td>检测引擎</td><td>Java POI XSSFCellStyle</td></tr>
+                <tr><td>颜色读取</td><td><code>getTopBorderXSSFColor()</code> 常返回 null</td></tr>
+                <tr><td>裁剪策略</td><td>firstRow+1（内裁剪）不稳定</td></tr>
+                <tr><td>输出产物</td><td>page_1.png, page_2.png（多余）</td></tr>
+                <tr><td>红框残留</td><td>❌ 仍有红色虚线框</td></tr>
+                <tr><td>清晰度</td><td>600DPI PNG 位图（放大模糊）</td></tr>
+                <tr><td>稳定性</td><td>取决于POI版本+PageOffice兼容</td></tr>
+            </table>
+        </div>
+        <div class="compare-card success">
+            <h4>✅ Python openpyxl 方案（当前）</h4>
+            <table style="font-size:12px;">
+                <tr><td>检测引擎</td><td>Python openpyxl（直接读 XML）</td></tr>
+                <tr><td>颜色读取</td><td><code>border.top.color.rgb == "FFFF0000"</code></td></tr>
+                <tr><td>裁剪策略</td><td>内裁剪 + 临时Excel（精确）</td></tr>
+                <tr><td>输出产物</td><td><strong>仅 1 个 region_1.svg</strong></td></tr>
+                <tr><td>红框残留</td><td>✅ <strong>无红色虚线框</strong></td></tr>
+                <tr><td>清晰度</td><td><strong>SVG 矢量 —— A4打印绝不失真</strong></td></tr>
+                <tr><td>稳定性</td><td>openpyxl 社区成熟，兼容性好</td></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Architecture -->
+<div class="card" id="architecture">
+    <h2>三、整体架构</h2>
+    <div class="pipeline">
+        <div class="node">👤 用户<br>保存Excel</div>
+        <div class="arrow">→</div>
+        <div class="node">☕ Java<br>OfficeOnlineApi</div>
+        <div class="arrow">→</div>
+        <div class="node" style="border-color:#059669;background:#f0fdf4;">🐍 <strong>Python脚本</strong><br>excel_region_to_svg.py</div>
+        <div class="arrow">→</div>
+        <div class="node">📊 openpyxl<br>检测红色虚线框</div>
+        <div class="arrow">→</div>
+        <div class="node">📄 LibreOffice<br>XLX→PDF</div>
+        <div class="arrow">→</div>
+        <div class="node" style="border-color:#7c3aed;background:#f3e8ff;">🖼 <strong>SVG</strong><br>矢量图</div>
+        <div class="arrow">→</div>
+        <div class="node">🗄 数据库<br>路径JSON</div>
+    </div>
+
+    <h3>调用方式</h3>
+    <pre>
+<span class="cmt">// codes fix from xzyPC: Java ProcessBuilder 调用 Python</span>
+ProcessBuilder pb = <span class="kw">new</span> ProcessBuilder(
+    <span class="str">"python3"</span>,
+    <span class="str">"scripts/excel_region_to_svg.py"</span>,   <span class="cmt">// Python脚本</span>
+    <span class="str">"/home/lims/.../task_123.xlsx"</span>,       <span class="cmt">// Excel文件路径</span>
+    <span class="str">"/home/lims/.../result/"</span>               <span class="cmt">// SVG输出目录</span>
+);
+Process process = pb.start();
+<span class="cmt">// 读取 Python stdout → 解析 JSON → 提取 SVG 文件路径</span></pre>
+
+    <div class="info-box">
+        <div class="label">💡 为什么设计成这样？</div>
+        Java 负责 HTTP 接口和数据库操作（不动原有架构），Python 只负责"Excel检测+截图"这一个独立任务。<br>
+        两者通过 <strong>JSON over stdout</strong> 通信 —— 最简、最可靠、无需额外端口或服务。
+    </div>
+</div>
+
+<!-- 4. Python script -->
+<div class="card" id="py-script">
+    <h2>四、Python 脚本核心逻辑</h2>
+    <h3>4.1 文件位置</h3>
+    <div class="file-tree">
+        <div class="dir">📁 xiziyi-lims-service/</div>
+        <div class="indent dir">📁 scripts/</div>
+        <div class="indent indent file new-file">🐍 <strong>excel_region_to_svg.py</strong> 👈 核心脚本</div>
+    </div>
+
+    <h3>4.2 执行流程</h3>
+    <div class="flow-container">
+        <div class="flow-step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <div class="step-title">openpyxl.load_workbook() 加载 Excel</div>
+                <div class="step-desc">读取所有 Sheet，获取单元格边框样式</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <div class="step-title">is_red_dashed() —— 双条件判定</div>
+                <div class="step-desc">
+                    <code>side.style in {'dashed', 'dashDot', ...}</code> AND <code>side.color.rgb == 'FFFF0000'</code><br>
+                    两个条件同时满足才是"红色虚线边框"
+                </div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <div class="step-title">detect_regions() —— 矩形区域检测</div>
+                <div class="step-desc">扫描所有红色+虚线边框单元格 → 找 Top 边 → 向下匹配 Bottom 边 → 验证 Left/Right → 去重 → 最小尺寸校验</div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <div class="step-title">create_inner_workbook() —— 内裁剪（关键！）</div>
+                <div class="step-desc">
+                    <strong>跳过边框行/列：</strong>只复制 firstRow+1 ~ lastRow-1、firstCol+1 ~ lastCol-1 的单元格<br>
+                    这样创建的临时XLSX<strong>完全不含红色虚线边框</strong>，后续截图也不会有红框
+                </div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">5a</div>
+            <div class="step-content">
+                <div class="step-title">⭐ SVG矢量（最优方案）</div>
+                <div class="step-desc">
+                    <code>LibreOffice XLSX→PDF(矢量)</code> → <code>pdf2svg PDF→SVG(矢量)</code><br>
+                    全程矢量转换，A4打印任意缩放绝不失真<br>
+                    <strong>需要: apt install pdf2svg</strong>
+                </div>
+            </div>
+        </div>
+        <div class="flow-step">
+            <div class="step-num">5b</div>
+            <div class="step-content">
+                <div class="step-title">⚠ PNG降级（无 pdf2svg 时自动启用）</div>
+                <div class="step-desc">
+                    <code>PyMuPDF(fitz) PDF→1200DPI PNG</code><br>
+                    A4纸 = 9921×14032 像素，印刷级清晰度<br>
+                    <strong>需要: pip3 install PyMuPDF</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3>4.3 输出 JSON 格式</h3>
+    <pre>
+{
+  <span class="str">"success"</span>: <span class="kw">true</span>,
+  <span class="str">"regions"</span>: [
+    {
+      <span class="str">"label"</span>:        <span class="str">"区域1(R3C2-R12C8)"</span>,
+      <span class="str">"img_path"</span>:      <span class="str">"/path/result/region_1.svg"</span>,
+      <span class="str">"content_rows"</span>:  <span class="num">8</span>,
+      <span class="str">"content_cols"</span>:  <span class="num">5</span>,
+      <span class="str">"format"</span>:        <span class="str">"svg"</span>
+    }
+  ],
+  <span class="str">"total"</span>:   <span class="num">1</span>,
+  <span class="str">"save_dir"</span>: <span class="str">"/path/result/"</span>
+}</pre>
+</div>
+
+<!-- 5. Java Wrapper -->
+<div class="card" id="java-wrapper">
+    <h2>五、Java 端调用方式</h2>
+    <p>[ExcelRegionScreenshotUtils.java](file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-common/src/main/java/com/xzy/common/utils/ExcelRegionScreenshotUtils.java) 已改为<strong>薄封装</strong>：</p>
+    <ul style="padding-left:20px;">
+        <li><code>detectRedDashedRegions()</code> → 调用 Python 检测，返回 <code>List&lt;CellRangeAddress&gt;</code></li>
+        <li><code>captureAllRegions()</code> → 调用 Python 截图，返回 <code>Map&lt;标签, PNG路径&gt;</code></li>
+        <li><code>callPythonScript()</code> → ProcessBuilder 执行 Python，读取 stdout，解析 JSON</li>
+    </ul>
+    <p>所有 Python 的 <code>print</code> 日志会被 Java 的 <code>log.info</code> 输出到同一个日志系统。</p>
+</div>
+
+<!-- 6. Files & DB -->
+<div class="card" id="files">
+    <h2>六、文件产出与数据库存储</h2>
+    <h3>6.1 一次保存产生的文件</h3>
+    <div class="file-tree">
+        <div class="dir">📁 upload/original/2026-05-08/</div>
+        <div class="indent file">📄 task_123.xlsx <span style="color:#94a3b8">← PageOffice保存的原始Excel</span></div>
+        <div class="indent file">📄 task_123_data.pdf <span style="color:#94a3b8">← 数据页PDF（出证书合并用）</span></div>
+        <div class="indent dir">📁 <strong>result/</strong></div>
+        <div class="indent indent file new-file">🖼 <strong>region_1.svg</strong> <span style="color:#059669">← 红色虚线框内内容的矢量截图</span></div>
+    </div>
+    <div class="info-box">
+        <div class="label">📌 与旧方案的区别</div>
+        旧方案产出：page_1.png, page_2.png, _result_page_1.jpg, _cropped.jpg 等 5+ 个文件<br>
+        新方案产出：<strong>只有 region_1.svg 1个文件</strong>（或 region_1.png 无 pdf2svg 时）
+    </div>
+
+    <h3>6.2 数据库存储</h3>
+    <p>格式完全不变，仍然序列化为 JSON 数组存入 <code>result_file_url</code>：</p>
+    <pre>
+<span class="str">"["/profile/upload/.../result/region_1.svg"]"</span>   <span class="cmt">← SVG 矢量格式</span>
+<span class="str">"["/profile/upload/.../result/region_1.png"]"</span>   <span class="cmt">← 无 pdf2svg 时的1200DPI PNG降级</span></pre>
+</div>
+
+<!-- 7. Deploy -->
+<div class="card" id="deploy">
+    <h2>七、服务器部署步骤</h2>
+    <h3>7.1 在 Ubuntu 服务器上安装依赖</h3>
+    <pre>
+<span class="cmt"># codes fix from xzyPC: 第1步——Python依赖</span>
+pip3 install openpyxl PyMuPDF
+
+<span class="cmt"># codes fix from xzyPC: 第2步——SVG转换工具（可选，推荐安装）</span>
+sudo apt install pdf2svg
+
+<span class="cmt"># codes fix from xzyPC: 第3步——验证</span>
+python3 -c "import openpyxl; print('OK:', openpyxl.__version__)"
+python3 -c "import fitz; print('OK:', fitz.version)"
+which pdf2svg</pre>
+
+    <h3>7.2 部署脚本文件</h3>
+    <pre>
+<span class="cmt"># codes fix from xzyPC: 将脚本复制到项目的 scripts/ 目录</span>
+cp excel_region_to_svg.py /path/to/xiziyi-lims-service/scripts/</pre>
+
+    <h3>7.3 重启服务</h3>
+    <pre>
+<span class="cmt"># codes fix from xzyPC: 正常重启 Spring Boot 项目即可</span>
+cd /path/to/xiziyi-lims-service
+./restart.sh</pre>
+</div>
+
+<!-- 8. VBA -->
+<div class="card" id="vba">
+    <h2>八、VBA 宏（确保红色虚线框正确）</h2>
+    <p>在Excel模板中 Alt+F11 → 插入模块，粘贴以下代码。选中需要截图的区域后运行宏：</p>
+    <pre>
+<span class="cmt">' codes fix from xzyPC: 选中区域 → 添加红色虚线边框</span>
+<span class="kw">Sub</span> <span class="fn">AddRedDashedBorder</span>()
+    <span class="kw">Dim</span> s <span class="kw">As</span> Object
+    <span class="kw">For Each</span> s <span class="kw">In</span> Array(xlEdgeLeft, xlEdgeTop, xlEdgeBottom, xlEdgeRight)
+        <span class="kw">With</span> Selection.Borders(s)
+            .LineStyle = xlDash        <span class="cmt">' 虚线 ─ 必须是虚线不是实线</span>
+            .Color = RGB(<span class="num">255</span>, <span class="num">0</span>, <span class="num">0</span>)    <span class="cmt">' 红色 ─ 必须是红色不是黑色</span>
+            .Weight = xlMedium         <span class="cmt">' 中等粗细（可选）</span>
+        <span class="kw">End With</span>
+    <span class="kw">Next</span>
+<span class="kw">End Sub</span>
+
+<span class="cmt">' codes fix from xzyPC: 清除选中区域的红色虚线边框</span>
+<span class="kw">Sub</span> <span class="fn">RemoveRedDashedBorder</span>()
+    Selection.Borders.LineStyle = xlNone
+<span class="kw">End Sub</span></pre>
+
+    <div class="highlight-box">
+        <div class="label">⚠ 关键检查项</div>
+        <ol style="padding-left:20px;">
+            <li>边框样式必须是 <strong>虚线</strong>（xlDash），不是实线（xlContinuous）</li>
+            <li>边框颜色必须是 <strong>红色</strong>（255,0,0），不是黑色</li>
+            <li>边框必须画在<strong>四个边</strong>（Left/Top/Bottom/Right）</li>
+            <li>框内至少留 1 行×1 列的内容区域（边框本身占2行×2列）</li>
+        </ol>
+    </div>
+</div>
+
+<!-- 9. Test -->
+<div class="card" id="test">
+    <h2>九、测试验证</h2>
+    <h3>9.1 本地快速测试（macOS开发机）</h3>
+    <pre>
+<span class="cmt"># codes fix from xzyPC: 直接用 Python 测试（不需要启动 Java）</span>
+python3 scripts/excel_region_to_svg.py \\
+    /Users/xxx/Desktop/test.xlsx \\
+    /Users/xxx/Desktop/output/
+
+<span class="cmt"># 查看输出</span>
+ls -la /Users/xxx/Desktop/output/
+<span class="cmt"># 应该看到: region_1.svg（或 region_1.png 如果无 pdf2svg）</span></pre>
+
+    <h3>9.2 集成测试（启动 Spring Boot）</h3>
+    <table>
+        <tr><th>步骤</th><th>操作</th><th>预期结果</th></tr>
+        <tr><td>1</td><td>启动项目</td><td>日志正常</td></tr>
+        <tr><td>2</td><td>前端打开带红色虚线框的模板</td><td>PageOffice 正常</td></tr>
+        <tr><td>3</td><td>填写数据 → 保存</td><td>返回 "ok"</td></tr>
+        <tr><td>4</td><td>检查日志</td><td>出现 "codes fix from xzyPC: 检测到红色虚线框区域" + "SVG矢量图生成成功"</td></tr>
+        <tr><td>5</td><td>检查 result/ 目录</td><td><strong>只有 1 个</strong> region_1.svg</td></tr>
+        <tr><td>6</td><td>打开 SVG 文件</td><td>内容区域清晰，<strong>无红色虚线框</strong></td></tr>
+    </table>
+</div>
+
+<!-- 10. Trouble -->
+<div class="card" id="trouble">
+    <h2>十、常见问题排查</h2>
+    <table>
+        <tr><th>问题</th><th>原因</th><th>解决</th></tr>
+        <tr>
+            <td>Python脚本不存在</td>
+            <td>脚本未部署到 scripts/ 目录</td>
+            <td>确认 <code>scripts/excel_region_to_svg.py</code> 存在</td>
+        </tr>
+        <tr>
+            <td>检测不到红色虚线框</td>
+            <td>边框不是红色+虚线</td>
+            <td>打开Excel: 右键单元格→格式→边框→确认是虚线+红色</td>
+        </tr>
+        <tr>
+            <td>SVG不生成，只有PNG</td>
+            <td>服务器未装 pdf2svg</td>
+            <td><code>sudo apt install pdf2svg</code>（或接受1200DPI PNG）</td>
+        </tr>
+        <tr>
+            <td>LibreOffice转换失败</td>
+            <td>LibreOffice未启动或core未装</td>
+            <td><code>apt install libreoffice-core</code></td>
+        </tr>
+        <tr>
+            <td>Python退出码非0</td>
+            <td>依赖缺失</td>
+            <td><code>pip3 install openpyxl PyMuPDF</code> + 查看日志</td>
+        </tr>
+        <tr>
+            <td>仍然有多余文件</td>
+            <td>检测失败，走了旧 pipeline 降级</td>
+            <td>检查 Python 日志中是否有 "未检测到红色虚线框区域"</td>
+        </tr>
+    </table>
+</div>
+
+<div style="text-align:center;color:#94a3b8;font-size:13px;margin-top:40px">
+    <p>📋 报告路径：/Users/sunnicholas/xiziyigit/info/Excel红色虚线框SVG方案-Python版.html</p>
+    <p>🏷 所有变动：codes fix from xzyPC | 生成时间：2026-05-08</p>
+</div>
+
+</div>
+</body>
+</html>

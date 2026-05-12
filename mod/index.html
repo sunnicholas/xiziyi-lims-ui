@@ -8,18 +8,18 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
         .app { display: flex; height: 100vh; }
-        
-        .sidebar { width: 280px; background: #1e293b; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #334155; }
+
+        .sidebar { width: 290px; background: #1e293b; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #334155; }
         .sidebar-header { padding: 20px; background: linear-gradient(135deg, #667eea, #764ba2); }
         .sidebar-header h1 { font-size: 18px; color: white; }
         .sidebar-header p { font-size: 12px; opacity: 0.7; margin-top: 4px; }
-        
-        .nav-section { padding: 12px 20px 4px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .nav-item { display: flex; align-items: center; padding: 10px 20px; cursor: pointer; font-size: 14px; transition: all 0.2s; border-left: 3px solid transparent; color: #cbd5e1; text-decoration: none; }
+
+        .nav-section { padding: 14px 20px 6px; font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .nav-item { display: flex; align-items: center; padding: 9px 20px; cursor: pointer; font-size: 13px; transition: all 0.2s; border-left: 3px solid transparent; color: #cbd5e1; text-decoration: none; }
         .nav-item:hover { background: #334155; border-left-color: #667eea; color: white; }
         .nav-item.active { background: #334155; border-left-color: #667eea; color: white; font-weight: 600; }
-        .nav-icon { margin-right: 10px; font-size: 16px; width: 20px; text-align: center; }
-        
+        .nav-icon { margin-right: 10px; font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+
         .main { flex: 1; display: flex; flex-direction: column; }
         .main iframe { flex: 1; border: none; background: white; }
 
@@ -80,18 +80,56 @@
                 <span class="nav-icon">🌐</span> 官网管理
             </a>
 
-            <div class="nav-section">📖 系统架构</div>
+            <div class="nav-section">📖 系统架构与基础设施</div>
             <a class="nav-item" href="module-architecture.html" target="contentFrame" onclick="setActive(this)">
                 <span class="nav-icon">🏛️</span> 系统架构总览
             </a>
             <a class="nav-item" href="module-file-ops.html" target="contentFrame" onclick="setActive(this)">
                 <span class="nav-icon">📁</span> 文件操作详解
             </a>
+            <a class="nav-item" href="module-file-upload.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📤</span> 文件上传规则与路径生成
+            </a>
+
+            <div class="nav-section">🔬 技术专题分析</div>
+            <a class="nav-item" href="Excel红色虚线框SVG方案-Python版.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🎨</span> Excel虚线框SVG方案(Python)
+            </a>
+            <a class="nav-item" href="Excel虚线框区域截图方案.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📸</span> Excel虚线框区域截图方案
+            </a>
+            <a class="nav-item" href="OfficeOnlineApi-功能总结报告.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">☁️</span> OfficeOnlineApi 功能总结
+            </a>
+            <a class="nav-item" href="PdfCertCleanConverter深度解析.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🧹</span> PdfCertCleanConverter 深度解析
+            </a>
+            <a class="nav-item" href="api-full-flow-tutorial.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔗</span> API全流程教程
+            </a>
+            <a class="nav-item" href="cert-number-flow.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔢</span> 证书编号生成流程
+            </a>
+            <a class="nav-item" href="excel-to-png-deep-dive.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🖼️</span> Excel转PNG深度解析
+            </a>
+            <a class="nav-item" href="excelToImgFile-逐行详解.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔍</span> excelToImgFile 逐行详解
+            </a>
+            <a class="nav-item" href="pageoffice 保存.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">💾</span> PageOffice 保存机制
+            </a>
+            <a class="nav-item" href="客户管理模块开发的问题引出.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">❓</span> 客户管理模块开发问题
+            </a>
+            <a class="nav-item" href="证书结果页-完整生命周期分析.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📑</span> 证书结果页生命周期分析
+            </a>
         </div>
 
         <div class="main">
             <iframe name="contentFrame" src="module-entrust.html"></iframe>
-            <div class="footer">© 2026 西自仪云检测一体化平台 | 项目文档 | 最后更新 2026-04-29</div>
+            <div class="footer">© 2026 西自仪云检测一体化平台 | 项目文档 | 最后更新 2026-05-12</div>
         </div>
     </div>
 

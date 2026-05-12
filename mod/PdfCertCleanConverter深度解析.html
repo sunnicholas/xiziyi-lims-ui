@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PdfCertCleanConverter 深度解析报告</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --accent: #2563eb;
+            --accent-light: #eff6ff;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 80px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #6366f1 100%);
+            color: #fff;
+            border-radius: var(--radius);
+            padding: 40px 48px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 24px rgba(37, 99, 235, 0.25);
+        }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .header .subtitle { font-size: 15px; opacity: 0.85; }
+        .header .meta { margin-top: 16px; font-size: 13px; opacity: 0.7; display: flex; gap: 24px; flex-wrap: wrap; }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--accent);
+            color: var(--accent);
+        }
+        .card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 24px 0 12px;
+            color: #334155;
+        }
+        .card h3::before { content: "▸ "; color: var(--accent); }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px 14px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+        }
+        tr:hover td { background: #f8fafc; }
+
+        /* Code */
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            color: #e11d48;
+        }
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px 24px;
+            border-radius: var(--radius);
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            margin: 12px 0;
+        }
+        pre .kw { color: #c084fc; }
+        pre .str { color: #86efac; }
+        pre .cmt { color: #94a3b8; }
+        pre .num { color: #fbbf24; }
+
+        /* Flow */
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .flow-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--accent-light);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+        .flow-step .step-num {
+            background: var(--accent);
+            color: #fff;
+            min-width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .flow-step .step-content { flex: 1; }
+        .flow-step .step-title { font-weight: 600; margin-bottom: 4px; }
+        .flow-step .step-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+        /* Pipeline */
+        .pipeline {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin: 24px 0;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .pipeline .node {
+            background: var(--accent-light);
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .pipeline .arrow {
+            font-size: 20px;
+            color: var(--accent);
+            padding: 0 8px;
+            font-weight: 700;
+        }
+        .pipeline .node-db {
+            background: #fef3c7;
+            border-color: #d97706;
+            color: #92400e;
+        }
+        .pipeline .node-disk {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #166534;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-blue { background: #dbeafe; color: #1e40af; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-amber { background: #fef3c7; color: #92400e; }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-purple { background: #f3e8ff; color: #7c3aed; }
+
+        /* File tree */
+        .file-tree {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 2;
+        }
+        .file-tree .dir { color: #2563eb; font-weight: 600; }
+        .file-tree .file { color: #334155; }
+        .file-tree .indent { margin-left: 20px; }
+
+        /* Highlight box */
+        .highlight-box {
+            background: #fefce8;
+            border: 1px solid #facc15;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        .highlight-box .label { font-weight: 700; color: #a16207; margin-bottom: 6px; }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        .info-box .label { font-weight: 700; color: #0369a1; margin-bottom: 6px; }
+
+        /* TOC */
+        .toc {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+        .toc h3 { margin-bottom: 12px; font-size: 16px; }
+        .toc a {
+            display: block;
+            padding: 6px 0;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .toc a:hover { text-decoration: underline; }
+
+        @media (max-width: 768px) {
+            .header { padding: 28px 24px; }
+            .card { padding: 20px; }
+            .pipeline { flex-direction: column; }
+            .pipeline .arrow { transform: rotate(90deg); padding: 8px 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ==================== HEADER ==================== -->
+    <div class="header">
+        <h1>📄 PdfCertCleanConverter 深度解析报告</h1>
+        <div class="subtitle">PDF 证书/表格高清转换工具 —— 从 PDF 到 600DPI 裁剪 PNG 的完整技术链路</div>
+        <div class="meta">
+            <span>📅 报告日期：2026-05-08</span>
+            <span>👤 作者：zhangaijun</span>
+            <span>📦 模块：xzy-common</span>
+            <span>🏷 版本：1.0</span>
+        </div>
+    </div>
+
+    <!-- ==================== TOC ==================== -->
+    <div class="toc">
+        <h3>📑 目录</h3>
+        <a href="#position">一、物理位置与文件定位</a>
+        <a href="#pipeline">二、完整调用链路（流程位置）</a>
+        <a href="#upstream">三、上游：数据从哪来</a>
+        <a href="#core">四、核心功能详解</a>
+        <a href="#downstream">五、下游：数据去哪了</a>
+        <a href="#db">六、数据库操作</a>
+        <a href="#files">七、物理文件产出</a>
+        <a href="#compare">八、与 PdfCertCleanConverters 的对比</a>
+        <a href="#test">九、如何测试验证</a>
+        <a href="#summary">十、总结</a>
+    </div>
+
+    <!-- ==================== 1. 物理位置 ==================== -->
+    <div class="card" id="position">
+        <h2>一、物理位置与文件定位</h2>
+
+        <h3>1.1 磁盘物理路径</h3>
+        <div class="file-tree">
+            <div class="dir">📁 xiziyigit/</div>
+            <div class="indent dir">📁 xiziyi-lims-service/</div>
+            <div class="indent indent dir">📁 xzy-common/ <span class="badge badge-blue">公共服务模块</span></div>
+            <div class="indent indent indent dir">📁 src/main/java/com/xzy/common/utils/</div>
+            <div class="indent indent indent indent file">📄 <strong>PdfCertCleanConverter.java</strong> 👈 这就是我们要分析的文件</div>
+            <div class="indent indent indent indent file">📄 ExcelSheetToPdfUtils.java <span class="badge badge-amber">上游</span></div>
+            <div class="indent indent indent indent file">📄 PdfCertCleanConverters.java <span class="badge badge-purple">变体（SVG版本）</span></div>
+            <div class="indent indent indent indent file">📄 FilePathUtil.java</div>
+            <div class="indent indent dir">📁 xzy-admin/ <span class="badge badge-green">Web管理模块</span></div>
+            <div class="indent indent indent dir">📁 src/main/java/com/xzy/web/controller/common/</div>
+            <div class="indent indent indent indent file">📄 <strong>OfficeOnlineApi.java</strong> 👈 调用方（唯一调用者）</div>
+        </div>
+
+        <h3>1.2 在项目架构中的位置</h3>
+        <table>
+            <tr><th>维度</th><th>说明</th></tr>
+            <tr><td>所属模块</td><td><code>xzy-common</code> —— 公共工具模块，被所有业务模块共享</td></tr>
+            <tr><td>模块职责</td><td>提供通用的工具类：文件处理、日期转换、字符串处理、PDF/Excel转换等</td></tr>
+            <tr><td>被谁引用</td><td>仅被 <code>xzy-admin</code> 模块的 <code>OfficeOnlineApi.java</code> 调用</td></tr>
+            <tr><td>Maven依赖</td><td><code>xzy-admin</code> 的 pom.xml 中依赖 <code>xzy-common</code>，间接引入此类</td></tr>
+            <tr><td>启动方式</td><td>静态工具类，无需注入，直接 <code>PdfCertCleanConverter.convertPdfPages(...)</code> 调用</td></tr>
+            <tr><td>编译产出</td><td>随 <code>xzy-common.jar</code> 打包，类路径 <code>com/xzy/common/utils/PdfCertCleanConverter.class</code></td></tr>
+        </table>
+    </div>
+
+    <!-- ==================== 2. 完整调用链路 ==================== -->
+    <div class="card" id="pipeline">
+        <h2>二、完整调用链路（流程位置）</h2>
+
+        <h3>2.1 宏观流程：从用户点击保存到数据库更新</h3>
+        <div class="pipeline">
+            <div class="node">👤 用户点击保存</div>
+            <div class="arrow">→</div>
+            <div class="node">🌐 POST<br>/saveOriginalFile</div>
+            <div class="arrow">→</div>
+            <div class="node node-disk">💾 Excel文件<br>存到磁盘</div>
+            <div class="arrow">→</div>
+            <div class="node node-disk">📊 Excel→PDF<br>(LibreOffice)</div>
+            <div class="arrow">→</div>
+            <div class="node" style="border-color:#dc2626; background:#fee2e2;">🖼 <strong>PDF→PNG<br>(PDFBox 600DPI)</strong><br>👈 本文分析对象</div>
+            <div class="arrow">→</div>
+            <div class="node node-db">🗄 更新数据库<br>(路径JSON)</div>
+        </div>
+
+        <h3>2.2 微观流程：方法调用链</h3>
+        <div class="flow-container">
+            <div class="flow-step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <div class="step-title">OfficeOnlineApi.saveOriginalFile() <span class="badge badge-green">入口</span></div>
+                    <div class="step-desc">接收前端保存请求。校验 filePath 和 allotId。<br>关键判断：<code>FileUtils.isExcelFile(normalizedPath)</code> —— 只有Excel才走转图片流程。</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <div class="step-title">OfficeOnlineApi.excelToImgFile(filePath) <span class="badge badge-blue">编排层</span></div>
+                    <div class="step-desc">创建 <code>result</code> 目录 → 构造 <code>_data.pdf</code> 和 <code>_result.pdf</code> 两个路径<br>→ 调用 ExcelSheetToPdfUtils.convertSingleSheet 两次（分别转"结果页"和"数据页"）<br>→ 调用 <strong style="color:#dc2626;">PdfCertCleanConverter.convertPdfPages()</strong> 把 _result.pdf 转为PNG</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <div class="step-title">ExcelSheetToPdfUtils.convertSingleSheet() <span class="badge badge-amber">Excel→PDF</span></div>
+                    <div class="step-desc">用 Apache POI 读取Excel → 处理公式单元格（把公式转为计算结果值）→ 删除其他Sheet只保留目标Sheet<br>→ 用 JodConverter（底层调用 LibreOffice headless）将处理后的 xlsx 转为 PDF</div>
+                </div>
+            </div>
+            <div class="flow-step" style="border-left-color: #dc2626; background: #fef2f2;">
+                <div class="step-num" style="background: #dc2626;">⭐</div>
+                <div class="step-content">
+                    <div class="step-title">PdfCertCleanConverter.convertPdfPages() <span class="badge badge-red">本文核心</span></div>
+                    <div class="step-desc">PDDocument.load 加载PDF → PDFRenderer.renderImageWithDPI(600) 逐页渲染 → smartCrop 智能裁剪<br>→ ImageIO.write 输出PNG → 返回 List&lt;String&gt; 图片路径列表</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <div class="step-title">TestTaskAllotService / MsOuterTaskAllotService.updateTaskAllotWithResultTemplate() <span class="badge badge-purple">数据库写入</span></div>
+                    <div class="step-desc">将PNG路径List序列化为JSON → 通过 PathConverter 将物理路径转为Web路径 → UPDATE 数据库对应记录<br>字段：result_file_url（结果页图片JSON）、data_pdf_url（数据页PDF路径）、original_excel_file_url（原始Excel路径）</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 3. 上游 ==================== -->
+    <div class="card" id="upstream">
+        <h2>三、上游：数据从哪来</h2>
+
+        <h3>3.1 唯一调用者</h3>
+        <table>
+            <tr><th>项目</th><th>详情</th></tr>
+            <tr><td>调用类</td><td><code>com.xzy.web.controller.common.OfficeOnlineApi</code></td></tr>
+            <tr><td>调用方法</td><td><code>private Map&lt;String, Object&gt; excelToImgFile(String filePath)</code></td></tr>
+            <tr><td>调用行</td><td>第 309 行：<code>List&lt;String&gt; resultImages = PdfCertCleanConverter.convertPdfPages(resultPdfPath, resultImgDir);</code></td></tr>
+            <tr><td>触发条件</td><td>前端点击"保存"，且文件是Excel（Word不触发），且转换成功生成了 _result.pdf</td></tr>
+        </table>
+
+        <h3>3.2 传入参数来源</h3>
+        <div class="highlight-box">
+            <div class="label">⚠ 两个参数都是 excelToImgFile 方法内部构造的，非外部传入</div>
+            <strong>参数1 - resultPdfPath (PDF路径)：</strong><br>
+            来自 <code>FilePathUtil.getPdfPath(filePath, "_result")</code><br>
+            如：<code>/upload/original/2026-05-08/task_123.xlsx</code> → <code>/upload/original/2026-05-08/task_123_result.pdf</code><br>
+            这个PDF是前一秒由 ExcelSheetToPdfUtils.convertSingleSheet 生成的<br><br>
+            <strong>参数2 - resultImgDir (输出目录)：</strong><br>
+            来自 <code>parentDir + File.separator + "result"</code><br>
+            如：<code>/upload/original/2026-05-08/result/</code><br>
+            目录通过 <code>mkDir(resultImgDir)</code> 确保已存在
+        </div>
+
+        <h3>3.3 ExcelSheetToPdfUtils 的关键处理</h3>
+        <p>在把 Excel 交给 PdfCertCleanConverter 之前，ExcelSheetToPdfUtils 做了以下预处理：</p>
+        <table>
+            <tr><th>步骤</th><th>做了什么</th><th>为什么</th></tr>
+            <tr><td>1. 复制文件</td><td><code>copyFile(originalFile, tempFile)</code> 创建临时副本</td><td>不破坏原始文件</td></tr>
+            <tr><td>2. 公式处理</td><td>遍历所有单元格，把公式转为计算结果值（如SUM转数值）</td><td>转PDF时公式计算结果会丢失</td></tr>
+            <tr><td>3. 错误值处理</td><td>把 #VALUE!、#NAME? 等错误值替换为空字符串</td><td>防止PDF中出现乱码</td></tr>
+            <tr><td>4. 删除无关Sheet</td><td>只保留目标Sheet（"结果页"或"数据页"），删除其他</td><td>PDF只包含需要的那个Sheet</td></tr>
+            <tr><td>5. LibreOffice转换</td><td><code>converter.convert(tempFile).to(new File(pdfPath)).execute()</code></td><td>实际生成PDF文件</td></tr>
+        </table>
+    </div>
+
+    <!-- ==================== 4. 核心功能详解 ==================== -->
+    <div class="card" id="core">
+        <h2>四、核心功能详解</h2>
+
+        <h3>4.1 类结构总览</h3>
+        <table>
+            <tr><th>成员</th><th>类型</th><th>访问级别</th><th>作用</th></tr>
+            <tr><td><code>RENDER_DPI</code></td><td>常量 600</td><td>private static</td><td>渲染分辨率：600像素/英寸，打印级别</td></tr>
+            <tr><td><code>MARGIN</code></td><td>常量 20</td><td>private static</td><td>裁剪安全边距：20像素，防止裁到文字边缘</td></tr>
+            <tr><td><code>WHITE_THRESHOLD</code></td><td>常量 254</td><td>private static</td><td>白像素阈值：RGB每通道≥254判定为白色背景</td></tr>
+            <tr><td><code>convertPdfPages()</code></td><td>静态方法</td><td>public static</td><td>⭐ 核心入口：PDF→PNG多图</td></tr>
+            <tr><td><code>smartCrop()</code></td><td>静态方法</td><td>private static</td><td>智能裁剪：调用三个边界扫描方法后裁图</td></tr>
+            <tr><td><code>findLeftBorder()</code></td><td>静态方法</td><td>private static</td><td>找左边界：从左到右逐列扫描</td></tr>
+            <tr><td><code>findRightBorder()</code></td><td>静态方法</td><td>private static</td><td>找右边界：从右到左逐列扫描</td></tr>
+            <tr><td><code>findBottomBorder()</code></td><td>静态方法</td><td>private static</td><td>找下边界：从下到上逐行扫描</td></tr>
+            <tr><td><code>isWhite()</code></td><td>静态方法</td><td>private static</td><td>判定像素是否为白色/空白背景</td></tr>
+            <tr><td><code>main()</code></td><td>入口方法</td><td>public static</td><td>开发测试用，生产环境不会执行</td></tr>
+        </table>
+
+        <h3>4.2 convertPdfPages() —— 核心方法</h3>
+        <div class="info-box">
+            <div class="label">📌 方法签名</div>
+            <code>public static List&lt;String&gt; convertPdfPages(String pdfPath, String outputDir)</code>
+        </div>
+        <p>执行步骤：</p>
+        <div class="flow-container">
+            <div class="flow-step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <div class="step-title">PDDocument.load 加载PDF</div>
+                    <div class="step-desc">使用 try-with-resources 自动管理资源。PDFBox读取PDF文件的所有页面结构。</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <div class="step-title">创建 PDFRenderer + 确保输出目录存在</div>
+                    <div class="step-desc">PDFRenderer 负责把PDF页面渲染成Java BufferedImage。同时检查 outputDir 是否存在，不存在则 mkdirs()。</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <div class="step-title">renderImageWithDPI(pageIndex, 600) 渲染当前页</div>
+                    <div class="step-desc"><strong>最关键的一步！</strong>600DPI渲染：A4纸(210×297mm)≈4961×7016像素。这保证了后续打印/放大查看都不会模糊。</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <div class="step-title">smartCrop() 智能裁剪</div>
+                    <div class="step-desc">扫描左/右/下三个方向的白边，裁掉无用空白。顶部不裁（表格类PDF顶部开始就是内容）。</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <div class="step-title">ImageIO.write 输出PNG文件</div>
+                    <div class="step-desc">文件命名 page_1.png, page_2.png... 保存到 resultImgDir 目录中。PNG无损压缩，保留600DPI的所有清晰度。</div>
+                </div>
+            </div>
+        </div>
+
+        <h3>4.3 智能裁剪算法详解</h3>
+        <p><strong>不裁上方的原因：</strong>检验表格的顶部就是表头（如"检测结果"、"标准信息"等），从Y=0开始就有内容，不需要裁。</p>
+        <pre>
+<span class="cmt">// smartCrop 裁剪逻辑示意</span>
+<span class="cmt">// 原始图片 7000px高，内容只占中间4000px</span>
+
+<span class="cmt">// ← 左白边(200px被裁) →|=====表格内容=====|← 右白边(150px被裁) →</span>
+<span class="cmt">// 顶部从0开始就是内容（不裁）</span>
+<span class="cmt">// =====表格内容=====</span>
+<span class="cmt">// ↓ 底部白边(2500px被裁) ↓</span>
+
+<span class="cmt">// 最终保留: X=left-20, Y=0, W=right-left+40, H=bottom+20</span></pre>
+
+        <p><strong>为什么 WHITE_THRESHOLD = 254 而不是 255？</strong></p>
+        <p>PDF渲染时可能产生细微色差，某些"看起来纯白"的像素实际RGB值是(254,254,254)。如果阈值设为255，这些像素会被误判为"有内容"，导致白色背景区域没有被裁剪掉。254的容忍度确保只有明确有颜色内容的像素才算"有内容"。</p>
+    </div>
+
+    <!-- ==================== 5. 下游 ==================== -->
+    <div class="card" id="downstream">
+        <h2>五、下游：数据去哪了</h2>
+
+        <h3>5.1 返回值怎么被使用</h3>
+        <p><code>convertPdfPages()</code> 返回 <code>List&lt;String&gt;</code>（PNG图片物理路径列表），在 <code>excelToImgFile()</code> 中被接收：</p>
+        <pre>
+<span class="cmt">// OfficeOnlineApi.java 第309-312行</span>
+List&lt;String&gt; resultImages = PdfCertCleanConverter.convertPdfPages(resultPdfPath, resultImgDir);
+resultMap.put(<span class="str">"croppedResultImages"</span>, resultImages);  <span class="cmt">// PNG路径List</span>
+resultMap.put(<span class="str">"dataPdfPath"</span>, dataPdfPath);              <span class="cmt">// 数据页PDF路径</span></pre>
+
+        <p>然后回到 <code>saveOriginalFile()</code> 方法（第256-270行）：</p>
+        <pre>
+<span class="cmt">// 从Map中取出两个值</span>
+List&lt;String&gt; croppedResultImages = (List&lt;String&gt;) amap.get(<span class="str">"croppedResultImages"</span>);
+String dataPdfPath = (String) amap.get(<span class="str">"dataPdfPath"</span>);
+
+<span class="cmt">// 1. PNG路径List → JSON字符串 ["/upload/.../page_1.png","/upload/.../page_2.png"]</span>
+String resultImgJson = <span class="kw">new</span> ObjectMapper().writeValueAsString(croppedResultImages);
+
+<span class="cmt">// 2. 更新数据库（送检或现场）</span>
+testTaskAllotService.updateTaskAllotWithResultTemplate(
+    allotId, resultImgJson, <span class="kw">null</span>, dataPdfPath, filePath
+);</pre>
+    </div>
+
+    <!-- ==================== 6. 数据库操作 ==================== -->
+    <div class="card" id="db">
+        <h2>六、数据库操作</h2>
+
+        <h3>6.1 涉及的数据库表</h3>
+        <table>
+            <tr><th>业务线</th><th>表名</th><th>Mapper</th></tr>
+            <tr><td>送检任务 (type="1")</td><td><code>test_task_allot</code></td><td><code>TestTaskAllotMapper</code></td></tr>
+            <tr><td>现场任务 (type≠"1")</td><td><code>ms_outer_task_allot</code></td><td><code>MsOuterTaskAllotMapper</code></td></tr>
+        </table>
+
+        <h3>6.2 更新的字段</h3>
+        <table>
+            <tr><th>数据库字段</th><th>存储内容</th><th>来源</th><th>格式示例</th></tr>
+            <tr><td><code>result_file_url</code></td><td>结果页PNG图片的Web路径JSON</td><td>PdfCertCleanConverter产出的PNG路径List</td><td><code>["/profile/upload/.../page_1.png","/profile/upload/.../page_2.png"]</code></td></tr>
+            <tr><td><code>data_file_url</code></td><td>数据页图片路径（当前传null）</td><td>暂未使用，预留字段</td><td><code>null</code></td></tr>
+            <tr><td><code>data_pdf_url</code></td><td>数据页PDF的Web路径</td><td>ExcelSheetToPdfUtils产出的 _data.pdf</td><td><code>/profile/upload/.../task_123_data.pdf</code></td></tr>
+            <tr><td><code>original_excel_file_url</code></td><td>原始Excel的Web路径</td><td>用户打开编辑的那个Excel</td><td><code>/profile/upload/.../task_123.xlsx</code></td></tr>
+        </table>
+
+        <h3>6.3 路径转换逻辑</h3>
+        <p>存入数据库前，物理路径会通过 <code>PathConverter.convertToOriginalWebPath()</code> 转换为Web路径：</p>
+        <div class="pipeline">
+            <div class="node node-disk">💾 /upload/original/.../page_1.png</div>
+            <div class="arrow">→</div>
+            <div class="node node-db">🗄 /profile/upload/.../page_1.png</div>
+        </div>
+        <p>这样做的好处：数据库存的是Web路径，前端可以直接用这个路径展示图片（通过HTTP访问），不需要二次转换。</p>
+
+        <h3>6.4 完整SQL流程</h3>
+        <div class="flow-container">
+            <div class="flow-step">
+                <div class="step-num">Q1</div>
+                <div class="step-content">
+                    <div class="step-title">SELECT —— 查询任务记录</div>
+                    <div class="step-desc"><code>testTaskAllotMapper.selectTestTaskAllotByAllotId(allotId)</code> —— 通过allotId查当前任务分配记录，获取taskId</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">Q2</div>
+                <div class="step-content">
+                    <div class="step-title">SELECT —— 查询证书记录</div>
+                    <div class="step-desc"><code>getTestTaskAllot(taskId, "ZS")</code> —— 通过taskId找到"出证书"类型的记录（ZS = 证书），这条记录才需要存图片路径</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">Q3</div>
+                <div class="step-content">
+                    <div class="step-title">UPDATE —— 更新图片/PDF路径</div>
+                    <div class="step-desc"><code>testTaskAllotMapper.updateTestTaskAllot(taskCaretInfo)</code> —— 把 result_file_url、data_pdf_url、original_excel_file_url 三个字段更新到证书那条记录上</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 7. 物理文件产出 ==================== -->
+    <div class="card" id="files">
+        <h2>七、物理文件产出</h2>
+
+        <h3>7.1 一次完整保存产生的文件</h3>
+        <p>假设原始Excel路径为 <code>/upload/original/2026-05-08/task_123.xlsx</code>，保存后目录结构：</p>
+        <div class="file-tree">
+            <div class="dir">📁 upload/original/2026-05-08/</div>
+            <div class="indent file">📄 task_123.xlsx</div>
+            <div class="indent" style="color:#94a3b8;">← 用户编辑后的Excel（被 PageOffice FileSaver 覆写保存）</div>
+            <div class="indent file">📄 task_123_result.pdf</div>
+            <div class="indent" style="color:#94a3b8;">← Excel"结果页"Sheet → LibreOffice转PDF（给 PdfCertCleanConverter 用）</div>
+            <div class="indent file">📄 task_123_data.pdf</div>
+            <div class="indent" style="color:#94a3b8;">← Excel"数据页"Sheet → LibreOffice转PDF（出证书时合并用，不转PNG）</div>
+            <div class="indent dir">📁 <strong>result/</strong></div>
+            <div class="indent indent file">🖼 <strong>page_1.png</strong></div>
+            <div class="indent indent" style="color:#dc2626;">👈 PdfCertCleanConverter 产出：600DPI裁剪PNG</div>
+            <div class="indent indent file">🖼 <strong>page_2.png</strong></div>
+            <div class="indent indent" style="color:#dc2626;">👈 如果PDF有2页（表格内容溢出到第2页）</div>
+        </div>
+
+        <h3>7.2 文件关系图</h3>
+        <div class="pipeline">
+            <div class="node node-disk">📊 task_123.xlsx</div>
+            <div class="arrow">→</div>
+            <div class="node node-disk">📄 task_123_result.pdf<br>(LibreOffice)</div>
+            <div class="arrow">→</div>
+            <div class="node node-disk" style="border-color:#dc2626; background:#fee2e2;">🖼 page_1.png<br>🖼 page_2.png<br>(PDFBox+裁剪)</div>
+        </div>
+        <div class="pipeline">
+            <div class="node node-disk">📊 task_123.xlsx</div>
+            <div class="arrow">→</div>
+            <div class="node node-disk">📄 task_123_data.pdf<br>(LibreOffice)</div>
+            <div class="arrow">→</div>
+            <div class="node node-db">🗄 存入DB<br>(不转PNG)</div>
+        </div>
+
+        <h3>7.3 关键问题解答</h3>
+        <div class="highlight-box">
+            <div class="label">❓ 为什么数据页PDF不转PNG？</div>
+            "数据页"PDF 是留给出证书阶段使用的——在出证书时会把多个PDF合并成一个完整的证书PDF文件。所以数据页保留PDF格式比PNG更合适（PDF可以无损拼接，PNG拼接会损失矢量信息）。
+        </div>
+        <div class="info-box">
+            <div class="label">❓ 为什么 result/ 目录和PDF放在同一父目录下？</div>
+            这样做方便管理和清理：一个任务的所有文件（Excel + 两个PDF + result目录中的PNG）都在同一个日期目录下，删除一个任务时不需要去多个地方找文件。
+        </div>
+    </div>
+
+    <!-- ==================== 8. 变体对比 ==================== -->
+    <div class="card" id="compare">
+        <h2>八、与 PdfCertCleanConverters 的对比</h2>
+
+        <p>项目中存在两个功能相似但实现不同的类：</p>
+        <table>
+            <tr><th>对比维度</th><th>PdfCertCleanConverter 👈本文</th><th>PdfCertCleanConverters (变体)</th></tr>
+            <tr><td>输出格式</td><td><strong>PNG</strong>（位图）</td><td><strong>SVG</strong>（矢量图）</td></tr>
+            <tr><td>渲染引擎</td><td>PDFBox PDFRenderer</td><td>PDFBox + Apache Batik SVG</td></tr>
+            <tr><td>裁剪方式</td><td>像素扫描 + BufferedImage.getSubimage</td><td>像素扫描 + SVG viewBox裁剪</td></tr>
+            <tr><td>文件大小</td><td>较大（600DPI位图约5-20MB）</td><td>较小（矢量XML约50-500KB）</td></tr>
+            <tr><td>缩放效果</td><td>放大有限制（像素限制）</td><td><strong>无限缩放不模糊</strong>（矢量特性）</td></tr>
+            <tr><td>浏览器兼容</td><td>所有浏览器都支持PNG</td><td>所有现代浏览器支持SVG</td></tr>
+            <tr><td>是否被调用</td><td>✅ 被 OfficeOnlineApi 调用</td><td>❌ 当前未在项目中使用</td></tr>
+            <tr><td>适用场景</td><td>打印、存档、展示</td><td>网页嵌入、在线预览、无限缩放查看</td></tr>
+        </table>
+
+        <div class="info-box">
+            <div class="label">💡 为什么用PNG而不是SVG？</div>
+            PNG是"所见即所得"——在任何设备、任何软件中打开都一样。SVG在不同浏览器/软件中渲染效果可能不一致（字体、表格线可能有差异），对于需要严格一致的检验记录来说，PNG更可靠。而且PNG可以直接用于打印和归档。
+        </div>
+    </div>
+
+    <!-- ==================== 9. 测试验证 ==================== -->
+    <div class="card" id="test">
+        <h2>九、如何测试验证</h2>
+
+        <h3>9.1 本地直接测试（最简单）</h3>
+        <div class="flow-container">
+            <div class="flow-step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <div class="step-title">准备一个测试PDF</div>
+                    <div class="step-desc">找任意一个PDF文件放到本地，比如 <code>/Users/xxx/test.pdf</code></div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <div class="step-title">修改 main 方法中的路径</div>
+                    <div class="step-desc">把 <code>"D:\\777.pdf"</code> 改成你的PDF路径，<code>"D:\\pdf_output\\"</code> 改成你想输出的目录</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <div class="step-title">在IDE中右键运行 main 方法</div>
+                    <div class="step-desc">不需要启动整个SpringBoot项目，这个类的 main 方法不依赖Spring容器</div>
+                </div>
+            </div>
+            <div class="flow-step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <div class="step-title">检查输出目录</div>
+                    <div class="step-desc">应该看到 page_1.png, page_2.png... 打开图片检查清晰度和裁剪效果</div>
+                </div>
+            </div>
+        </div>
+
+        <h3>9.2 集成测试（完整流程）</h3>
+        <table>
+            <tr><th>步骤</th><th>操作</th><th>预期结果</th></tr>
+            <tr><td>1</td><td>启动整个 SpringBoot 项目</td><td>项目正常启动，LibreOffice服务日志中出现"✅ LibreOffice 转换服务已启动"</td></tr>
+            <tr><td>2</td><td>在前端进入"记录编制"页面，选一个Excel模板打开</td><td>PageOffice控件正常加载Excel</td></tr>
+            <tr><td>3</td><td>编辑Excel内容后点击保存</td><td>页面显示保存成功（返回"ok"）</td></tr>
+            <tr><td>4</td><td>查看服务器日志</td><td>日志应出现："Excel转多图处理——转换完成，共生成N张高清图片"</td></tr>
+            <tr><td>5</td><td>检查服务器磁盘目录</td><td>在Excel同目录下应出现 _result.pdf、_data.pdf 和 result/ 目录中的PNG</td></tr>
+            <tr><td>6</td><td>检查数据库</td><td><code>test_task_allot</code> 或 <code>ms_outer_task_allot</code> 表中对应记录的 result_file_url 字段应有JSON路径</td></tr>
+        </table>
+
+        <h3>9.3 常见问题排查</h3>
+        <table>
+            <tr><th>问题现象</th><th>可能原因</th><th>排查方法</th></tr>
+            <tr><td>PNG图片模糊</td><td>DPI没有生效（可能用了默认72DPI）</td><td>检查日志，确认调用了 renderImageWithDPI(600)</td></tr>
+            <tr><td>result/ 目录为空</td><td>PDF转换失败（PDF损坏或目录权限）</td><td>查看日志中是否有"PDF转换失败"error</td></tr>
+            <tr><td>图片四周白边过多</td><td>smartCrop 裁剪不生效（全白页误判）</td><td>检查 isWhite 阈值，可能PDF底色不是纯白</td></tr>
+            <tr><td>内存溢出（OutOfMemoryError）</td><td>600DPI渲染单个A4页需要约200MB内存</td><td>增大JVM堆内存 -Xmx2g</td></tr>
+            <tr><td>数据库路径为空</td><td>转换失败返回了空List，被序列化为"[]"</td><td>检查ExcelSheetToPdfUtils是否有异常日志</td></tr>
+        </table>
+    </div>
+
+    <!-- ==================== 10. 总结 ==================== -->
+    <div class="card" id="summary">
+        <h2>十、总结</h2>
+
+        <h3>10.1 PdfCertCleanConverter 的本质角色</h3>
+        <p>它是整个<strong>"Excel编辑→数据库存储"链路中的倒数第二步</strong>：把 LibreOffice 生成的 PDF 转化为前端可以直接展示的高清 PNG 图片。它的位置可以概括为：</p>
+
+        <div class="pipeline">
+            <div class="node">前端编辑Excel</div>
+            <div class="arrow">→</div>
+            <div class="node node-disk">Excel存盘</div>
+            <div class="arrow">→</div>
+            <div class="node node-disk">LibreOffice<br>Excel→PDF</div>
+            <div class="arrow">→</div>
+            <div class="node" style="border-color:#dc2626; background:#fee2e2; font-weight:800;">⭐本文<br>PDF→PNG</div>
+            <div class="arrow">→</div>
+            <div class="node node-db">路径JSON<br>存入DB</div>
+            <div class="arrow">→</div>
+            <div class="node">出证书时<br>合并PDF</div>
+        </div>
+
+        <h3>10.2 核心要点速记</h3>
+        <ul style="list-style: none; padding: 0;">
+            <li style="padding: 8px 0;">🔹 <strong>输入</strong>：ExcelSheetToPdfUtils 生成的 _result.pdf（物理路径）</li>
+            <li style="padding: 8px 0;">🔹 <strong>输出</strong>：600DPI裁剪后的 PNG 图片（物理路径列表）</li>
+            <li style="padding: 8px 0;">🔹 <strong>核心依赖</strong>：Apache PDFBox（PDF渲染，纯Java，无需安装额外软件）</li>
+            <li style="padding: 8px 0;">🔹 <strong>关键技术</strong>：600DPI印刷级分辨率 + smartCrop像素级智能裁剪</li>
+            <li style="padding: 8px 0;">🔹 <strong>下游消费</strong>：路径List序列化为JSON → 存入数据库 result_file_url → 前端/出证书使用</li>
+            <li style="padding: 8px 0;">🔹 <strong>容错策略</strong>：失败不抛异常，返回空List（允许部分失败，不影响其他流程）</li>
+            <li style="padding: 8px 0;">🔹 <strong>不处理数据页</strong>：_data.pdf 保留PDF原始格式，供出证书阶段PDF合并使用</li>
+        </ul>
+
+        <h3>10.3 为什么方案特有？</h3>
+        <p>相比"特征存储+相似度过滤"，PdfCertCleanConverter（属于权重方案）的更核心价值在于：</p>
+        <ul style="list-style: none; padding: 0;">
+            <li style="padding: 6px 0;">✅ <strong>它是生成环节</strong>—— 不是判断"这个检测是否误报"，而是把 Excel 变成高清图片供存档和证书使用</li>
+            <li style="padding: 6px 0;">✅ <strong>600DPI 是业务刚需</strong>—— 检验证书需要印刷级清晰度，普通截图72DPI根本无法用于打印</li>
+            <li style="padding: 6px 0;">✅ <strong>裁剪是视觉优化</strong>—— 去白边让图片"内容撑满"，在证书排版时更好看、更省空间</li>
+        </ul>
+
+        <p style="margin-top: 20px; padding: 16px; background: #f0f9ff; border-radius: 8px; color: #0369a1;">
+            🎯 <strong>一句话总结</strong>：PdfCertCleanConverter 是"Excel保存→数据库更新"链路中将 PDF 转为高清裁剪 PNG 的关键工具，解决了"转换后图片模糊、留白过多"两个核心痛点，是整个记录编制流程不可或缺的一环。
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; color: #94a3b8; font-size: 13px; margin-top: 40px;">
+        <p>📋 本报告由代码分析自动生成 —— 生成时间 2026-05-08</p>
+        <p>📂 报告路径：/Users/sunnicholas/xiziyigit/info/PdfCertCleanConverter深度解析.html</p>
+    </div>
+
+</div>
+
+</body>
+</html>

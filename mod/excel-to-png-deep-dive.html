@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>记录编制 - Excel转图片文件生成深度剖析（Ubuntu生产环境）</title>
+<style>
+:root {
+  --pri: #1a73e8; --pri-bg: #e8f0fe;
+  --succ: #34a853; --warn: #fbbc04; --err: #ea4335;
+  --dark: #202124; --gray: #5f6368; --border: #dadce0;
+  --bg: #f8f9fa; --code-bg: #1e1e1e; --code-txt: #d4d4d4;
+  --card: #ffffff;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif; background: var(--bg); color: var(--dark); line-height: 1.85; padding: 20px; }
+.container { max-width: 1300px; margin: 0 auto; }
+
+.header { background: linear-gradient(135deg, #2d3436 0%, #636e72 100%); color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px; text-align: center; }
+.header h1 { font-size: 1.8rem; margin-bottom: 10px; }
+.header p { opacity: 0.85; font-size: 0.95rem; }
+.badge { display: inline-block; background: rgba(255,255,255,0.18); padding: 3px 14px; border-radius: 20px; font-size: 0.8rem; margin: 0 4px; }
+
+.section { background: var(--card); border-radius: 12px; padding: 28px 32px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+.section h2 { font-size: 1.4rem; color: var(--pri); margin-bottom: 14px; padding-bottom: 6px; border-bottom: 3px solid var(--pri); }
+.section h3 { font-size: 1.15rem; color: var(--dark); margin: 24px 0 8px; }
+.section h3:before { content: "▸ "; color: var(--pri); }
+.section h4 { font-size: 1rem; color: #444; margin: 16px 0 6px; }
+
+.code-block { background: var(--code-bg); color: var(--code-txt); border-radius: 8px; margin: 10px 0; overflow: hidden; }
+.code-block .title { background: #333; padding: 8px 14px; font-size: 0.8rem; color: #aaa; display: flex; justify-content: space-between; }
+.code-block pre { padding: 14px 16px; overflow-x: auto; font-size: 0.8rem; line-height: 1.55; margin: 0; white-space: pre; }
+
+.tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 500; margin-right: 4px; }
+.tag-libre { background: #e8f0fe; color: #1a73e8; }
+.tag-java { background: #e6f4ea; color: #137333; }
+.tag-ubuntu { background: #fef7e0; color: #e37400; }
+.tag-img { background: #fce8e6; color: #c5221f; }
+.tag-sys { background: #f3e8fd; color: #7b1fa2; }
+
+.info-box { background: var(--pri-bg); border-left: 4px solid var(--pri); padding: 12px 16px; border-radius: 6px; margin: 12px 0; font-size: 0.9rem; }
+.warn-box { background: #fef7e0; border-left: 4px solid var(--warn); padding: 12px 16px; border-radius: 6px; margin: 12px 0; font-size: 0.9rem; }
+.err-box { background: #fce8e6; border-left: 4px solid var(--err); padding: 12px 16px; border-radius: 6px; margin: 12px 0; font-size: 0.9rem; }
+
+.data-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.88rem; }
+.data-table th { background: var(--bg); padding: 9px 12px; text-align: left; border: 1px solid var(--border); font-weight: 600; }
+.data-table td { padding: 7px 12px; border: 1px solid var(--border); }
+.data-table tr:hover { background: var(--pri-bg); }
+
+.file-tree { background: var(--code-bg); border-radius: 8px; padding: 14px 18px; font-family: monospace; font-size: 0.8rem; line-height: 2; margin: 10px 0; }
+.file-tree .dir { color: #569cd6; }
+.file-tree .file { color: #dcdcaa; }
+.file-tree .bran { color: #888; }
+.file-tree .cmt { color: #888; font-style: italic; }
+
+.flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin: 14px 0; }
+.flow-card { flex: 1; min-width: 160px; padding: 16px 14px; background: var(--bg); border-radius: 8px; text-align: center; border: 2px solid var(--border); font-size: 0.88rem; }
+.flow-card.arrow { min-width: auto; border: none; background: none; padding: 0; display: flex; align-items: center; font-size: 1.4rem; color: var(--pri); }
+
+.step-list { padding-left: 22px; line-height: 2.1; font-size: 0.92rem; }
+.step-list li { margin-bottom: 4px; }
+
+.toc { background: var(--card); border-radius: 12px; padding: 20px 28px; margin-bottom: 24px; border: 1px solid var(--border); }
+.toc h3 { margin-top: 0 !important; }
+.toc ol { padding-left: 22px; line-height: 2.2; }
+.toc a { color: var(--pri); text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+
+.top-btn { position: fixed; bottom: 30px; right: 30px; width: 42px; height: 42px; background: var(--pri); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 1.1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: 0.2s; }
+.top-btn:hover { background: #1557b0; transform: scale(1.05); }
+
+img.diagram { max-width:100%; border-radius:8px; border:1px solid var(--border); margin:10px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>📐 文件生成深度剖析：Excel → PDF → 高清PNG</h1>
+  <p>Ubuntu 22.04 生产环境 · 逐行代码解读 · 从零验证指南</p>
+  <div style="margin-top:10px">
+    <span class="badge">LibreOffice</span>
+    <span class="badge">PDFBox</span>
+    <span class="badge">600DPI</span>
+    <span class="badge">智能裁剪</span>
+    <span class="badge">Ubuntu</span>
+  </div>
+</div>
+
+<!-- 目录 -->
+<div class="toc">
+  <h3>📑 目录</h3>
+  <ol>
+    <li><a href="#overview">一张图的诞生：从Excel到PNG完整路径</a></li>
+    <li><a href="#step1">第一步：ExcelSheetToPdfUtils — Excel→PDF</a></li>
+    <li><a href="#step2">第二步：PdfCertCleanConverter — PDF→PNG</a></li>
+    <li><a href="#path">路径系统：从Web到本地再回到Web</a></li>
+    <li><a href="#deps">依赖清单：Maven坐标 + 系统软件</a></li>
+    <li><a href="#ubuntu">Ubuntu生产环境配置清单</a></li>
+    <li><a href="#test">一步一步测试验证指南</a></li>
+    <li><a href="#trouble">常见故障排查手册</a></li>
+    <li><a href="#summary">总结速查</a></li>
+  </ol>
+</div>
+
+<!-- ============ 1. 概览 ============ -->
+<div class="section" id="overview">
+  <h2>🖼️ 1. 一张图的诞生：从Excel到PNG完整路径</h2>
+
+  <h3>1.1 总览：保存按钮触发后的文件生成流</h3>
+  <div class="flow">
+    <div class="flow-card">📊 Excel文件<br><small>用户编辑的.xlsx</small></div>
+    <div class="flow-card arrow">→</div>
+    <div class="flow-card"><span class="tag tag-libre">LibreOffice</span><br><small>ExcelSheetToPdfUtils<br>JodConverter调用</small><br>→ 📄 result.pdf</div>
+    <div class="flow-card arrow">→</div>
+    <div class="flow-card"><span class="tag tag-java">PDFBox</span><br><small>PdfCertCleanConverter<br>600DPI渲染</small><br>→ 🖼️ page_1.png</div>
+    <div class="flow-card arrow">→</div>
+    <div class="flow-card"><span class="tag tag-img">智能裁剪</span><br><small>去空白区域<br>内容撑满画布</small><br>→ 🖼️ 最终PNG</div>
+  </div>
+
+  <h3>1.2 Ubuntu环境下的完整文件树</h3>
+  <div class="file-tree">
+    <span class="dir">/home/xiziyi/uploadPath/original/</span><br>
+    &nbsp;&nbsp;<span class="bran">├──</span> <span class="dir">2026/05/</span><br>
+    &nbsp;&nbsp;<span class="bran">│&nbsp;&nbsp;&nbsp;</span><span class="bran">├──</span> <span class="file">模板_20260508120000.xlsx</span> &nbsp;&nbsp;&nbsp;<span class="cmt"># 用户编辑的Excel原始文件</span><br>
+    &nbsp;&nbsp;<span class="bran">│&nbsp;&nbsp;&nbsp;</span><span class="bran">├──</span> <span class="file">模板_20260508120000_result.pdf</span> &nbsp;&nbsp;&nbsp;<span class="cmt"># "结果页"Sheet转的PDF</span><br>
+    &nbsp;&nbsp;<span class="bran">│&nbsp;&nbsp;&nbsp;</span><span class="bran">├──</span> <span class="file">模板_20260508120000_data.pdf</span> &nbsp;&nbsp;&nbsp;<span class="cmt"># "数据页"Sheet转的PDF</span><br>
+    &nbsp;&nbsp;<span class="bran">│&nbsp;&nbsp;&nbsp;</span><span class="bran">└──</span> <span class="dir">result/</span><br>
+    &nbsp;&nbsp;<span class="bran">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="bran">├──</span> <span class="file">page_1.png</span> &nbsp;&nbsp;&nbsp;<span class="cmt"># 结果页第1张PNG (600DPI)</span><br>
+    &nbsp;&nbsp;<span class="bran">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="bran">├──</span> <span class="file">page_2.png</span> &nbsp;&nbsp;&nbsp;<span class="cmt"># 结果页第2张PNG (600DPI)</span><br>
+    &nbsp;&nbsp;<span class="bran">│&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="bran">└──</span> <span class="file">...</span><br>
+  </div>
+
+  <h3>1.3 核心调用链代码索引</h3>
+  <table class="data-table">
+    <tr><th>序号</th><th>类 / 文件</th><th>方法</th><th>作用</th></tr>
+    <tr><td>①</td><td><code>OfficeOnlineApi.java</code></td><td><code>excelToImgFile()</code></td><td>总入口：协调整个转换流程</td></tr>
+    <tr><td>②</td><td><code>FilePathUtil.java</code></td><td><code>getPdfPath()</code></td><td>根据Excel路径生成PDF文件名</td></tr>
+    <tr><td>③</td><td><code>ExcelSheetToPdfUtils.java</code></td><td><code>convertSingleSheet()</code></td><td>取Excel指定Sheet → 用LibreOffice转PDF</td></tr>
+    <tr><td>④</td><td><code>PdfCertCleanConverter.java</code></td><td><code>convertPdfPages()</code></td><td>PDF每一页 → 600DPI PNG + 智能裁剪</td></tr>
+    <tr><td>⑤</td><td><code>PathConverter.java</code></td><td><code>convertToOriginalWebPath()</code></td><td>本地路径 → Web访问路径</td></tr>
+    <tr><td>⑥</td><td><code>FileUtils.java</code></td><td><code>normalizeOriginalFilePath()</code></td><td>Web路径 → 本地绝对路径</td></tr>
+  </table>
+
+  <div class="info-box">
+    <strong>核心概念</strong>：Excel的"结果页"Sheet包含检测结果表格（多行数据可能跨多页），转换后会生成<strong>多张PNG图片</strong>（page_1.png, page_2.png ...），这些图片路径以JSON数组形式存到数据库。后续"证书编制"（Word模板）会用这些图片填充证书的结果页区域。
+  </div>
+</div>
+
+<!-- ============ 2. Excel→PDF ============ -->
+<div class="section" id="step1">
+  <h2>📊 2. 第一步：ExcelSheetToPdfUtils — Excel → PDF</h2>
+
+  <h3>2.1 为什么要用LibreOffice而不是POI直接转？</h3>
+  <p>Apache POI虽然能读写Excel，但它<strong>渲染PDF的能力极差</strong>——合并单元格错位、边框丢失、字体不一致。而<strong>LibreOffice是完整的办公套件</strong>，它的Calc组件打开Excel后能完美还原格式，再通过JodConverter调用LibreOffice的服务模式把文件"另存为PDF"，实现了1:1格式还原。</p>
+
+  <div class="warn-box">
+    ⚠️ <strong>Ubuntu下的关键区别</strong>：Windows版使用Office COM对象，而<strong>Ubuntu依赖LibreOffice</strong>。LibreOffice必须安装并作为服务运行。这是该代码能在Linux跑的核心前提。
+  </div>
+
+  <h3>2.2 静态初始化块：启动LibreOffice服务（仅一次）</h3>
+  <p class="file-ref">📄 <a style="color:var(--pri);font-family:monospace" href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-common/src/main/java/com/xzy/common/utils/ExcelSheetToPdfUtils.java">ExcelSheetToPdfUtils.java</a> 第246~262行 — <code>OfficeHolder</code> 静态内部类</p>
+  <div class="code-block">
+    <div class="title">【代码】LibreOffice服务启动</div>
+    <pre>private static class OfficeHolder {
+    private static final ExcelSheetToPdfUtils INSTANCE = new ExcelSheetToPdfUtils();
+
+    static {
+        try {
+            // LocalOfficeManager.builder() 会在本地启动一个LibreOffice进程（后台模式）
+            officeManager = LocalOfficeManager.builder()
+                    .install()            // 💡 自动查找系统已安装的LibreOffice
+                    .taskExecutionTimeout(60000L) // 💡 单个转换任务超时60秒
+                    .build();
+            officeManager.start();       // 🔥 启动！此后LibreOffice进程常驻内存
+            converter = LocalConverter.make(officeManager);
+            log.info("✅ LibreOffice 转换服务已启动");
+        } catch (Exception e) {
+            log.error("❌ LibreOffice 启动失败", e);
+        }
+    }
+}</pre>
+  </div>
+
+  <h3>2.3 convertSingleSheet —— 核心转换方法逐行解析</h3>
+  <p class="file-ref">📄 <a style="color:var(--pri);font-family:monospace" href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-common/src/main/java/com/xzy/common/utils/ExcelSheetToPdfUtils.java">ExcelSheetToPdfUtils.java</a> 第33~150行</p>
+
+  <h4>第一步：入口校验</h4>
+  <div class="code-block">
+    <div class="title">【代码】convertSingleSheet - 入口</div>
+    <pre>public static boolean convertSingleSheet(String excelPath, String pdfPath, String sheetName) {
+    // ① getInstance() 触发 OfficeHolder 静态初始化 → 启动LibreOffice
+    getInstance();
+    if (converter == null) {
+        log.error("❌ 转换工具未初始化");
+        return false;
+    }
+    // ② 检查Excel文件是否存在
+    File originalFile = new File(excelPath);
+    if (!originalFile.exists()) {
+        log.error("❌ Excel文件不存在：{}", excelPath);
+        return false;
+    }
+    // ③ 创建临时文件（避免污染原始Excel）</pre>
+  </div>
+
+  <h4>第二步：处理公式 → 转为静态值</h4>
+  <p>LibreOffice打开Excel时，如果单元格包含公式（如 <code>=SUM(A1:A10)</code>），它不会自动计算。所以代码先把所有<strong>公式的结果静态化</strong>（转为字符串值），否则LibreOffice转PDF时会显示 <code>#VALUE!</code> 或空值。</p>
+  <div class="code-block">
+    <div class="title">【代码】处理公式单元格</div>
+    <pre>for (int rowIndex = sheet.getFirstRowNum(); rowIndex <= sheet.getLastRowNum(); rowIndex++) {
+    XSSFRow row = sheet.getRow(rowIndex);
+    for (int cellIndex = row.getFirstCellNum(); cellIndex < row.getLastCellNum(); cellIndex++) {
+        XSSFCell cell = row.getCell(cellIndex);
+        if (cell.getCellType() == CellType.FORMULA) {
+            CellType cachedType = cell.getCachedFormulaResultType();
+            if (cachedType == CellType.STRING) {
+                finalValue = cell.getStringCellValue();     // 字符串公式结果
+            } else if (cachedType == CellType.NUMERIC) {
+                double num = cell.getNumericCellValue();
+                String formatStr = cell.getCellStyle().getDataFormatString();
+                if (formatStr != null) {
+                    DecimalFormat df = new DecimalFormat(formatStr);
+                    finalValue = df.format(num);            // 💡 保留Excel原始数字格式
+                } else {
+                    finalValue = String.valueOf(num);       // 无格式直接转
+                }
+            }
+            // 🔑 关键操作：把公式单元格强制改为文本类型
+            cell.setCellType(CellType.STRING);
+            cell.setCellValue(finalValue);
+        }
+    }
+}</pre>
+  </div>
+
+  <h4>第三步：删除其他Sheet → 只保留指定Sheet</h4>
+  <div class="code-block">
+    <div class="title">【代码】删除多余Sheet + 写出临时文件</div>
+    <pre>// 倒序删除（避免索引错乱）
+for (int i = workbook.getNumberOfSheets() - 1; i >= 0; i--) {
+    if (!workbook.getSheetName(i).equals(sheetName)) {
+        workbook.removeSheetAt(i);  // 🔑 只保留指定Sheet名（如"结果页"）
+    }
+}
+// 写出到临时文件
+try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+    workbook.write(fos);
+}</pre>
+  </div>
+
+  <h4>第四步：JodConverter调用LibreOffice转PDF</h4>
+  <p>这是整个流程中<strong>最核心的一行代码</strong>：</p>
+  <div class="code-block">
+    <div class="title">【代码】LibreOffice转PDF（一行搞定）</div>
+    <pre>converter.convert(tempFile)      // 源文件：临时XLSX（已处理公式、只剩目标Sheet）
+    .to(new File(pdfPath))        // 目标文件：PDF路径
+    .execute();                   // 🔥 执行！调用LibreOffice后台进程完成转换</pre>
+  </div>
+
+  <p><code>converter</code> 是 JodConverter 的 <code>LocalConverter</code> 实例。它通过<strong>管道通信</strong>把临时XLSX文件发送给后台LibreOffice进程，LibreOffice打开文件 → 渲染 → 另存为PDF → 返回给Java。整个过程对开发者透明。</p>
+
+  <div class="info-box">
+    <strong>📝 小知识</strong>：LibreOffice在后台以 <code>--headless</code> 模式运行，不需要GUI界面。整个转换过程是<strong>同步的</strong>（blocking），60秒超时，超时后会抛异常。
+  </div>
+
+  <h3>2.4 完整流程时序（第一次调用）</h3>
+  <ol class="step-list">
+    <li><strong>类加载</strong>：Spring容器创建 <code>ExcelSheetToPdfUtils</code> Bean → 静态内部类 <code>OfficeHolder</code> 初始化</li>
+    <li><strong>启动LibreOffice</strong>：<code>officeManager.start()</code> → 在系统中查找 <code>/usr/lib/libreoffice/program/soffice.bin</code> → 以后台模式启动</li>
+    <li><strong>复制Excel</strong>：把原始Excel复制到临时文件 → 用POI打开</li>
+    <li><strong>遍历所有单元格</strong>：公式 → 静态值；日期 → 保持格式；数字 → 保持格式</li>
+    <li><strong>删除多余Sheet</strong>：只保留目标Sheet名</li>
+    <li><strong>写出临时文件</strong>：把处理后的Workbook写到tempFile</li>
+    <li><strong>LibreOffice转PDF</strong>：<code>converter.convert(tempFile).to(pdfFile).execute()</code></li>
+    <li><strong>清理临时文件</strong>：<code>tempFile.delete()</code>（finally块）</li>
+  </ol>
+</div>
+
+<!-- ============ 3. PDF→PNG ============ -->
+<div class="section" id="step2">
+  <h2>🖼️ 3. 第二步：PdfCertCleanConverter — PDF → 高清PNG</h2>
+
+  <p class="file-ref">📄 <a style="color:var(--pri);font-family:monospace" href="file:///Users/sunnicholas/xiziyigit/xiziyi-lims-service/xzy-common/src/main/java/com/xzy/common/utils/PdfCertCleanConverter.java">PdfCertCleanConverter.java</a> — 全部145行</p>
+
+  <h3>3.1 核心配置参数</h3>
+  <div class="code-block">
+    <div class="title">【配置】渲染参数</div>
+    <pre>private static final int RENDER_DPI      = 600;    // 🔥 600DPI（打印级超清）
+private static final int MARGIN           = 20;     // 裁剪后保留的边距（像素）
+private static final int WHITE_THRESHOLD  = 254;    // 255是纯白，254是容忍度（近似白色也算空白）</pre>
+  </div>
+
+  <table class="data-table">
+    <tr><th>参数</th><th>值</th><th>含义</th><th>为什么选这个值</th></tr>
+    <tr><td><code>RENDER_DPI</code></td><td>600</td><td>渲染分辨率（每英寸像素数）</td><td>证书需要<strong>打印级清晰度</strong>。300DPI=屏幕清晰，600DPI=打印级超清。生成的图片文件更大，但文字边缘锋利。</td></tr>
+    <tr><td><code>MARGIN</code></td><td>20</td><td>裁剪后边距</td><td>完全裁剪到内容边会让证书"顶格"显示不美观。保留20像素边距保证视觉效果。</td></tr>
+    <tr><td><code>WHITE_THRESHOLD</code></td><td>254</td><td>白色容忍度</td><td>PDF->PNG渲染后，纸张背景不是完美的255纯白（PDFBox渲染有轻微色差）。254容忍一小块近似白也算空白区域。</td></tr>
+  </table>
+
+  <div class="info-box">
+    <strong>为什么是600DPI？</strong>如果你只做屏幕预览，300DPI就够了。但这个项目的PNG最终会<strong>嵌入到证书的Word模板中</strong>，打印后需要清晰。600DPI是"证书打印质量"的标准选择。代价是每张图片约2-5MB。
+  </div>
+
+  <h3>3.2 convertPdfPages —— 主方法逐行解析</h3>
+  <div class="code-block">
+    <div class="title">【代码】PDF转PNG主流程</div>
+    <pre>public static List&lt;String&gt; convertPdfPages(String pdfPath, String outputDir) {
+    List&lt;String&gt; resultPaths = new ArrayList&lt;&gt;();
+
+    // ① 使用PDFBox加载PDF文档
+    try (PDDocument document = PDDocument.load(new File(pdfPath))) {
+        PDFRenderer renderer = new PDFRenderer(document);  // PDFBox渲染器
+        int totalPages = document.getNumberOfPages();      // 总页数
+        log.info("PDF总页数：{}", totalPages);
+
+        // ② 确保输出目录存在
+        File dir = new File(outputDir);
+        if (!dir.exists()) dir.mkdirs();
+
+        // ③ 逐页处理
+        for (int pageIndex = 0; pageIndex &lt; totalPages; pageIndex++) {
+            // 🔥 按600DPI将PDF页面渲染为Java BufferedImage（位图）
+            BufferedImage fullImage = renderer.renderImageWithDPI(pageIndex, RENDER_DPI);
+
+            // 🔥 智能裁剪：去掉上下左右空白区域
+            BufferedImage croppedImage = smartCrop(fullImage);
+
+            // ④ 写出PNG文件
+            String outputPath = new File(outputDir, "page_" + (pageIndex + 1) + ".png").getAbsolutePath();
+            ImageIO.write(croppedImage, "png", new File(outputPath));
+            resultPaths.add(outputPath); // 收集所有生成的图片路径
+        }
+        return resultPaths;
+    }
+}</pre>
+  </div>
+
+  <h3>3.3 smartCrop —— 智能裁剪算法详解</h3>
+  <p>这是"把图片多余空白去掉"的核心算法。PDF每次渲染会带上整张纸的背景（全是白色），不裁剪的话图片会<strong>上下左右留大片空白</strong>，难看不美观。</p>
+
+  <h4>算法图示</h4>
+  <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:18px;text-align:center;font-family:monospace;font-size:0.85rem;line-height:2.2;margin:10px 0;">
+<pre style="margin:0;line-height:1.6;">
+     ┌─────────────────────────────┐  ← y=0 (图片顶部)
+     │         (大量空白)            │
+     │  ┌─────────────────────┐    │  ← left=150 (第一个非白像素列)
+     │  │                     │    │
+     │  │   实际内容区域        │    │
+     │  │  (证书数据表格等)     │    │
+     │  │                     │    │
+     │  └─────────────────────┘    │  ← bottom=1200 (最后一个非白像素行)
+     │         (大量空白)            │
+     └─────────────────────────────┘  ← y=1800 (图片底部, height=1800)
+
+     裁剪后：
+      left - MARGIN  = 130
+      right + MARGIN = 1450
+      bottom + MARGIN = 1220
+      → 最终尺寸 = 1320 × 1220（内容撑满，留20px边距）
+</pre>
+  </div>
+
+  <h4>findLeftBorder —— 找到左边第一个有内容的像素列</h4>
+  <div class="code-block">
+    <div class="title">【算法】从左向右逐列扫描</div>
+    <pre>private static int findLeftBorder(BufferedImage image) {
+    int w = image.getWidth();
+    int h = image.getHeight();
+    for (int x = 0; x &lt; w; x++) {           // ← 从左向右
+        for (int y = 0; y &lt; h; y++) {       //  ← 这一列从上到下
+            if (!isWhite(image.getRGB(x, y))) // 🔑 找到第一个不是白色的像素
+                return x;                     // 返回列号 → 这就是"左边界"
+        }
+    }
+    return -1;  // 整张图全白（不太会发生）
+}</pre>
+  </div>
+
+  <h4>findRightBorder —— 从右向左找右边界（同理）</h4>
+  <h4>findBottomBorder —— 从下向上找底部边界</h4>
+  <p>注意：代码<strong>没有做findTopBorder</strong>（顶部裁剪从y=0开始）。这是因为证书PDF的顶部通常就是内容起始位置，保留了顶部。</p>
+
+  <h4>isWhite —— 判断一个像素是否是"白色"</h4>
+  <div class="code-block">
+    <div class="title">【算法】白色判断</div>
+    <pre>private static boolean isWhite(int rgb) {
+    Color c = new Color(rgb);
+    return c.getRed() >= 254
+        && c.getGreen() >= 254
+        && c.getBlue() >= 254;
+    // 🔑 R、G、B 三个分量都 ≥ 254 → 判定为白色
+    // （254而非255，因为PDFBox渲染的纸张背景不是完美纯白）
+}</pre>
+  </div>
+
+  <h3>3.4 输出结果</h3>
+  <div class="code-block">
+    <div class="title">【输出示例】返回的图片路径列表</div>
+    <pre>// convertPdfPages() 的返回值：
+["/home/xiziyi/uploadPath/original/2026/05/result/page_1.png",
+ "/home/xiziyi/uploadPath/original/2026/05/result/page_2.png",
+ "/home/xiziyi/uploadPath/original/2026/05/result/page_3.png"]
+
+// 这个List传回 excelToImgFile()，序列化为JSON字符串：
+"[\"/home/xiziyi/uploadPath/original/2026/05/result/page_1.png\", ...]"
+
+// 然后通过 convertPathsToWebJson() 转换为Web路径JSON存入数据库：
+"[\"/profile/original/2026/05/result/page_1.png\", ...]"</pre>
+  </div>
+</div>
+
+<!-- ============ 4. 路径 ============ -->
+<div class="section" id="path">
+  <h2>🗺️ 4. 路径系统：从Web到本地再回到Web</h2>
+
+  <h3>4.1 两种路径的切换图</h3>
+  <div style="text-align:center;background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px;font-family:monospace;font-size:0.85rem;line-height:2.5;margin:10px 0;">
+    🌐 <strong>Web路径</strong>（数据库/前端用）<br>
+    &nbsp;&nbsp;<code>/profile/original/2026/05/result/page_1.png</code><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↕ <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ <code>FileUtils.normalizeOriginalFilePath()</code>（去Web前缀，拼本地目录）<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑ <code>PathConverter.convertToOriginalWebPath()</code>（去本地前缀，拼Web前缀）<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↕ <br>
+    💻 <strong>本地绝对路径</strong>（代码/文件系统用）<br>
+    &nbsp;&nbsp;<code>/home/xiziyi/uploadPath/original/2026/05/result/page_1.png</code>
+  </div>
+
+  <h3>4.2 normalizeOriginalFilePath — Web→本地</h3>
+  <div class="code-block">
+    <div class="title">【代码】FileUtils.java 第479~484行</div>
+    <pre>public static String normalizeOriginalFilePath(String filePath) {
+    // 1. 去掉 Web 前缀 "/profile/original/"
+    String cleanPath = filePath.replace("/profile/original/", "");
+    //    例如: "/profile/original/2026/05/test.xlsx" → "2026/05/test.xlsx"
+
+    // 2. 用 XiziYiConfig.getOriginalPath()（即 /home/xiziyi/uploadPath/original）
+    //    拼接 cleanPath → 得到完整本地路径
+    //    返回: /home/xiziyi/uploadPath/original/2026/05/test.xlsx
+    return Paths.get(XiziYiConfig.getOriginalPath(), cleanPath)
+               .toString().replace("\\", "\\\\");
+}</pre>
+  </div>
+
+  <h3>4.3 convertToOriginalWebPath — 本地→Web</h3>
+  <div class="code-block">
+    <div class="title">【代码】PathConverter.java 第23~64行</div>
+    <pre>public static String convertToWebPathGeneric(String physicalPath,
+        String configPath, String webPrefix, String logTag) {
+    // 清理路径（统一分隔符为 /）
+    String cleanedPhysical = removeTrailingSlash(cleanFilePath(physicalPath));
+    String cleanedConfig = removeTrailingSlash(cleanFilePath(configPath));
+
+    // 1. 精确匹配：用 Java Path 判断是否以configPath开头
+    Path physical = Paths.get(cleanedPhysical).normalize();
+    Path config = Paths.get(cleanedConfig).normalize();
+    if (physical.startsWith(config)) {
+        Path relative = config.relativize(physical);  // 取相对路径
+        return webPrefix + relative.toString().replace('\\', '/');
+        //   例如: "/profile/original/" + "2026/05/result/page_1.png"
+        //       = "/profile/original/2026/05/result/page_1.png"
+    }
+
+    // 2. 降级：大小写不敏感匹配（兼容历史数据，Ubuntu下应该一致）
+    ...
+}</pre>
+  </div>
+
+  <h3>4.4 getPdfPath — Excel路径→PDF路径</h3>
+  <div class="code-block">
+    <div class="title">【代码】FilePathUtil.java 第14~34行</div>
+    <pre>public static String getPdfPath(String excelPath, String suffix) {
+    String lowerPath = excelPath.toLowerCase();
+    String[] excelExtensions = {".xlsx", ".xlsm", ".xls"};
+    for (String ext : excelExtensions) {
+        if (lowerPath.endsWith(ext)) {
+            // 1. 去掉扩展名
+            int lastDot = excelPath.lastIndexOf('.');
+            // 2. 拼接 suffix + ".pdf"
+            return excelPath.substring(0, lastDot) + suffix + ".pdf";
+        }
+    }
+    return excelPath + suffix + ".pdf";
+}
+
+// 示例：
+// getPdfPath("/home/xiziyi/uploadPath/original/2026/05/template.xlsx", "_result")
+// → "/home/xiziyi/uploadPath/original/2026/05/template_result.pdf"
+//
+// getPdfPath("/home/xiziyi/uploadPath/original/2026/05/template.xlsx", "_data")
+// → "/home/xiziyi/uploadPath/original/2026/05/template_data.pdf"</pre>
+  </div>
+</div>
+
+<!-- ============ 5. 依赖 ============ -->
+<div class="section" id="deps">
+  <h2>📦 5. 依赖清单：Maven坐标 + 系统软件</h2>
+
+  <h3>5.1 Maven依赖（pom.xml）</h3>
+  <table class="data-table">
+    <tr><th>依赖</th><th>GroupId:ArtifactId</th><th>作用</th></tr>
+    <tr>
+      <td><span class="tag tag-libre">JodConverter</span></td>
+      <td><code>org.jodconverter:jodconverter-local</code></td>
+      <td>Java调用LibreOffice的桥梁。负责启动/管理Office进程，发送转换指令。</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-libre">JodConverter Spring Boot</span></td>
+      <td><code>org.jodconverter:jodconverter-spring-boot-starter</code></td>
+      <td>Spring Boot自动配置集成</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-sys">LibreOffice SDK</span></td>
+      <td><code>org.libreoffice:libreoffice</code> (多个jar)</td>
+      <td>LibreOffice的Java UNO API（代码中用JodConverter封装，不直接调用）</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-java">PDFBox</span></td>
+      <td><code>org.apache.pdfbox:pdfbox</code></td>
+      <td>PDF的加载、渲染（PDF→PNG）、页面遍历</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-java">Aspose.Cells</span></td>
+      <td><code>com.aspose:aspose-cells</code></td>
+      <td>商业Excel库（注意：<strong>ExcelSheetToPdfUtils没有用它</strong>，它走的是POI+LibreOffice路线。Aspose用于其他Excel处理场景）</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-java">Apache POI</span></td>
+      <td><code>org.apache.poi:poi-ooxml</code>（若依框架自带）</td>
+      <td>Java读写Excel（ExcelSheetToPdfUtils用POI读取/修改Excel，再交给LibreOffice转PDF）</td>
+    </tr>
+  </table>
+
+  <h3>5.2 系统软件依赖（Ubuntu必须安装）</h3>
+  <table class="data-table">
+    <tr><th>软件</th><th>Ubuntu安装命令</th><th>必装原因</th></tr>
+    <tr>
+      <td><span class="tag tag-ubuntu">LibreOffice</span></td>
+      <td><code>sudo apt install libreoffice -y</code></td>
+      <td>ExcelSheetToPdfUtils 启动后台Office进程，没有它无法转换</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-ubuntu">LibreOffice-headless</span></td>
+      <td><code>sudo apt install libreoffice-headless -y</code></td>
+      <td>Ubuntu服务器没有GUI，必须装headless版本</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-ubuntu">LibreOffice-writer</span></td>
+      <td><code>sudo apt install libreoffice-writer -y</code></td>
+      <td>Word文档支持（证书编制会用到）</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-ubuntu">LibreOffice-calc</span></td>
+      <td><code>sudo apt install libreoffice-calc -y</code></td>
+      <td>Excel支持（记录编制用到）</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-ubuntu">中文字体</span></td>
+      <td><code>sudo apt install fonts-wqy-microhei -y</code></td>
+      <td>⚠️ 极其重要！没有中文字体，LibreOffice渲染中文会变成方框□□□</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============ 6. Ubuntu ============ -->
+<div class="section" id="ubuntu">
+  <h2>🐧 6. Ubuntu生产环境配置清单</h2>
+
+  <h3>6.1 安装脚本（一次性）</h3>
+  <div class="code-block">
+    <div class="title">【Shell】Ubuntu 22.04 一键安装所需软件</div>
+    <pre>#!/bin/bash
+# 生产环境 — LibreOffice + 中文字体安装
+
+# 1. 更新包索引
+sudo apt update -y
+
+# 2. 安装LibreOffice全套（必须！）
+sudo apt install -y \
+    libreoffice \
+    libreoffice-headless \
+    libreoffice-writer \
+    libreoffice-calc
+
+# 3. 安装中文字体（必须！否则证书和记录的PDF中文都是方块）
+sudo apt install -y \
+    fonts-wqy-microhei \
+    fonts-wqy-zenhei \
+    fonts-noto-cjk
+
+# 4. 验证LibreOffice安装
+libreoffice --headless --version
+
+# 5. 验证中文字体
+fc-list :lang=zh | head -5
+
+echo "✅ Ubuntu环境准备完毕"</pre>
+  </div>
+
+  <h3>6.2 application.yml 生产环境配置</h3>
+  <div class="code-block">
+    <div class="title">【YAML】application.yml - Ubuntu路径配置</div>
+    <pre>xzy:
+  # Ubuntu 生产环境 — 文件存储目录
+  profile: /home/xiziyi/uploadPath
+  # 这会派生以下路径：
+  #   /home/xiziyi/uploadPath/original/   → 原始Excel + PDF + PNG
+  #   /home/xiziyi/uploadPath/cert/       → 证书Word文件
+  #   /home/xiziyi/uploadPath/upload/     → 通用上传
+  #   /home/xiziyi/uploadPath/download/   → 下载导出
+  #   /home/xiziyi/uploadPath/template/   → 模板文件</pre>
+  </div>
+
+  <h3>6.3 目录权限（极易踩坑）</h3>
+  <div class="warn-box">
+    ⚠️ <strong>Ubuntu常见故障</strong>：应用以 <code>xiziyi</code> 用户运行时，对 <code>/home/xiziyi/uploadPath/</code> 必须有<strong>读写权限</strong>（创建 result/ 子目录、写出 PDF/PNG）。
+  </div>
+  <div class="code-block">
+    <div class="title">【Shell】确保目录存在且有写入权限</div>
+    <pre># 创建所有需要的子目录
+sudo mkdir -p /home/xiziyi/uploadPath/{original,cert,upload,download,template,sign}
+
+# 设置权限（假设应用用户是 xiziyi）
+sudo chown -R xiziyi:xiziyi /home/xiziyi/uploadPath
+sudo chmod -R 755 /home/xiziyi/uploadPath
+
+# 验证
+ls -la /home/xiziyi/uploadPath/</pre>
+  </div>
+
+  <h3>6.4 Ubuntu与Windows环境的差异对比</h3>
+  <table class="data-table">
+    <tr><th>项目</th><th>Windows</th><th>Ubuntu 22.04</th></tr>
+    <tr><td>文档转换依赖</td><td>Aspose.Words（商业jar包，纯Java）</td><td><strong>LibreOffice</strong>（系统级，必须apt安装）</td></tr>
+    <tr><td>Excel转PDF方式</td><td>Aspose.Cells（商业jar包）</td><td><strong>LibreOffice Calc</strong>（由JodConverter调用）</td></tr>
+    <tr><td>文件路径</td><td><code>D:\\lims\\uploadPath\\original\\</code></td><td><code>/home/xiziyi/uploadPath/original/</code></td></tr>
+    <tr><td>路径分隔符</td><td>反斜杠 <code>\\</code></td><td>正斜杠 <code>/</code></td></tr>
+    <tr><td>PDF打开方式</td><td><code>poCtrl.webOpen(normalizedPath)</code></td><td><code>poCtrl.webOpen("file://" + normalizedPath)</code></td></tr>
+    <tr><td>Chrome等浏览器</td><td>直接路径即可</td><td>需file://协议前缀（PageOffice要求）</td></tr>
+    <tr><td>字体方案</td><td>系统自带（宋体/微软雅黑）</td><td><strong>必须手动安装</strong>（文泉驿微米黑 / Noto CJK）</td></tr>
+    <tr><td>JVM进程权限</td><td>Administrator极高权限</td><td>普通用户，需chown确保目录可写</td></tr>
+    <tr><td>libreoffice路径</td><td><code>C:\Program Files\LibreOffice\</code></td><td><code>/usr/lib/libreoffice/program/soffice.bin</code></td></tr>
+  </table>
+</div>
+
+<!-- ============ 7. 测试 ============ -->
+<div class="section" id="test">
+  <h2>🧪 7. 一步一步测试验证指南</h2>
+
+  <h3>7.1 阶段一：环境验证（10分钟）</h3>
+
+  <h4>测试7.1-1：验证LibreOffice可用</h4>
+  <div class="code-block">
+    <div class="title">【Shell】测试LibreOffice命令行工作</div>
+    <pre># 1. 确认LibreOffice可执行
+which soffice
+# 期望输出: /usr/bin/soffice
+
+# 2. 测试无头模式转PDF
+# 新建一个测试Excel（用LibreOffice命令行创建）
+echo "test" > /tmp/test.csv
+libreoffice --headless --convert-to pdf /tmp/test.csv --outdir /tmp/
+# 期望输出: convert ... -> /tmp/test.pdf
+
+# 3. 检查PDF是否生成
+ls -la /tmp/test.pdf
+# 期望: 文件存在且大小 > 0
+
+echo "✅ LibreOffice验证通过"</pre>
+  </div>
+
+  <h4>测试7.1-2：验证中文字体</h4>
+  <div class="code-block">
+    <div class="title">【Shell】验证中文字体可用</div>
+    <pre># 1. 列出已安装的中文字体
+fc-list :lang=zh | grep -i "wenquan\|noto\|micro"
+
+# 2. 用LibreOffice生成一个含中文的PDF（验证不会出现方块）
+# 创建一个临时CSV（含中文）
+echo "姓名,年龄\n张三,25\n李四,30" > /tmp/test_cn.csv
+libreoffice --headless --convert-to pdf /tmp/test_cn.csv --outdir /tmp/
+
+# 3. 用pdftotext检查PDF内容（如果中文正常提取，说明字体正确）
+pdftotext /tmp/test_cn.pdf - | head
+# 期望输出: "张三" "李四" 字样（而不是空白或乱码）
+
+echo "✅ 中文字体验证通过"</pre>
+  </div>
+
+  <h4>测试7.1-3：验证上传目录</h4>
+  <div class="code-block">
+    <div class="title">【Shell】验证目录权限</div>
+    <pre># 1. 确认所有子目录存在
+ls -la /home/xiziyi/uploadPath/original/
+ls -la /home/xiziyi/uploadPath/cert/
+
+# 2. 测试能否写入（用应用用户）
+touch /home/xiziyi/uploadPath/original/.test_write && rm -f /home/xiziyi/uploadPath/original/.test_write
+# 期望: 没有 "Permission denied" 错误
+
+echo "✅ 目录权限验证通过"</pre>
+  </div>
+
+  <h3>7.2 阶段二：Java单元测试Excel→PDF（20分钟）</h3>
+
+  <p><strong>目标</strong>：不启动整个Spring Boot，直接写一段Java代码验证 ExcelSheetToPdfUtils 的核心逻辑。</p>
+
+  <h4>测试7.2-1：准备测试Excel</h4>
+  <p>找一个<strong>有"结果页"Sheet的Excel模板</strong>，放到 <code>/home/xiziyi/uploadPath/original/test/</code> 目录下。确保该Excel文件包含以下特征（覆盖代码的各个分支）：</p>
+  <ol class="step-list">
+    <li>至少两个Sheet，其中一个是<strong>"结果页"</strong></li>
+    <li>"结果页"中有<strong>公式单元格</strong>（如 <code>=SUM(B2:B10)</code>）</li>
+    <li>"结果页"中有<strong>数字格式化单元格</strong>（如设置小数位数2位）</li>
+    <li>"结果页"中有<strong>日期单元格</strong></li>
+    <li>"结果页"中有<strong>合并单元格</strong></li>
+  </ol>
+
+  <h4>测试7.2-2：创建JUnit测试类</h4>
+  <p>在项目 <code>xzy-common/src/test/java/com/xzy/common/utils/</code> 下创建以下测试类：</p>
+  <div class="code-block">
+    <div class="title">【Java】ExcelToPdfTest.java — 单元测试</div>
+    <pre>package com.xzy.common.utils;
+
+import org.junit.jupiter.api.Test;
+import java.io.File;
+
+public class ExcelToPdfTest {
+
+    @Test
+    public void testExcelToPdfSingleSheet() {
+        // ====== 准备参数 ======
+        String excelPath = "/home/xiziyi/uploadPath/original/test/test_record.xlsx";
+        String sheetName = "结果页";  // ⚠️ 必须和Excel中的Sheet名完全一致！
+
+        // 用FilePathUtil生成PDF路径
+        String pdfPath = FilePathUtil.getPdfPath(excelPath, "_result");
+        // 期望: /home/xiziyi/uploadPath/original/test/test_record_result.pdf
+
+        System.out.println("==================== 开始测试 ====================");
+        System.out.println("Excel路径: " + excelPath);
+        System.out.println("PDF路径:   " + pdfPath);
+        System.out.println("Sheet名:   " + sheetName);
+
+        // ====== 执行转换 ======
+        boolean result = ExcelSheetToPdfUtils.convertSingleSheet(excelPath, pdfPath, sheetName);
+
+        // ====== 断言验证 ======
+        // ① 方法返回true
+        assert result : "❌ 转换返回false，请检查日志";
+
+        // ② PDF文件确实存在
+        File pdfFile = new File(pdfPath);
+        assert pdfFile.exists() : "❌ PDF文件不存在：" + pdfPath;
+
+        // ③ PDF文件大小 > 0
+        long fileSize = pdfFile.length();
+        assert fileSize > 0 : "❌ PDF文件为空：" + pdfPath;
+
+        System.out.println("==================== 测试通过 ====================");
+        System.out.println("PDF路径: " + pdfPath);
+        System.out.println("PDF大小: " + (fileSize / 1024) + " KB");
+    }
+}</pre>
+  </div>
+
+  <h4>测试7.2-3：检查PDF质量</h4>
+  <div class="code-block">
+    <div class="title">【Shell】检查生成的PDF</div>
+    <pre># 1. 检查PDF基本信息
+pdfinfo /home/xiziyi/uploadPath/original/test/test_record_result.pdf
+
+# 2. 将PDF转回文本（验证中文没有丢失）
+pdftotext /home/xiziyi/uploadPath/original/test/test_record_result.pdf - | head -20
+# 期望: 能看到中文文字（不是空白也不是乱码）
+
+# 3. 检查PDF页数是否符合预期
+pdfinfo ... | grep Pages
+
+echo "✅ PDF质量验证通过"</pre>
+  </div>
+
+  <div class="err-box">
+    ⚠️ <strong>如果这一步失败</strong>：最常见的是 <code>LibreOffice启动失败</code>。检查 <code>libreoffice</code> 是否在PATH中，用 <code>which libreoffice</code> 确认。如果是Ubuntu Docker容器，还需要安装 <code>libreoffice-headless</code>。
+  </div>
+
+  <h3>7.3 阶段三：Java单元测试PDF→PNG（10分钟）</h3>
+
+  <h4>测试7.3-1：测试PdfCertCleanConverter</h4>
+  <div class="code-block">
+    <div class="title">【Java】PdfToPngTest.java — 单元测试</div>
+    <pre>package com.xzy.common.utils;
+
+import org.junit.jupiter.api.Test;
+import java.io.File;
+import java.util.List;
+
+public class PdfToPngTest {
+
+    @Test
+    public void testPdfToHighQualityPng() {
+        // ====== 用上一步生成的PDF做输入 ======
+        String pdfPath = "/home/xiziyi/uploadPath/original/test/test_record_result.pdf";
+        String outputDir = "/home/xiziyi/uploadPath/original/test/result/";
+
+        System.out.println("==================== 开始PDF→PNG测试 ====================");
+        System.out.println("PDF路径:    " + pdfPath);
+        System.out.println("输出目录:   " + outputDir);
+
+        // ====== 执行转换 ======
+        List&lt;String&gt; resultPaths = PdfCertCleanConverter.convertPdfPages(pdfPath, outputDir);
+
+        // ====== 断言验证 ======
+        // ① 至少生成1张图片
+        assert !resultPaths.isEmpty() : "❌ 没有生成任何图片";
+
+        // ② 检查每张图片
+        for (String path : resultPaths) {
+            File imgFile = new File(path);
+            assert imgFile.exists() : "❌ 图片文件不存在：" + path;
+            assert imgFile.length() > 0 : "❌ 图片文件为空：" + path;
+            System.out.println("  ✔ " + path + " (" + (imgFile.length() / 1024) + " KB)");
+        }
+
+        System.out.println("==================== 测试通过 ====================");
+        System.out.println("共生成 " + resultPaths.size() + " 张高清PNG");
+
+        // ====== 额外检查：肉眼可见的质量 ======
+        // 把图片下载到本地，用图片查看器打开：
+        // 1. 文字是否清晰锐利（不能模糊）
+        // 2. 表格边框是否完整
+        // 3. 中文是否正常显示（不是方块□□□）
+        // 4. 空白区域是否被裁剪掉
+    }
+}</pre>
+  </div>
+
+  <h4>测试7.3-2：图片质量肉眼检测项</h4>
+  <table class="data-table">
+    <tr><th>检查项</th><th>方法</th><th>期望结果</th></tr>
+    <tr><td>文字清晰度</td><td>用图片查看器放大到200%</td><td>文字边缘锋利，不模糊，不发虚</td></tr>
+    <tr><td>中文显示</td><td>直接看图片中的中文</td><td>显示正常宋体/微软雅黑风格，不是□□□</td></tr>
+    <tr><td>表格边框</td><td>检查Excel的合并单元格区域</td><td>边框完整，颜色正确（不会丢失线条）</td></tr>
+    <tr><td>空白裁剪</td><td>看图片上下左右空白区域</td><td>空白被去掉，内容区域撑满画面（保留20px边距）</td></tr>
+    <tr><td>图片大小</td><td>ls -lh 查看文件大小</td><td>每张约2-5MB（600DPI的正常大小）</td></tr>
+  </table>
+
+  <h3>7.4 阶段四：集成测试——模拟完整保存链路（15分钟）</h3>
+
+  <p><strong>目标</strong>：模拟 Controller 中 <code>excelToImgFile()</code> 的完整调用。</p>
+  <div class="code-block">
+    <div class="title">【Java】FullConversionTest.java — 完整链路测试</div>
+    <pre>package com.xzy.common.utils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
+
+public class FullConversionTest {
+
+    // 📐 这个方法模拟了 OfficeOnlineApi.excelToImgFile() 的完整逻辑
+    @Test
+    public void testFullPipeline() throws Exception {
+        // ====== 准备参数（模拟 Controller 接收的参数） ======
+        String excelPath = "/home/xiziyi/uploadPath/original/test/test_record.xlsx";
+
+        // ====== 1. 生成PDF路径 ======
+        String dataPdfPath   = FilePathUtil.getPdfPath(excelPath, "_data");
+        String resultPdfPath = FilePathUtil.getPdfPath(excelPath, "_result");
+
+        // ====== 2. 创建输出目录 ======
+        File originalFile = new File(excelPath);
+        String parentDir = originalFile.getParent();
+        String resultImgDir = parentDir + File.separator + "result";
+        Files.createDirectories(Paths.get(resultImgDir));
+
+        System.out.println("=== Step1: Excel → PDF ===");
+        System.out.println("  结果页PDF: " + resultPdfPath);
+        System.out.println("  数据页PDF: " + dataPdfPath);
+
+        // ====== 3. Excel → PDF ======
+        boolean r1 = ExcelSheetToPdfUtils.convertSingleSheet(excelPath, resultPdfPath, "结果页");
+        boolean r2 = ExcelSheetToPdfUtils.convertSingleSheet(excelPath, dataPdfPath, "数据页");
+        assert r1 && r2 : "❌ Excel→PDF 转换失败";
+
+        // ====== 4. PDF → PNG ======
+        List&lt;String&gt; resultImages = PdfCertCleanConverter.convertPdfPages(resultPdfPath, resultImgDir);
+        assert !resultImages.isEmpty() : "❌ 没有生成PNG图片";
+
+        System.out.println("\n=== Step2: PDF → PNG ===");
+        resultImages.forEach(p -> System.out.println("  ✔ " + p));
+
+        // ====== 5. 路径转换（模拟 Service 层的逻辑） ======
+        // 本地路径 → Web路径
+        String dataWebPath = PathConverter.convertToOriginalWebPath(dataPdfPath);
+        System.out.println("\n=== Step3: 本地路径 → Web路径 ===");
+        System.out.println("  数据PDF-本地: " + dataPdfPath);
+        System.out.println("  数据PDF-Web:  " + dataWebPath);
+
+        // 多图片路径整体转换（模拟 convertPathsToWebJson）
+        List&lt;String&gt; webImageList = resultImages.stream()
+            .map(PathConverter::convertToOriginalWebPath)
+            .toList();
+        System.out.println("  结果图片(本地):");
+        resultImages.forEach(p -> System.out.println("    " + p));
+        System.out.println("  结果图片(Web):");
+        webImageList.forEach(p -> System.out.println("    " + p));
+
+        // ====== 6. 模拟存入数据库的JSON ======
+        String resultImgJson = new ObjectMapper().writeValueAsString(webImageList);
+        System.out.println("\n=== Step4: 存入DB的JSON ===");
+        System.out.println("  result_file_url = " + resultImgJson);
+        System.out.println("  data_pdf_url    = " + dataWebPath);
+
+        System.out.println("\n✅ 完整链路测试通过！");
+    }
+}</pre>
+  </div>
+
+  <h3>7.5 阶段五：通过API端到端验证（15分钟）</h3>
+  <p>启动完整的Spring Boot应用后，按以下步骤操作：</p>
+  <ol class="step-list">
+    <li><strong>登录系统</strong> → 进入 "记录编制" 页面</li>
+    <li><strong>选择一条任务</strong> → 点击"编写记录" → 选择Excel模板</li>
+    <li>切换到<strong>"数据页" Tab</strong> → 确认Excel正常加载</li>
+    <li><strong>编辑数据</strong>（填入一些检测数据）</li>
+    <li>切换到"记录模板页"，<strong>填写委托信息、技术依据、计量器具</strong>等</li>
+    <li>点击 <strong>"保存"按钮</strong></li>
+    <li>ssh到服务器，<strong>检查生成的文件</strong>：</li>
+  </ol>
+  <div class="code-block">
+    <div class="title">【Shell】验证生成的文件</div>
+    <pre># 在Ubuntu服务器上执行：
+# 找到最新的Excel文件目录
+LATEST_DIR=$(ls -td /home/xiziyi/uploadPath/original/*/ | head -1)
+echo "最新目录: $LATEST_DIR"
+
+# 列出所有生成文件
+ls -lhR $LATEST_DIR
+
+# 期望看到:
+# *.xlsx          → 原始Excel
+# *_data.pdf      → 数据页PDF
+# *_result.pdf    → 结果页PDF
+# result/page_*.png → 多张高清PNG截图</pre>
+  </div>
+
+  <h3>7.6 各阶段测试对照速查</h3>
+  <table class="data-table">
+    <tr><th>阶段</th><th>测试内容</th><th>验证什么</th><th>时间</th><th>如果失败...</th></tr>
+    <tr><td>7.1</td><td>环境验证</td><td>LibreOffice可用、中文不乱码、目录可写</td><td>10min</td><td>→ 第8节"环境故障"</td></tr>
+    <tr><td>7.2</td><td>Excel→PDF单元测试</td><td>公式处理正确、日期/数字格式保留、PDF生成成功</td><td>20min</td><td>→ 检查日志中的"❌"行</td></tr>
+    <tr><td>7.3</td><td>PDF→PNG单元测试</td><td>600DPI高清渲染、智能裁剪生效、中文正常</td><td>10min</td><td>→ 第8节"渲染故障"</td></tr>
+    <tr><td>7.4</td><td>完整链路集成测试</td><td>路径转换正确、JSON格式符合预期、文件目录结构</td><td>15min</td><td>→ 对比代码逐行debug</td></tr>
+    <tr><td>7.5</td><td>API端到端测试</td><td>前端保存→后端保存→数据库更新完整可用</td><td>15min</td><td>→ 检查HTTP请求参数和日志</td></tr>
+  </table>
+</div>
+
+<!-- ============ 8. 故障 ============ -->
+<div class="section" id="trouble">
+  <h2>🔧 8. 常见故障排查手册</h2>
+
+  <h3>8.1 LibreOffice启动失败</h3>
+  <div class="code-block">
+    <div class="title">【日志特征】</div>
+    <pre>❌ LibreOffice 启动失败
+❌ 转换工具未初始化</pre>
+  </div>
+  <table class="data-table">
+    <tr><th>原因</th><th>解决方案</th></tr>
+    <tr><td>LibreOffice未安装</td><td><code>sudo apt install libreoffice libreoffice-headless -y</code></td></tr>
+    <tr><td>headless包缺失</td><td><code>sudo apt install libreoffice-headless -y</code>（Docker容器必须）</td></tr>
+    <tr><td>soffice不在PATH</td><td><code>export PATH=$PATH:/usr/lib/libreoffice/program/</code> 加到 <code>~/.bashrc</code></td></tr>
+  </table>
+
+  <h3>8.2 PNG中文变成方块□□□</h3>
+  <div class="code-block">
+    <div class="title">【日志特征】</div>
+    <pre>转换成功，但打开PNG后中文全部是口口口</pre>
+  </div>
+  <table class="data-table">
+    <tr><th>原因</th><th>解决方案</th></tr>
+    <tr><td>Ubuntu缺少中文字体</td><td><code>sudo apt install fonts-wqy-microhei fonts-noto-cjk -y</code></td></tr>
+    <tr><td>LibreOffice没有识别字体</td><td>重启应用（Office进程会重新读取系统字体列表）</td></tr>
+  </table>
+
+  <h3>8.3 Permission Denied（文件写入失败）</h3>
+  <div class="code-block">
+    <div class="title">【日志特征】</div>
+    <pre>java.io.FileNotFoundException: /home/xiziyi/uploadPath/original/...
+(Permission denied)</pre>
+  </div>
+  <table class="data-table">
+    <tr><th>原因</th><th>解决方案</th></tr>
+    <tr><td>应用用户没有目录写入权限</td><td><code>sudo chown -R appuser:appuser /home/xiziyi/uploadPath/</code><br>（把 appuser 替换为实际运行应用的用户）</td></tr>
+    <tr><td>父目录不存在</td><td><code>sudo mkdir -p /home/xiziyi/uploadPath/original/</code></td></tr>
+  </table>
+
+  <h3>8.4 转换超时（60秒超时）</h3>
+  <div class="code-block">
+    <div class="title">【日志特征】</div>
+    <pre>❌ 单个Sheet转换失败
+java.util.concurrent.TimeoutException
+
+超时阈值: taskExecutionTimeout(60000L) — 60秒</pre>
+  </div>
+  <table class="data-table">
+    <tr><th>原因</th><th>解决方案</th></tr>
+    <tr><td>Excel文件过大（几百MB）</td><td>检查Excel是否有不必要的数据，或调大超时：<code>.taskExecutionTimeout(180000L)</code>（3分钟）</td></tr>
+    <tr><td>服务器内存不足</td><td>LibreOffice进程吃内存，检查可用内存：<code>free -h</code></td></tr>
+  </table>
+
+  <h3>8.5 图片模糊/字体发虚</h3>
+  <table class="data-table">
+    <tr><th>原因</th><th>解决方案</th></tr>
+    <tr><td>DPI太低</td><td>确认 <code>RENDER_DPI = 600</code> 没有被改过</td></tr>
+    <tr><td>裁剪参数不对</td><td>确认 <code>MARGIN = 20</code>，太小会导致内容贴边</td></tr>
+  </table>
+</div>
+
+<!-- ============ 9. 总结 ============ -->
+<div class="section" id="summary">
+  <h2>📋 9. 总结速查</h2>
+
+  <h3>9.1 两个核心类一句话总结</h3>
+  <table class="data-table">
+    <tr><th>类</th><th>作用</th><th>底层技术</th></tr>
+    <tr>
+      <td><code>ExcelSheetToPdfUtils</code></td>
+      <td>从Excel中提取指定Sheet → 转PDF<br>
+      1. 处理公式→静态值（POI）<br>
+      2. 删除其他Sheet<br>
+      3. 调用LibreOffice → 输出PDF</td>
+      <td>Apache POI + JodConverter + LibreOffice<br>（纯Java调用本地进程）</td>
+    </tr>
+    <tr>
+      <td><code>PdfCertCleanConverter</code></td>
+      <td>PDF每页 → 600DPI超清PNG + 智能裁剪<br>
+      1. PDFBox加载PDF<br>
+      2. 逐页renderImageWithDPI(600)<br>
+      3. smartCrop裁剪空白<br>
+      4. ImageIO写出PNG</td>
+      <td>Apache PDFBox + Java AWT/ImageIO<br>（纯JDK+开源库，无第三方图片依赖）</td>
+    </tr>
+  </table>
+
+  <h3>9.2 Ubuntu环境最小安装清单</h3>
+  <div class="code-block">
+    <div class="title">【Shell】生产环境最小安装</div>
+    <pre># 1. LibreOffice（文档转换引擎）
+sudo apt install -y libreoffice libreoffice-headless libreoffice-calc libreoffice-writer
+
+# 2. 中文字体（否则PDF/PNG中文是方块）
+sudo apt install -y fonts-wqy-microhei fonts-noto-cjk
+
+# 3. 目录 + 权限
+sudo mkdir -p /home/xiziyi/uploadPath/{original,cert,upload,download}
+sudo chown -R xiziyi:xiziyi /home/xiziyi/uploadPath
+sudo chmod -R 755 /home/xiziyi/uploadPath
+
+echo "✅ Ubuntu环境准备完毕"</pre>
+  </div>
+
+  <h3>9.3 数据最终存入数据库的字段</h3>
+  <table class="data-table">
+    <tr><th>表</th><th>字段</th><th>存储的值</th></tr>
+    <tr><td><code>test_task_allot</code> (ZS记录)</td><td><code>result_file_url</code></td><td><code>["/profile/original/...result/page_1.png", "/profile/original/...result/page_2.png"]</code></td></tr>
+    <tr><td><code>test_task_allot</code> (ZS记录)</td><td><code>data_pdf_url</code></td><td><code>/profile/original/...xxx_data.pdf</code></td></tr>
+    <tr><td><code>test_task_allot</code> (ZS记录)</td><td><code>data_file_url</code></td><td><code>NULL</code>（当前保存时传null）</td></tr>
+    <tr><td><code>test_task_allot</code> (ZS记录)</td><td><code>original_excel_file_url</code></td><td><code>/profile/original/...xxx.xlsx</code></td></tr>
+  </table>
+</div>
+
+<div style="text-align:center;padding:30px;color:var(--gray);font-size:0.83rem;">
+  📅 报告生成：2026-05-08  Ubuntu 22.04 · xiziyi-lims 文件生成深度剖析<br>
+  代码源文件：ExcelSheetToPdfUtils.java / PdfCertCleanConverter.java / FilePathUtil.java / PathConverter.java / FileUtils.java
+</div>
+</div>
+
+<button class="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+</body>
+</html>

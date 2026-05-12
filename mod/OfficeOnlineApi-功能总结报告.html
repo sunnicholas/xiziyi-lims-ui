@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OfficeOnlineApi.java 功能总结报告</title>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --card-bg: #fff;
+    --text: #2c3e50;
+    --text-secondary: #606c78;
+    --border: #e2e8f0;
+    --accent: #3b82f6;
+    --accent-light: #eff6ff;
+    --green: #10b981;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --purple: #8b5cf6;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 32px 16px;
+  }
+  .container { max-width: 1000px; margin: 0 auto; }
+  .header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+    color: #fff;
+    padding: 40px 36px;
+    border-radius: var(--radius);
+    margin-bottom: 28px;
+    box-shadow: 0 4px 14px rgba(30,58,95,0.2);
+  }
+  .header h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+  .header .meta { font-size: 14px; opacity: 0.85; }
+  .header .meta span { margin-right: 20px; }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card h3 { font-size: 16px; font-weight: 600; margin: 18px 0 10px; color: #1e3a5f; }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .badge-get { background: #dbeafe; color: #1d4ed8; }
+  .badge-post { background: #fef3c7; color: #b45309; }
+  .endpoint {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 14px;
+  }
+  .endpoint .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+  .endpoint .method { font-weight: 700; font-size: 13px; }
+  .endpoint .path {
+    font-family: "SF Mono", "Fira Code", monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e3a5f;
+  }
+  .endpoint .desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .endpoint .params {
+    font-size: 12px;
+    color: #8b9aaf;
+    margin-top: 4px;
+    padding-left: 12px;
+    border-left: 2px solid var(--border);
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat .num { font-size: 30px; font-weight: 800; }
+  .stat .label { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .num-blue { color: var(--accent); }
+  .num-green { color: var(--green); }
+  .num-purple { color: var(--purple); }
+  .num-orange { color: var(--orange); }
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px 4px 2px 0;
+    background: var(--accent-light);
+    color: var(--accent);
+  }
+  .tag.green { background: #ecfdf5; color: #059669; }
+  .tag.purple { background: #f5f3ff; color: #7c3aed; }
+  .tag.orange { background: #fff7ed; color: #c2410c; }
+  .dep-list { columns: 200px 3; column-gap: 24px; font-size: 13px; color: var(--text-secondary); }
+  .dep-list li { padding: 2px 0; break-inside: avoid; }
+  .flow-step {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  .flow-step .step-num {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .flow-step .step-text { padding-top: 2px; }
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #9ca3af;
+    margin-top: 28px;
+  }
+  hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+  ul.content { padding-left: 20px; font-size: 14px; color: var(--text-secondary); }
+  ul.content li { margin-bottom: 4px; }
+  .warn-box {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #92400e;
+    margin-top: 16px;
+  }
+  .warn-box strong { color: #b45309; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ========== Header ========== -->
+<div class="header">
+  <h1>OfficeOnlineApi.java — 功能总结报告</h1>
+  <div class="meta">
+    <span>路径: xzy-admin/src/main/java/com/xzy/web/controller/common/OfficeOnlineApi.java</span>
+    <span>基路径: /office/api</span>
+    <span>生成时间: 2026-05-07</span>
+  </div>
+</div>
+
+<!-- ========== 总览统计 ========== -->
+<div class="summary-grid">
+  <div class="stat">
+    <div class="num num-blue">13</div>
+    <div class="label">API 端点</div>
+  </div>
+  <div class="stat">
+    <div class="num num-green">16</div>
+    <div class="label">私有辅助方法</div>
+  </div>
+  <div class="stat">
+    <div class="num num-purple">16</div>
+    <div class="label">注入的服务依赖</div>
+  </div>
+  <div class="stat">
+    <div class="num num-orange">1560+</div>
+    <div class="label">总代码行数</div>
+  </div>
+</div>
+
+<!-- ========== 核心概述 ========== -->
+<div class="card">
+  <h2>📋 核心概述</h2>
+  <p style="font-size:15px; color:var(--text-secondary);margin-bottom:14px;">
+    <code style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:13px;">OfficeOnlineApi</code> 
+    是一个基于 <strong>PageOffice 6.5.1.2</strong> 组件的在线 Office 文档编辑控制器，
+    提供 Word、Excel 文档的在线编辑、预览、保存，以及 PDF 在线预览，并深度集成了 LIMS（实验室信息管理系统）的业务流程。
+  </p>
+  <div>
+    <span class="tag">Word 在线编辑</span>
+    <span class="tag green">Excel 在线编辑</span>
+    <span class="tag purple">PDF 预览</span>
+    <span class="tag orange">LIMS 证书回显</span>
+    <span class="tag">Excel→图片/PDF 转换</span>
+    <span class="tag green">防伪码二维码</span>
+    <span class="tag purple">电子签名</span>
+    <span class="tag orange">送检+现场双模式</span>
+  </div>
+</div>
+
+<!-- ========== API 端点清单 ========== -->
+<div class="card">
+  <h2>🔌 API 端点清单（13个）</h2>
+
+  <h3>🗂 文件保存类</h3>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-post">POST</span>
+      <span class="path">/office/api/saveFile</span>
+    </div>
+    <div class="desc">通用保存文件——根据文件后缀分 Word/Excel 路径归一化后保存</div>
+    <div class="params">参数: filePath (String, 必填) — 模板物理路径</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-post">POST</span>
+      <span class="path">/office/api/saveZsFile</span>
+    </div>
+    <div class="desc">证书保存接口（送检任务）——通过 allotId 反查任务分配记录获取文件路径后保存</div>
+    <div class="params">参数: allotId (Long) — 送检任务明细ID</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-post">POST</span>
+      <span class="path">/office/api/saveXcZsFile</span>
+    </div>
+    <div class="desc">证书保存接口（现场任务）——通过 allotId 反查现场任务分配记录获取文件路径后保存</div>
+    <div class="params">参数: allotId (Long) — 现场任务明细ID</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-post">POST</span>
+      <span class="path">/office/api/saveOriginalFile</span>
+    </div>
+    <div class="desc">保存原始记录文件——若为 Excel 文件会触发 "结果页/数据页" 分离转图片+PDF 流程，并更新任务记录的 resultTemplate 字段</div>
+    <div class="params">参数: filePath (String), type (String: 送检/现场), allotId (Long)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-post">POST</span>
+      <span class="path">/office/api/saveData</span>
+    </div>
+    <div class="desc">提取 Word 模板中的 DataRegion 与 Table 元信息——遍历所有数据区域，识别 table_ 前缀区域并记录行列数，存入 Redis 缓存</div>
+  </div>
+
+  <h3>📊 Excel 编辑/预览类</h3>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/excel</span>
+    </div>
+    <div class="desc">在线 Excel 普通编辑——以当前用户身份打开 Excel 进行编辑，PageOffice Ctrl 含自定义保存按钮</div>
+    <div class="params">参数: filePath (String, 必填)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/recordEditExcel</span>
+    </div>
+    <div class="desc">记录编制在线 Excel——根据 templateChildId 加载区域配置（RegContent），设置指定 Sheet/Table 为可写区域，以表单提交模式打开</div>
+    <div class="params">参数: filePath (String), templateChildId (Long, 必填)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/excelView</span>
+    </div>
+    <div class="desc">在线 Excel 预览——以只读模式打开 Excel</div>
+    <div class="params">参数: filePath (String, 必填)</div>
+  </div>
+
+  <h3>📝 Word 编辑/预览类</h3>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/word</span>
+    </div>
+    <div class="desc">在线 Word 编辑——路径安全校验后以普通编辑模式打开</div>
+    <div class="params">参数: filePath (String, 必填)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/viewWord</span>
+    </div>
+    <div class="desc">在线 Word 预览——以只读模式打开</div>
+    <div class="params">参数: filePath (String, 必填)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/openWordTag</span>
+    </div>
+    <div class="desc">打开 Word 并定义书签（数据区域）——从字典表加载书签列表批量 defineDataRegion，返回书签表格元信息（来自 Redis）</div>
+    <div class="params">参数: filePath (String, 必填)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/openWordEchoTag</span>
+    </div>
+    <div class="desc"><strong>核心流程：送检任务数据回显书签</strong>——填充委托信息、日期、签名、结果页图片、防伪码、计量标准/器具表格等，支持只读/编辑模式</div>
+    <div class="params">参数: allotId (Long), readOnly (String: Y/N)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/openWordEchoXcTag</span>
+    </div>
+    <div class="desc"><strong>核心流程：现场任务数据回显书签</strong>——与送检流程逻辑一致，但数据源来自现场任务表 MsOuterTaskAllot</div>
+    <div class="params">参数: allotId (Long), readOnly (String: Y/N)</div>
+  </div>
+
+  <h3>📄 PDF & 测试类</h3>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-get">GET</span>
+      <span class="path">/office/api/showPdf</span>
+    </div>
+    <div class="desc">在线 PDF 预览——支持禁止拷贝/下载控制，自动适配 Windows/Linux 文件路径协议</div>
+    <div class="params">参数: filePath (String, 必填), allowCopy (Boolean, 必填)</div>
+  </div>
+
+  <div class="endpoint">
+    <div class="row">
+      <span class="badge badge-post">POST</span>
+      <span class="path">/office/api/testExcel</span>
+    </div>
+    <div class="desc">Excel 区域只读测试——接收区域配置 JSON，设置对应 Sheet/Table 为可写</div>
+    <div class="params">Body: TestRegional (JSON) — 包含 filePath + regList（sheetName + regionalValues）</div>
+  </div>
+</div>
+
+<!-- ========== 核心业务流程 ========== -->
+<div class="card">
+  <h2>🔄 核心业务流程</h2>
+
+  <h3>流程一：证书编制与数据回显（送检 / 现场）</h3>
+  <div class="flow-step"><div class="step-num">1</div><div class="step-text">前端调用 <code>/openWordEchoTag</code> (送检) 或 <code>/openWordEchoXcTag</code> (现场)</div></div>
+  <div class="flow-step"><div class="step-num">2</div><div class="step-text">通过 allotId 反查任务分配信息 <code>getTaskAllot()</code> / <code>getOuterTaskAllot()</code></div></div>
+  <div class="flow-step"><div class="step-num">3</div><div class="step-text">获取证书编号 <code>getTaskCertNumber()</code>，准备文档数据 <code>prepareDocumentData()</code></div></div>
+  <div class="flow-step"><div class="step-num">4</div><div class="step-text">填充书签映射 <code>createBookmarkDataMap()</code>：委托编号、样品名称、规格、日期、签名图片、防伪码二维码、结果页图片</div></div>
+  <div class="flow-step"><div class="step-num">5</div><div class="step-text">填充数据标签 <code>createDataTagDataMap()</code>：证书编号、委托名称</div></div>
+  <div class="flow-step"><div class="step-num">6</div><div class="step-text">若状态=30（编制完成），回显计量标准表格 <code>setStandardInfoTagValues()</code> + 计量器具表格 <code>setDeviceInfoTagValues()</code></div></div>
+  <div class="flow-step"><div class="step-num">7</div><div class="step-text">PageOffice 打开 Word 文档（只读/编辑模式），用户在线编辑</div></div>
+  <div class="flow-step"><div class="step-num">8</div><div class="step-text">保存时触发 <code>/saveZsFile</code> (送检) 或 <code>/saveXcZsFile</code> (现场)</div></div>
+
+  <h3>流程二：原始记录 Excel 分离转图片</h3>
+  <div class="flow-step"><div class="step-num">1</div><div class="step-text">前端保存原始记录，调用 <code>/saveOriginalFile</code></div></div>
+  <div class="flow-step"><div class="step-num">2</div><div class="step-text">若为 Excel → <code>excelToImgFile()</code></div></div>
+  <div class="flow-step"><div class="step-num">3</div><div class="step-text">分离"结果页"Sheet → PDF → 图片（png）</div></div>
+  <div class="flow-step"><div class="step-num">4</div><div class="step-text">分离"数据页"Sheet → PDF</div></div>
+  <div class="flow-step"><div class="step-num">5</div><div class="step-text">结果页图片 JSON 存入 <code>resultTemplate</code> 字段（送检/现场分别更新）</div></div>
+</div>
+
+<!-- ========== 注入依赖 ========== -->
+<div class="card">
+  <h2>🧩 注入的服务依赖（16个）</h2>
+  <ul class="dep-list">
+    <li><code>RedisCache</code></li>
+    <li><code>ITestTaskAllotService</code></li>
+    <li><code>IMsOuterTaskAllotService</code></li>
+    <li><code>IMsTaskCertNumberService</code></li>
+    <li><code>ISysDictTypeService</code></li>
+    <li><code>ISysDictDataService</code></li>
+    <li><code>ITestTechnicalInfoService</code></li>
+    <li><code>IMsTemplateChildService</code></li>
+    <li><code>ITestDeviceInfoService</code></li>
+    <li><code>ITestStandardInfoService</code></li>
+    <li><code>ISysConfigService</code></li>
+    <li><code>BarcodeGenerator</code></li>
+    <li><code>ITestMasterInfo (间接)</code></li>
+    <li><code>dictDataService</code></li>
+    <li><code>dictTypeService</code></li>
+    <li><code>configService</code></li>
+  </ul>
+</div>
+
+<!-- ========== 私有方法 ========== -->
+<div class="card">
+  <h2>🔧 私有辅助方法（16个）</h2>
+
+  <table style="width:100%;font-size:13px;border-collapse:collapse;color:var(--text-secondary);">
+    <thead>
+      <tr style="text-align:left;border-bottom:2px solid var(--border);">
+        <th style="padding:8px 12px;">方法</th>
+        <th style="padding:8px 12px;">职责</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">excelToImgFile()</td><td style="padding:7px 12px;">Excel指定Sheet→PDF→裁剪图片，返回图片列表+数据PDF路径</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">processExcelFile()</td><td style="padding:7px 12px;">复制指定Sheet到新XSSFWorkbook，返回文件路径</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">getSheetIndexByName()</td><td style="padding:7px 12px;">按名称查找Sheet索引</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">initializePageOffice()</td><td style="padding:7px 12px;">统一创建PageOfficeCtrl，设置ServerPage、自定义保存按钮</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">prepareDocumentTemplate()</td><td style="padding:7px 12px;">创建WordDocumentWriter并批量定义数据区域</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">createDataRegionMap()</td><td style="padding:7px 12px;">从字典表(BOOK_MARK)构建书签→中文名映射</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">prepareDocumentData()</td><td style="padding:7px 12px;">准备文档数据（书签+数据标签+表格）</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">createBookmarkDataMap()</td><td style="padding:7px 12px;">构建书签数据Map（委托、签名、防伪码、结果页图片）</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">createDataAntiFakeCodeImgMap()</td><td style="padding:7px 12px;">生成防伪码二维码(BufferedImage)，存为PNG写入书签</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">createDataTagImgDataMap()</td><td style="padding:7px 12px;">根据任务状态(30/40/50)写入签名图片和姓名到对应书签</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">setStandardInfoTagValues()</td><td style="padding:7px 12px;">回显计量标准表格（名称/范围/准确度/证书编号/有效期）</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">setDeviceInfoTagValues()</td><td style="padding:7px 12px;">回显计量器具表格（同上维度）</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">processDateBookmarks()</td><td style="padding:7px 12px;">处理日期相关书签：采样日期、检定日期、有效期、发布日期</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">processCheckResult()</td><td style="padding:7px 12px;">检定结论转换（合格/不合格/符合）</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">isValidFilePath()</td><td style="padding:7px 12px;">路径安全校验——CanonicalPath必须在UploadPath内且文件存在</td></tr>
+      <tr style="border-bottom:1px solid var(--border);"><td style="padding:7px 12px;font-family:monospace;">openDocument()/openDocViewument()/openExcel...()</td><td style="padding:7px 12px;">5个文档打开辅助方法，统一处理Windows/Linux路径差异</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ========== 安全机制 ========== -->
+<div class="card">
+  <h2>🛡 安全机制</h2>
+  <ul class="content">
+    <li><strong>路径越权防护：</strong><code>isValidFilePath()</code> 使用 <code>getCanonicalPath()</code> 校验文件必须在 <code>XiziYiConfig.getUploadPath()</code> 目录内</li>
+    <li><strong>用户认证校验：</strong>每个端点都校验 <code>SecurityUtils.getLoginUser()</code> 是否存在，未登录抛出 UNAUTHORIZED 异常</li>
+    <li><strong>参数非空校验：</strong>所有端点对 filePath/allotId 等关键参数做空值检查</li>
+    <li><strong>文件存在校验：</strong>结果页图片插入前会检查文件是否存在，不存在抛出异常</li>
+    <li><strong>PDF 防拷贝：</strong><code>showPdf</code> 支持 allowCopy 参数控制拷贝/下载权限</li>
+    <li><strong>平台兼容：</strong>Windows/Linux 文件路径协议自动适配 (<code>file://</code> 前缀)</li>
+  </ul>
+</div>
+
+<!-- ========== 外部组件 ========== -->
+<div class="card">
+  <h2>📦 依赖的外部组件</h2>
+  <ul class="content">
+    <li><strong>PageOffice 6.5.1.2</strong> — 在线 Office 编辑核心组件（com.zhuozhengsoft.pageoffice.*）</li>
+    <li><strong>Aspose.Words / Aspose.Cells</strong> — Word/Excel 转 PDF</li>
+    <li><strong>Apache POI</strong> — Excel 底层读写（WorkbookFactory、XSSFWorkbook）</li>
+    <li><strong>Fastjson2</strong> — JSON 解析 RegionContent</li>
+    <li><strong>Jackson ObjectMapper</strong> — Java对象 → JSON 序列化</li>
+    <li><strong>BarcodeGenerator</strong> — 防伪码二维码生成</li>
+    <li><strong>PDFCertCleanConverter</strong> — PDF → 图片转换</li>
+    <li><strong>ExcelSheetToPdfUtils</strong> — Excel 单 Sheet → PDF</li>
+  </ul>
+</div>
+
+<!-- ========== 潜在风险 ========== -->
+<div class="warn-box">
+  <strong>⚠ 潜在注意事项：</strong>
+  <ul style="margin-top:8px;padding-left:18px;">
+    <li>excelToImgFile() 生成的临时 PDF 文件（resultPdfPath / dataPdfPath）未做清理（finally 已注释），可能积累磁盘占用</li>
+    <li>大量字符串拼接（如委托编号、规格等）未做长度限制，超长数据可能导致Word排版异常</li>
+    <li>setTableTagValues / setTableTagXcValues 存在代码重复，可以合并提取</li>
+    <li>saveData() 中对 dataRegion.getName().contains("table_") 的 table_ 硬编码依赖约定</li>
+  </ul>
+</div>
+
+<div class="footer">
+  <p>自动生成 · OfficeOnlineApi.java 功能总结报告 · 2026-05-07</p>
+</div>
+
+</div>
+</body>
+</html>
