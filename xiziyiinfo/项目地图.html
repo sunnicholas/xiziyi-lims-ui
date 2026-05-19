@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>西自仪计量检测管理系统 · 项目地图</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #f1f5f9; color: #1e293b; line-height: 1.7; }
+.nav { position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 10px 30px; display: flex; gap: 24px; flex-wrap: wrap; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
+.nav a { color: #94a3b8; text-decoration: none; font-size: 13px; padding: 6px 12px; border-radius: 6px; transition: all .2s; }
+.nav a:hover { color: #fff; background: rgba(255,255,255,.1); }
+
+.hero { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1e293b 100%); color: #fff; padding: 48px 30px 32px; text-align: center; }
+.hero h1 { font-size: 32px; margin-bottom: 8px; }
+.hero p { opacity: .75; font-size: 14px; }
+.hero .tags { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+.tag { padding: 3px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.tag-green { background: #16a34a33; color: #86efac; }
+.tag-blue { background: #2563eb33; color: #93c5fd; }
+.tag-purple { background: #7c3aed33; color: #c4b5fd; }
+.tag-orange { background: #ea580c33; color: #fdba74; }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+
+.section { background: #fff; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+.section h2 { font-size: 20px; color: #0f172a; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+.section h2 .icon { font-size: 22px; }
+.section h3 { font-size: 16px; color: #334155; margin: 20px 0 12px; }
+.section h3:first-child { margin-top: 0; }
+
+/* Entry Point Button */
+.entry-point { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; padding: 6px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; }
+.entry-point-small { font-size: 11px; padding: 2px 8px; }
+
+/* Chain Flow */
+.chain { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.chain-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-size: 13px; text-align: center; min-width: 100px; transition: all .2s; }
+.chain-box strong { display: block; font-size: 12px; color: #64748b; margin-bottom: 4px; }
+.chain-box:hover { border-color: #6366f1; box-shadow: 0 2px 8px rgba(99,102,241,.15); }
+.chain-arrow { color: #94a3b8; font-size: 18px; font-weight: bold; flex-shrink: 0; }
+
+/* Detailed chain */
+.detail-chain { background: #f8fafc; border-radius: 10px; padding: 20px; border-left: 4px solid #6366f1; margin: 16px 0; }
+.detail-step { padding: 6px 0; font-size: 14px; display: flex; align-items: flex-start; gap: 10px; }
+.detail-step .num { background: #6366f1; color: #fff; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+.detail-step .sep { color: #94a3b8; font-size: 14px; width: 22px; text-align: center; flex-shrink: 0; margin-top: 1px; }
+
+/* File Card */
+.file-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 16px; transition: all .2s; }
+.file-card:hover { border-color: #6366f1; }
+.file-card .name { font-weight: 600; font-size: 14px; color: #1e293b; }
+.file-card .path { font-size: 12px; color: #64748b; }
+.file-card .desc { font-size: 13px; color: #475569; }
+.file-card .badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; flex-shrink: 0; }
+.badge-red { background: #fecaca; color: #991b1b; }
+.badge-blue { background: #bfdbfe; color: #1e40af; }
+.badge-green { background: #bbf7d0; color: #166534; }
+.badge-purple { background: #e9d5ff; color: #6b21a8; }
+.badge-orange { background: #fed7aa; color: #9a3412; }
+
+/* Module grid */
+.modules { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.module-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; transition: all .2s; }
+.module-card:hover { border-color: #6366f1; box-shadow: 0 2px 8px rgba(99,102,241,.1); }
+.module-card h4 { font-size: 15px; margin-bottom: 6px; color: #0f172a; }
+.module-card p { font-size: 12px; color: #64748b; }
+.module-card .mod-meta { font-size: 11px; color: #94a3b8; margin-top: 8px; }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+table th { background: #f1f5f9; padding: 10px 14px; text-align: left; font-weight: 600; color: #475569; border-bottom: 2px solid #e2e8f0; }
+table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+table tr:hover td { background: #f8fafc; }
+table code { background: #f1f5f9; padding: 1px 6px; border-radius: 3px; font-size: 12px; color: #6366f1; }
+
+/* Code block */
+pre { background: #0f172a; color: #e2e8f0; padding: 16px 20px; border-radius: 8px; overflow-x: auto; font-size: 12px; line-height: 1.6; margin: 12px 0; }
+pre .c { color: #64748b; }
+pre .k { color: #c4b5fd; }
+pre .v { color: #86efac; }
+pre .s { color: #fdba74; }
+
+.footer { text-align: center; padding: 20px; font-size: 12px; color: #94a3b8; }
+
+@media (max-width: 768px) {
+    .chain { flex-direction: column; align-items: stretch; }
+    .chain-arrow { text-align: center; transform: rotate(90deg); }
+    .modules { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+    <a href="index.html" style="background:#6366f1;color:#fff;">🏠 知识中心</a>
+    <a href="#overview">总览</a>
+    <a href="#modules">模块结构</a>
+    <a href="#request-chain">请求调用链</a>
+    <a href="#auth-chain">认证链路</a>
+    <a href="#biz-chain">业务链路</a>
+    <a href="#async-chain">异步链路</a>
+    <a href="#core-files">核心文件</a>
+    <a href="#tool-chain">工具依赖</a>
+</div>
+
+<div class="hero">
+    <h1>西自仪计量检测管理系统 · 项目地图</h1>
+    <p>基于若依(RuoYi) 3.8.9 · Spring Boot 2.5.15 · JDK 17 · Maven 多模块 · 2026-05-18</p>
+    <div class="tags">
+        <span class="tag tag-green">Spring Boot</span>
+        <span class="tag tag-blue">MyBatis-Plus</span>
+        <span class="tag tag-purple">Spring Security</span>
+        <span class="tag tag-orange">MySQL 5.7</span>
+        <span class="tag tag-green">Redis</span>
+        <span class="tag tag-blue">Vue.js 前端</span>
+    </div>
+</div>
+
+<div class="container">
+
+<!-- ============================================================ -->
+<div class="section" id="overview">
+    <h2><span class="icon">🏠</span> 一、项目入口与全局概览</h2>
+
+    <h3>1.1 启动入口</h3>
+    <p style="margin-bottom:12px;">
+        <span class="entry-point">🚀 LimsApplication.java</span>
+        <code style="margin-left:10px;">xzy-admin/src/main/java/com/xzy/LimsApplication.java</code>
+    </p>
+    <table>
+        <tr><th style="width:140px;">配置项</th><th>值</th><th>说明</th></tr>
+        <tr><td>服务端口</td><td><code>30001</code></td><td>HTTP服务端口</td></tr>
+        <tr><td>上下文路径</td><td><code>/xzy-api</code></td><td>所有API前缀: http://localhost:30001/xzy-api/xxx</td></tr>
+        <tr><td>数据库</td><td><code>MySQL 5.7</code></td><td>127.0.0.1:3306/lims (本地开发)</td></tr>
+        <tr><td>Redis</td><td><code>127.0.0.1:36379 DB4</code></td><td>存储 Token / 验证码 / 缓存</td></tr>
+        <tr><td>文件上传路径</td><td><code>/Users/sunnicholas/uploadPath</code></td><td>xzy.profile 配置</td></tr>
+        <tr><td>PageOffice</td><td><code>/Users/sunnicholas/pageoffice</code></td><td>在线文档编辑的许可证存放路径</td></tr>
+    </table>
+
+    <h3>1.2 排除自动配置</h3>
+    <p><code>@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})</code> — 禁用了Spring Boot自动数据源，改用手动的 Druid 多数据源配置（支持主从分离）。同时开启了 <code>@EnableAsync</code>（异步）和 <code>@EnableTransactionManagement</code>（事务）。</p>
+
+    <h3>1.3 详细分析文档入口</h3>
+    <table>
+        <tr><th>文档</th><th>路径</th><th>内容</th></tr>
+        <tr><td>项目全景文档</td><td><code>info/mod/index.html</code></td><td>交互式侧边栏文档，含15+模块专题分析</td></tr>
+        <tr><td>后端架构全景图</td><td><code>info/reports/后端架构全景图.md</code></td><td>所有模块文件级索引</td></tr>
+        <tr><td>软著申请信息</td><td><code>info/软件著作权登记申请信息.html</code></td><td>软著硬件/软件环境、功能、技术特点</td></tr>
+        <tr><td>功能描述文档</td><td><code>info/西自仪计量检测管理系统-功能描述文档.doc</code></td><td>软著申请表功能描述</td></tr>
+    </table>
+    <p style="font-size:12px;color:#94a3b8;margin-top:14px;">💡 扩展阅读：<a href="../mod/module-architecture.html" style="color:#6366f1;">架构总览</a> · <a href="../reports/项目架构技术栈手册.md" style="color:#6366f1;">技术栈手册</a> · <a href="../reports/本地编译运行与打包完整流程.md" style="color:#6366f1;">本地编译运行指南</a></p>
+</div>
+
+<!-- ============================================================ -->
+<div class="section" id="modules">
+    <h2><span class="icon">🧩</span> 二、10模块结构总览</h2>
+
+    <div class="modules">
+        <div class="module-card">
+            <h4>🌐 xzy-admin</h4>
+            <p>启动入口 + 全部 REST Controller + 配置文件</p>
+            <div class="mod-meta">80+ Java文件 | 入口: LimsApplication.java</div>
+        </div>
+        <div class="module-card">
+            <h4>🔧 xzy-framework</h4>
+            <p>框架核心：Security/JWT/AOP/数据源/拦截器</p>
+            <div class="mod-meta">40+ Java文件 | 入口: SecurityConfig.java</div>
+        </div>
+        <div class="module-card">
+            <h4>📦 xzy-common</h4>
+            <p>公共层：注解/常量/工具类/过滤器/Redis</p>
+            <div class="mod-meta">80+ Java文件 | 入口: XiziYiConfig.java</div>
+        </div>
+        <div class="module-card">
+            <h4>📐 xzy-measure</h4>
+            <p>核心业务：委托→任务→检测→证书→模板</p>
+            <div class="mod-meta">180+ Java文件 · 58张表 | 最大模块</div>
+        </div>
+        <div class="module-card">
+            <h4>👤 xzy-system</h4>
+            <p>系统管理：用户/角色/部门/菜单/字典/日志</p>
+            <div class="mod-meta">55+ Java文件 · 19张表</div>
+        </div>
+        <div class="module-card">
+            <h4>📊 xzy-basics</h4>
+            <p>基础数据：编码规则/检测项目/报价/标签</p>
+            <div class="mod-meta">45+ Java文件 · 11张表</div>
+        </div>
+        <div class="module-card">
+            <h4>🤝 xzy-crm</h4>
+            <p>客户管理：客户/送检/样品/发票</p>
+            <div class="mod-meta">35+ Java文件 · 9张表</div>
+        </div>
+        <div class="module-card">
+            <h4>⚙️ xzy-quality</h4>
+            <p>质量管理：技术依据/技术条款</p>
+            <div class="mod-meta">6+ Java文件 · 2张表</div>
+        </div>
+        <div class="module-card">
+            <h4>⏰ xzy-quartz</h4>
+            <p>Quartz定时任务：证书到期提醒/数据备份</p>
+            <div class="mod-meta">14+ Java文件 · 2张表</div>
+        </div>
+        <div class="module-card">
+            <h4>⚡ xzy-generator</h4>
+            <p>Velocity代码生成器：一键CRUD</p>
+            <div class="mod-meta">12+ Java文件 · 10套模板</div>
+        </div>
+    </div>
+
+    <h3>模块依赖关系</h3>
+    <pre>
+<span class="c">xzy-admin</span>  (启动入口，依赖所有模块)
+  ├── <span class="k">xzy-framework</span>  (框架核心)
+  │     └── <span class="k">xzy-system</span>  (系统管理)
+  │           └── <span class="k">xzy-common</span>  (通用工具)
+  ├── <span class="v">xzy-measure</span>  → xzy-common
+  ├── <span class="v">xzy-basics</span>   → xzy-common
+  ├── <span class="v">xzy-crm</span>      → xzy-common
+  ├── <span class="v">xzy-quality</span>  → xzy-common
+  ├── <span class="v">xzy-quartz</span>   → xzy-common
+  └── <span class="v">xzy-generator</span> → xzy-common</pre>
+    <p>关键规则：<strong>所有业务模块只依赖 xzy-common</strong>；xzy-framework 额外依赖 xzy-system；xzy-admin 作为顶层聚合模块依赖所有子模块。</p>
+    <p style="font-size:12px;color:#94a3b8;margin-top:14px;">💡 扩展阅读：<a href="../mod/module-architecture.html" style="color:#6366f1;">系统架构总览</a> · <a href="../mod/module-file-ops.html" style="color:#6366f1;">文件操作详解</a> · <a href="../mod/module-file-upload.html" style="color:#6366f1;">文件上传规则</a> · <a href="../reports/后端架构全景图.md" style="color:#6366f1;">架构全景图.md</a></p>
+</div>
+
+<!-- ============================================================ -->
+<div class="section" id="request-chain">
+    <h2><span class="icon">🔗</span> 三、一次请求的完整调用链路</h2>
+    <p style="color:#64748b;font-size:14px;margin-bottom:16px;">以「用户查询委托列表」为例，展示请求从浏览器到数据库再返回的全路径</p>
+
+    <div class="chain" style="margin-bottom:24px;">
+        <div class="chain-box"><strong>浏览器</strong>GET /xzy-api/measure/entrust/list</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>Nginx</strong>反向代理<br><span style="font-size:11px;color:#94a3b8;">→ localhost:30001</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>Filter 链</strong>XssFilter → RefererFilter<br><span style="font-size:11px;color:#94a3b8;">xzy-common/filter/</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>JWT Filter</strong>取Token→Redis查用户<br><span style="font-size:11px;color:#94a3b8;">xzy-framework/security/</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>Controller</strong>MsEntrustTaskController<br><span style="font-size:11px;color:#94a3b8;">xzy-admin/measure/</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>Service</strong>MsEntrustTaskServiceImpl<br><span style="font-size:11px;color:#94a3b8;">xzy-measure/service/</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>Mapper</strong>MsEntrustTaskMapper<br><span style="font-size:11px;color:#94a3b8;">xzy-measure/mapper/</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>MySQL</strong>lims库 → JSON返回</div>
+    </div>
+
+    <div class="detail-chain">
+        <div class="detail-step"><span class="num">1</span>客户端发送 <code>GET /xzy-api/measure/entrust/list?pageNum=1&pageSize=10</code>，Header 带 <code>Authorization: Bearer &lt;token&gt;</code></div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num">2</span><strong>XssFilter</strong>：过滤请求参数中的 XSS 攻击字符</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num">3</span><strong>JwtAuthenticationTokenFilter</strong>：从 Header 取 token → <code>TokenService.getLoginUser()</code> → Redis 查询 LoginUser → 校验有效期 → 写入 SecurityContext</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num">4</span><strong>MsEntrustTaskController.list()</strong>：接收分页参数，调用 <code>msEntrustTaskService.selectMsEntrustTaskList()</code></div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num">5</span><strong>MsEntrustTaskServiceImpl</strong>：通过 <code>SecurityUtils.getUserId()</code> 获取当前用户 → <code>DataScopeAspect</code> AOP 自动拼接部门数据权限 SQL → 分页查询</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num">6</span><strong>MsEntrustTaskMapper + XML</strong>：执行 MyBatis-Plus 分页 SQL <code>SELECT ... FROM ms_entrust_task WHERE ... LIMIT 0,10</code></div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num">7</span><strong>AjaxResult</strong>：Controller 将结果封装为 <code>{"code":200, "rows":[...], "total":50}</code> 返回浏览器</div>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:10px;">💡 扩展阅读：<a href="../mod/api-full-flow-tutorial.html" style="color:#6366f1;">API全流程开发教程</a> · <a href="../mod/module-file-upload.html" style="color:#6366f1;">文件上传规则</a> · <a href="../reports/本地编译运行与打包完整流程.md" style="color:#6366f1;">本地编译运行指南</a></p>
+</div>
+
+<!-- ============================================================ -->
+<div class="section" id="auth-chain">
+    <h2><span class="icon">🔐</span> 四、认证链路：登录 → JWT → 权限校验</h2>
+
+    <div class="detail-chain" style="border-left-color:#dc2626;">
+        <div class="detail-step"><span class="num" style="background:#dc2626;">1</span><strong>SysLoginController.login()</strong> — 接收用户名/密码/验证码</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#dc2626;">2</span><strong>SysLoginService.login()</strong> — 登录核心</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#dc2626;">3</span>├─ <strong>loginPreCheck()</strong> → 空值校验 / 长度限制 / IP黑名单 (<code>IpUtils.isMatchedIp()</code>)</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#dc2626;">4</span>├─ <strong>validateCaptcha()</strong> → Redis 对比验证码，校验后删除</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#dc2626;">5</span>├─ <strong>authenticationManager.authenticate()</strong> → Spring Security 认证</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#dc2626;">6</span>│  └─ <strong>UserDetailsServiceImpl.loadUserByUsername()</strong> → 查DB用户 → 查角色权限 → 返回 LoginUser</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#dc2626;">7</span>├─ <strong>recordLoginInfo()</strong> → 更新用户最后登录IP和时间</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#dc2626;">8</span>└─ <strong>TokenService.createToken(loginUser)</strong> → UUID → JWT HS512签名 → Redis存储 → 返回 Token</div>
+    </div>
+
+    <h3>关键安全文件</h3>
+    <table>
+        <tr><th>文件</th><th>职责</th></tr>
+        <tr><td><code>SecurityConfig.java</code></td><td>CSRF禁用、无状态Session、JWT过滤器链、白名单URL（含微信/App接口）、BCrypt加密</td></tr>
+        <tr><td><code>JwtAuthenticationTokenFilter.java</code></td><td>每个请求都经过此过滤器：取Token → Redis查LoginUser → 写入SecurityContext</td></tr>
+        <tr><td><code>TokenService.java</code></td><td>Token全生命周期：创建(HS512)、解析、刷新(过期前20分钟自动续期)、删除</td></tr>
+        <tr><td><code>PermissionService.java</code></td><td>提供 hasPermi/hasRole 方法，用于 @PreAuthorize 注解</td></tr>
+        <tr><td><code>DataScopeAspect.java</code></td><td>@DataScope 注解AOP，自动拼接待办部门数据隔离SQL</td></tr>
+    </table>
+    <p style="font-size:12px;color:#94a3b8;margin-top:10px;">💡 扩展阅读：<a href="../mod/module-review.html" style="color:#6366f1;">审核管理</a> · <a href="../mod/客户管理模块开发的问题引出.html" style="color:#6366f1;">@Sensitive注解分析</a></p>
+</div>
+
+<!-- ============================================================ -->
+<div class="section" id="biz-chain">
+    <h2><span class="icon">🏭</span> 五、核心业务链路：委托 → 任务分配 → 检测 → 证书</h2>
+
+    <h3>5.1 委托登记链路</h3>
+    <div class="detail-chain" style="border-left-color:#16a34a;">
+        <div class="detail-step"><span class="num" style="background:#16a34a;">1</span><strong>MsEntrustTaskController.add()</strong> — 接收委托登记表单</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">2</span><strong>MsEntrustTaskServiceImpl.insertMsEntrustTask()</strong> — 委托登记核心 (~588行)</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">3</span>├─ <code>IdWorker.getId()</code> → 生成委托ID（雪花算法分布式ID）</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">4</span>├─ <code>selectRuleList()</code> → Redis缓存查编码规则 → 未命中则查 <code>basEncodingRulesMapper</code></div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">5</span>├─ <code>ConfigService.getCode(rule)</code> → 按编码规则自动生成委托编号</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">6</span>├─ <code>msEntrustTaskMapper.insertMsEntrustTask()</code> → 插入主表</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">7</span>├─ <code>initSample()</code> → 删除旧样品 → configService生成样品编码 → 批量保存样品</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">8</span>├─ [status=20] <code>initSampleInfoData()</code> → 自动生成样品台账信息</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">9</span>├─ [条件] <code>wxMessageAsyncService.sendTextMsgAsync()</code> → 企微推送（开关控制）</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">10</span>├─ [status=20] <code>msTaskWarningInfoService.insertWarningInfo()</code> → 创建超时预警</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#16a34a;">11</span>└─ [status=20] <code>publisher.publishEvent(EntrustProcessEvent)</code> → <span style="color:#16a34a;">触发异步链路 ⤵</span></div>
+    </div>
+
+    <h3>5.2 任务分配链路</h3>
+    <div class="detail-chain" style="border-left-color:#2563eb;">
+        <div class="detail-step"><span class="num" style="background:#2563eb;">1</span><strong>TestTaskAllotController.add()</strong> — 批量任务分配请求</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#2563eb;">2</span><strong>TestTaskAllotServiceImpl.insertBatchTaskAllot()</strong> — 批量分配核心 (~1245行)</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#2563eb;">3</span>├─ <code>buildTaskAllotList()</code> → 构建 ZS(证书) + JL(记录) 双类型分配记录</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#2563eb;">4</span>├─ <code>batchDeleteOldAllocations()</code> → 删除旧分配记录</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#2563eb;">5</span>├─ <code>saveBatch(allotAllList)</code> → 批量保存分配记录</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#2563eb;">6</span>├─ <code>batchUpdateTaskInfos()</code> → 批量更新任务信息(接收人/状态)</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#2563eb;">7</span>└─ <code>processPostAllocationLogic()</code> → 创建预警 + 企微推送</div>
+    </div>
+
+    <h3>5.3 证书生成链路（审核通过后触发）</h3>
+    <div class="detail-chain" style="border-left-color:#7c3aed;">
+        <div class="detail-step"><span class="num" style="background:#7c3aed;">1</span><strong>审核通过 (status→50/60)</strong> — auditSubmit() 通过核验/批准</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#7c3aed;">2</span><strong>ConfigService.getZsCode() / incrNumber()</strong> → CMA/非CMA证书编号自动生成</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#7c3aed;">3</span><strong>BarcodeGenerator.generateQRCode()</strong> → 生成含防伪码URL的二维码 → ImageUtils保存PNG</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#7c3aed;">4</span><strong>PdfCertCleanConverter</strong> → PDF → 600DPI渲染 → 裁剪空白 → 输出整齐证书图</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#7c3aed;">5</span><strong>ImageMergeUtils / ImageToPdfUtil</strong> → 多图合成最终PDF</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#7c3aed;">6</span><strong>uploadCertImgBatch()</strong> → 证书图上传 + 路径保存 → 可供下载/打印</div>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:6px;">💡 扩展阅读：<a href="../mod/module-entrust.html" style="color:#6366f1;">委托登记详解</a> · <a href="../mod/module-task-allot.html" style="color:#6366f1;">任务分配详解</a> · <a href="../mod/module-record-compile.html" style="color:#6366f1;">记录编制</a> · <a href="../mod/module-cert-compile.html" style="color:#6366f1;">证书编制</a> · <a href="../mod/module-cert-merge.html" style="color:#6366f1;">合证管理</a> · <a href="../mod/module-print.html" style="color:#6366f1;">证书打印</a> · <a href="../mod/module-scene-entrust.html" style="color:#6366f1;">现场委托</a></p>
+</div>
+
+<!-- ============================================================ -->
+<div class="section" id="async-chain">
+    <h2><span class="icon">⚡</span> 六、异步链路：事务提交后自动生成委托单</h2>
+    <p style="color:#64748b;font-size:14px;">这是项目中最精巧的设计之一：委托登记提交后，不阻塞主线程，异步生成Word/Excel委托单文档</p>
+
+    <div class="detail-chain" style="border-left-color:#ea580c;">
+        <div class="detail-step"><span class="num" style="background:#ea580c;">1</span><strong>MsEntrustTaskServiceImpl</strong> 事务提交 → <code>publisher.publishEvent(EntrustProcessEvent)</code></div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">2</span><strong>EntrustProcessListener</strong> — <code>@TransactionalEventListener(AFTER_COMMIT)</code></div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">3</span>├─ 注解保证：<code>phase = AFTER_COMMIT</code> → 数据库事务成功后才触发</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">4</span>├─ 注解保证：<code>@Async</code> → 独立线程池执行，不阻塞HTTP响应返回</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">5</span>└─ 调用 → <code>entrustAsyncService.processEntrustData()</code></div>
+    </div>
+
+    <h3>EntrustAsyncServiceImpl —— 异步文档生成核心 (~594行)</h3>
+    <div class="detail-chain" style="border-left-color:#ea580c;">
+        <div class="detail-step"><span class="num" style="background:#ea580c;">A</span><strong>createQuoted()</strong> → 选择模板引擎</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">B</span>├─ <strong>检验检测分类</strong> → handleInspection()</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">C</span>│  ├─ <code>WordUtil.easyPoiExport()</code> → EasyPoi 导出 Word 委托单</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">D</span>│  └─ <code>Word2PdfAsposeUtil.doc2pdf()</code> → Aspose Word转PDF</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">E</span>├─ <strong>检定校准分类</strong> → handleCalibration()</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">F</span>│  ├─ <code>JxlsExcelExporter.exportWithTemplate()</code> → Jxls 导出 Excel</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">G</span>│  ├─ <code>ExcelToPdfUtil.convert*()</code> → Excel转PDF</div>
+        <div class="detail-step"><span class="sep">││</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">H</span>│  └─ <code>addWatermarksToPdf()</code> → PdfImageWatermarkByKeyUtil 添加业务章+检验章</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">I</span>├─ <code>barcodeGenerator.generateCode128Barcode()</code> → 生成Code128条形码</div>
+        <div class="detail-step"><span class="sep">│</span></div>
+        <div class="detail-step"><span class="num" style="background:#ea580c;">J</span>└─ 更新DB → 委托单URL + 条形码路径保存</div>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:6px;">💡 扩展阅读：<a href="../mod/module-template.html" style="color:#6366f1;">模板管理核心</a> · <a href="../mod/module-sample.html" style="color:#6366f1;">样品管理</a> · <a href="../mod/module-review.html" style="color:#6366f1;">审核管理</a></p>
+</div>
+
+<!-- ============================================================ -->
+<div class="section" id="core-files">
+    <h2><span class="icon">⭐</span> 七、核心文件索引（按调用层级排列）</h2>
+
+    <h3>7.1 启动入口 & 配置</h3>
+    <div class="file-card">
+        <div>
+            <div class="name">LimsApplication.java</div>
+            <div class="path">xzy-admin/src/main/java/com/xzy/LimsApplication.java</div>
+            <div class="desc">Spring Boot 启动类，注册PageOffice Servlet，排除自动数据源</div>
+        </div>
+        <span class="badge badge-red badge-entry">🚀 入口</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">application.yml</div>
+            <div class="path">xzy-admin/src/main/resources/application.yml</div>
+            <div class="desc">主配置：端口30001、上下文/xzy-api、Redis、文件路径、企业微信、PageOffice</div>
+        </div>
+        <span class="badge badge-red">⚙️ 配置</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">application-druid.yml</div>
+            <div class="path">xzy-admin/src/main/resources/application-druid.yml</div>
+            <div class="desc">Druid数据源：MySQL主从配置、连接池、慢SQL监控、控制台</div>
+        </div>
+        <span class="badge badge-red">⚙️ 配置</span>
+    </div>
+
+    <h3>7.2 安全认证</h3>
+    <div class="file-card">
+        <div>
+            <div class="name">SecurityConfig.java</div>
+            <div class="path">xzy-framework/src/.../config/SecurityConfig.java</div>
+            <div class="desc">Spring Security核心：CSRF禁用、JWT过滤器链、白名单(CORS/微信/App)</div>
+        </div>
+        <span class="badge badge-purple">🔐 核心</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">JwtAuthenticationTokenFilter.java</div>
+            <div class="path">xzy-framework/src/.../security/filter/JwtAuthenticationTokenFilter.java</div>
+            <div class="desc">每个请求必经：取Token → Redis查用户 → 写入SecurityContext</div>
+        </div>
+        <span class="badge badge-purple">🔐 核心</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">TokenService.java</div>
+            <div class="path">xzy-framework/src/.../web/service/TokenService.java</div>
+            <div class="desc">Token生命周期：UUID+HS512签名创建、过期前20分钟自动续期</div>
+        </div>
+        <span class="badge badge-purple">🔐 核心</span>
+    </div>
+
+    <h3>7.3 业务核心 Service</h3>
+    <div class="file-card">
+        <div>
+            <div class="name">MsEntrustTaskServiceImpl.java</div>
+            <div class="path">xzy-measure/src/.../service/impl/MsEntrustTaskServiceImpl.java</div>
+            <div class="desc">委托登记核心(~588行)：编码生成、样品初始化、台账生成、事件发布</div>
+        </div>
+        <span class="badge badge-blue">📝 核心</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">TestTaskAllotServiceImpl.java</div>
+            <div class="path">xzy-measure/src/.../service/impl/TestTaskAllotServiceImpl.java</div>
+            <div class="desc">任务分配+证书核心(~1245行，最大文件)：分配/编制/审核/证书生成</div>
+        </div>
+        <span class="badge badge-blue">📝 核心</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">EntrustAsyncServiceImpl.java</div>
+            <div class="path">xzy-measure/src/.../service/impl/EntrustAsyncServiceImpl.java</div>
+            <div class="desc">异步委托单生成(~594行)：Word/Excel→PDF+水印+条形码</div>
+        </div>
+        <span class="badge badge-blue">📝 核心</span>
+    </div>
+
+    <h3>7.4 框架级服务</h3>
+    <div class="file-card">
+        <div>
+            <div class="name">SysLoginService.java</div>
+            <div class="path">xzy-framework/src/.../web/service/SysLoginService.java</div>
+            <div class="desc">登录核心：前置校验→Spring Security认证→Token生成</div>
+        </div>
+        <span class="badge badge-purple">🔐 核心</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">EntrustProcessListener.java</div>
+            <div class="path">xzy-framework/src/.../web/service/EntrustProcessListener.java</div>
+            <div class="desc">事务后异步监听：@TransactionalEventListener(AFTER_COMMIT) + @Async</div>
+        </div>
+        <span class="badge badge-orange">⚡ 核心</span>
+    </div>
+
+    <h3>7.5 AOP & 数据权限</h3>
+    <div class="file-card">
+        <div>
+            <div class="name">DataScopeAspect.java</div>
+            <div class="path">xzy-framework/src/.../aspectj/DataScopeAspect.java</div>
+            <div class="desc">@DataScope注解AOP，自动拼接部门级数据隔离SQL(<code>WHERE dept_id IN</code>)</div>
+        </div>
+        <span class="badge badge-green">🎯 核心</span>
+    </div>
+    <div class="file-card">
+        <div>
+            <div class="name">MybatisPlusConfig.java</div>
+            <div class="path">xzy-framework/src/.../config/MybatisPlusConfig.java</div>
+            <div class="desc">MyBatis-Plus：分页(MySQL)、乐观锁、防全表误删拦截器</div>
+        </div>
+        <span class="badge badge-green">🎯 核心</span>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;margin-top:14px;">💡 扩展阅读：<a href="../mod/Excel虚线框区域截图方案.html" style="color:#6366f1;">Excel虚线框截图</a> · <a href="../mod/excel-to-png-deep-dive.html" style="color:#6366f1;">Excel转PNG生产环境</a> · <a href="../mod/PdfCertCleanConverter深度解析.html" style="color:#6366f1;">PdfCertCleanConverter</a></p>
+</div>
+
+<!-- ============================================================ -->
+<div class="section" id="tool-chain">
+    <h2><span class="icon">🛠</span> 八、关键工具类依赖链</h2>
+
+    <h3>8.1 编码/ID 生成链</h3>
+    <div class="chain" style="margin-bottom:20px;">
+        <div class="chain-box"><strong>SnowflakeIdWorker</strong>分布式ID<br><span style="font-size:11px;color:#94a3b8;">xzy-common</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>ConfigService</strong>委托/样品/证书编号<br><span style="font-size:11px;color:#94a3b8;">按编码规则自动生成</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>BasEncodingRulesMapper</strong>编码规则配置<br><span style="font-size:11px;color:#94a3b8;">xzy-basics</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>Redis 缓存</strong>规则缓存加速</div>
+    </div>
+
+    <h3>8.2 文档处理链</h3>
+    <div class="chain" style="margin-bottom:20px;">
+        <div class="chain-box"><strong>WordUtil</strong>EasyPoi Word模板</div>
+        <span class="chain-arrow">+</span>
+        <div class="chain-box"><strong>JxlsExcelExporter</strong>Jxls Excel模板</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>Word2PdfAsposeUtil</strong><br>Word→PDF (Aspose)</div>
+        <span class="chain-arrow">+</span>
+        <div class="chain-box"><strong>ExcelToPdfUtil</strong><br>Excel→PDF (Spire/Aspose)</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>PdfImageWatermarkByKeyUtil</strong>添加水印章</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>最终PDF</strong>含双水印委托单</div>
+    </div>
+
+    <h3>8.3 证书渲染链</h3>
+    <div class="chain" style="margin-bottom:20px;">
+        <div class="chain-box"><strong>PdfCertCleanConverter</strong>PDF→600DPI图片<br><span style="font-size:11px;color:#94a3b8;">裁剪空白区域</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>BarcodeGenerator</strong>防伪码QR二维码<br><span style="font-size:11px;color:#94a3b8;">Code128 + QR</span></div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>ImageMergeUtils</strong>底图+表格合成</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>ImageToPdfUtil</strong>多图→PDF</div>
+        <span class="chain-arrow">+</span>
+        <div class="chain-box"><strong>HtmlToPdfPlaywrightUtils</strong>HTML→PDF</div>
+        <span class="chain-arrow">→</span>
+        <div class="chain-box"><strong>上传 / 下载</strong>FileUploadUtils / ZipUtils</div>
+    </div>
+
+    <h3>8.4 完整工具类清单（高频使用）</h3>
+    <table>
+        <tr><th>工具类</th><th>模块</th><th>核心用途</th><th>被调用者</th></tr>
+        <tr><td><code>ConfigService</code></td><td>xzy-common</td><td>委托编码、样品编码、证书编号自动生成</td><td>EntrustTask / TestTaskAllot / EntrustAsync</td></tr>
+        <tr><td><code>BarcodeGenerator</code></td><td>xzy-common</td><td>Code128条形码 + QR二维码(防伪码)</td><td>TestTaskAllot / EntrustAsync</td></tr>
+        <tr><td><code>PdfCertCleanConverter</code></td><td>xzy-common</td><td>PDF→600DPI→裁剪空白→输出整齐证书图</td><td>TestTaskAllot</td></tr>
+        <tr><td><code>HtmlToPdfPlaywrightUtils</code></td><td>xzy-common</td><td>Playwright浏览器引擎渲染HTML→高质量PDF</td><td>TestTaskAllot</td></tr>
+        <tr><td><code>Word2PdfAsposeUtil</code></td><td>xzy-common</td><td>Aspose Words Word→PDF转换</td><td>EntrustAsync</td></tr>
+        <tr><td><code>ExcelToPdfUtil</code></td><td>xzy-common</td><td>Spire.XLS Excel→PDF转换</td><td>EntrustAsync</td></tr>
+        <tr><td><code>PdfImageWatermarkByKeyUtil</code></td><td>xzy-common</td><td>PDF添加业务章+检验章水印</td><td>EntrustAsync</td></tr>
+        <tr><td><code>ImageMergeUtils</code></td><td>xzy-common</td><td>证书底图+表格合成</td><td>TestTaskAllot</td></tr>
+        <tr><td><code>ImageToPdfUtil</code></td><td>xzy-common</td><td>多张图片合成PDF</td><td>TestTaskAllot</td></tr>
+        <tr><td><code>ZipUtils</code></td><td>xzy-common</td><td>证书/委托单批量ZIP打包下载</td><td>EntrustTask / TestTaskAllot</td></tr>
+        <tr><td><code>FileUploadUtils</code></td><td>xzy-common</td><td>文件上传+路径生成</td><td>TestTaskAllot</td></tr>
+        <tr><td><code>RedisCache</code></td><td>xzy-common</td><td>Redis操作：编码规则缓存、Token/验证码存取</td><td>EntrustTask / SysLogin</td></tr>
+        <tr><td><code>XiziYiConfig</code></td><td>xzy-common</td><td>读取 application.yml 中 xzy.* 所有配置</td><td>EntrustTask / TestTaskAllot / EntrustAsync</td></tr>
+        <tr><td><code>SecurityUtils</code></td><td>xzy-common</td><td>获取当前登录用户/角色/岗位信息</td><td>所有 Service</td></tr>
+    </table>
+    <p style="font-size:12px;color:#94a3b8;margin-top:14px;">💡 扩展阅读：<a href="../mod/OfficeOnlineApi-功能总结报告.html" style="color:#6366f1;">OfficeOnlineApi</a> · <a href="../mod/cert-number-flow.html" style="color:#6366f1;">证书编号生成</a> · <a href="../mod/excelToImgFile-逐行详解.html" style="color:#6366f1;">excelToImgFile详解</a> · <a href="../mod/证书结果页-完整生命周期分析.html" style="color:#6366f1;">证书生命周期</a> · <a href="../mod/pageoffice 保存.html" style="color:#6366f1;">PageOffice保存</a> · <a href="../mod/Excel红色虚线框SVG方案-Python版.html" style="color:#6366f1;">SVG方案</a></p>
+</div>
+
+<div class="footer">
+    © 2026 西自仪计量检测管理系统 | 项目地图 v2.0 | 基于 xiziyi-lims-service 生产环境 + info 目录历史文档绘制
+</div>
+
+</div><!-- /.container -->
+
+</body>
+</html>

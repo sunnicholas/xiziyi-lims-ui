@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>西自仪计量检测管理系统 · 知识中心</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif; background: #0f172a; color: #e2e8f0; height: 100vh; overflow: hidden; }
+
+.app { display: flex; height: 100vh; }
+
+/* ========== 侧边栏 ========== */
+.sidebar { width: 300px; background: #1e293b; overflow-y: auto; flex-shrink: 0; border-right: 1px solid #334155; display: flex; flex-direction: column; }
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+
+.sidebar-header { padding: 20px 20px 16px; background: linear-gradient(135deg, #6366f1, #8b5cf6); position: sticky; top: 0; z-index: 2; }
+.sidebar-header h1 { font-size: 16px; color: #fff; line-height: 1.4; }
+.sidebar-header p { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 4px; }
+
+.nav-body { flex: 1; padding-bottom: 20px; }
+
+.nav-section { padding: 18px 20px 8px; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.nav-section .sec-icon { font-size: 13px; }
+
+.nav-item { display: flex; align-items: center; padding: 8px 20px; cursor: pointer; font-size: 13px; transition: all .15s; border-left: 3px solid transparent; color: #94a3b8; text-decoration: none; }
+.nav-item:hover { background: #334155; border-left-color: #6366f1; color: #e2e8f0; }
+.nav-item.active { background: #334155; border-left-color: #6366f1; color: #fff; font-weight: 600; }
+.nav-item .nav-icon { margin-right: 10px; font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; opacity: .8; }
+.nav-item .nav-badge { margin-left: auto; font-size: 10px; padding: 1px 6px; border-radius: 8px; background: #334155; color: #94a3b8; flex-shrink: 0; }
+.nav-item.active .nav-badge { background: #6366f1; color: #fff; }
+
+.nav-sub { padding-left: 28px; }
+.nav-sub .nav-item { font-size: 12px; padding: 6px 20px; }
+
+.nav-item-home { background: linear-gradient(135deg, #6366f133, #8b5cf633); border-left-color: #6366f1 !important; color: #c4b5fd !important; font-weight: 600; }
+
+/* ========== 主区域 ========== */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.main iframe { flex: 1; border: none; background: #fff; }
+.main .footer { text-align: center; padding: 8px; font-size: 11px; color: #475569; background: #1e293b; flex-shrink: 0; }
+
+/* ========== 响应式 ========== */
+@media (max-width: 768px) {
+    .sidebar { width: 100%; max-height: 40vh; }
+    .app { flex-direction: column; }
+    .main { flex: 1; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+    <!-- ========== 侧边栏 ========== -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>🧬 西自仪计量检测管理系统</h1>
+            <p>知识中心 · 项目地图 + 模块文档 + 技术专题</p>
+        </div>
+
+        <div class="nav-body">
+
+            <!-- 主页 -->
+            <a class="nav-item nav-item-home active" href="项目地图.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🗺️</span> 项目地图（核心入口）
+            </a>
+
+            <!-- ===== 核心业务流程 ===== -->
+            <div class="nav-section">
+                <span class="sec-icon">📋</span> 核心业务流程
+            </div>
+            <a class="nav-item" href="../mod/module-entrust.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📝</span>委托登记下单
+            </a>
+            <a class="nav-item" href="../mod/module-task-allot.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📋</span>任务分配
+            </a>
+            <a class="nav-item" href="../mod/module-record-compile.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📄</span>记录编制
+            </a>
+            <a class="nav-item" href="../mod/module-cert-compile.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📜</span>证书编制
+            </a>
+            <a class="nav-item" href="../mod/module-cert-merge.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔗</span>合证管理
+            </a>
+            <a class="nav-item" href="../mod/module-print.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🖨️</span>证书/标签打印
+            </a>
+            <a class="nav-item" href="../mod/module-review.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">✅</span>审核管理
+            </a>
+
+            <!-- ===== 扩展业务模块 ===== -->
+            <div class="nav-section">
+                <span class="sec-icon">🏗️</span> 扩展业务模块
+            </div>
+            <a class="nav-item" href="../mod/module-scene-entrust.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🏗️</span>现场委托检测
+            </a>
+            <a class="nav-item" href="../mod/module-template.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📐</span>模板管理（核心）
+            </a>
+            <a class="nav-item" href="../mod/module-sample.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🧪</span>样品管理
+            </a>
+            <a class="nav-item" href="../mod/module-quality.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">⚙️</span>质量管理
+            </a>
+            <a class="nav-item" href="../mod/module-crm.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">👥</span>客户管理 (CRM)
+            </a>
+            <a class="nav-item" href="../mod/module-basics.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📊</span>基础数据管理
+            </a>
+            <a class="nav-item" href="../mod/module-website.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🌐</span>官网管理
+            </a>
+
+            <!-- ===== 系统架构与基础设施 ===== -->
+            <div class="nav-section">
+                <span class="sec-icon">📖</span> 系统架构与基础设施
+            </div>
+            <a class="nav-item" href="../mod/module-architecture.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🏛️</span>系统架构总览
+            </a>
+            <a class="nav-item" href="../mod/module-file-ops.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📁</span>文件操作详解
+            </a>
+            <a class="nav-item" href="../mod/module-file-upload.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📤</span>文件上传规则与路径
+            </a>
+
+            <!-- ===== 技术专题分析 ===== -->
+            <div class="nav-section">
+                <span class="sec-icon">🔬</span> 技术专题分析
+            </div>
+            <a class="nav-item" href="../mod/api-full-flow-tutorial.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔗</span>API全流程开发教程
+            </a>
+            <a class="nav-item" href="../mod/cert-number-flow.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔢</span>证书编号生成流程
+            </a>
+            <a class="nav-item" href="../mod/PdfCertCleanConverter深度解析.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🧹</span>PdfCertCleanConverter 深度解析
+            </a>
+            <a class="nav-item" href="../mod/OfficeOnlineApi-功能总结报告.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">☁️</span>OfficeOnlineApi 功能总结
+            </a>
+            <a class="nav-item" href="../mod/excelToImgFile-逐行详解.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🖼️</span>excelToImgFile 逐行详解
+            </a>
+            <a class="nav-item" href="../mod/excel-to-png-deep-dive.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🔍</span>Excel转PNG深度剖析
+            </a>
+            <a class="nav-item" href="../mod/Excel虚线框区域截图方案.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📸</span>Excel虚线框截图方案
+            </a>
+            <a class="nav-item" href="../mod/Excel红色虚线框SVG方案-Python版.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🎨</span>Excel虚线框SVG方案
+            </a>
+            <a class="nav-item" href="../mod/pageoffice 保存.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">💾</span>PageOffice 保存机制
+            </a>
+            <a class="nav-item" href="../mod/证书结果页-完整生命周期分析.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📑</span>证书结果页生命周期
+            </a>
+            <a class="nav-item" href="../mod/客户管理模块开发的问题引出.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">❓</span>@Sensitive 连锁反应分析
+            </a>
+
+            <!-- ===== 参考资料 & 产品文档 ===== -->
+            <div class="nav-section">
+                <span class="sec-icon">📚</span> 参考资料 & 产品文档
+            </div>
+            <a class="nav-item" href="../软件著作权登记申请信息.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📋</span>软著申请信息
+            </a>
+            <a class="nav-item" href="../西自仪计量检测管理系统-功能描述文档.doc" target="_blank" onclick="setActive(this)">
+                <span class="nav-icon">📄</span>软著功能描述文档 ⤤
+            </a>
+            <a class="nav-item" href="../使用说明书-V1.0.0.html" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📖</span>使用说明书 V1.0
+            </a>
+            <a class="nav-item" href="../使用说明书-V1.0.0.docx" target="_blank" onclick="setActive(this)">
+                <span class="nav-icon">📥</span>使用说明书.docx 下载 ⤤
+            </a>
+
+            <div class="nav-section">
+                <span class="sec-icon">📝</span> 开发运维指南
+            </div>
+            <a class="nav-item" href="../reports/后端架构全景图.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🏛️</span>后端架构全景图
+            </a>
+            <a class="nav-item" href="../reports/项目架构技术栈手册.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📚</span>项目技术栈手册
+            </a>
+            <a class="nav-item" href="../reports/本地编译运行与打包完整流程.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">⚡</span>本地编译运行指南
+            </a>
+            <a class="nav-item" href="../reports/启动总结.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🚀</span>启动总结
+            </a>
+            <a class="nav-item" href="../reports/startup_manual.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📘</span>启动手册
+            </a>
+            <a class="nav-item" href="../reports/Maven 命令直接运行 Spring Boot 应用.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">☕</span>Maven直接运行应用
+            </a>
+            <a class="nav-item" href="../reports/数据库分析报告.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🗄️</span>数据库分析报告
+            </a>
+            <a class="nav-item" href="../reports/project-summary.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📊</span>项目总结
+            </a>
+
+            <div class="nav-section">
+                <span class="sec-icon">🔧</span> 工具 & 中间件专题
+            </div>
+            <a class="nav-item" href="../reports/Aspose部署与用法详解.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📝</span>Aspose部署与用法
+            </a>
+            <a class="nav-item" href="../reports/Aspose_Implementation_Guide.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">📗</span>Aspose实现指南
+            </a>
+            <a class="nav-item" href="../reports/pageoffice_usage_doc.md" target="contentFrame" onclick="setActive(this)">
+                <span class="nav-icon">🏢</span>PageOffice用法文档
+            </a>
+            <a class="nav-item" href="../reports/2026-04-10_lims.docx" target="_blank" onclick="setActive(this)">
+                <span class="nav-icon">📥</span>LIMS报告.docx 下载 ⤤
+            </a>
+        </div>
+    </div>
+
+    <!-- ========== 主内容区 ========== -->
+    <div class="main">
+        <iframe name="contentFrame" src="项目地图.html"></iframe>
+        <div class="footer">
+            © 2026 西自仪计量检测管理系统 · 知识中心 · 基于生产环境 + 历史文档融合 · 更新于 2026-05-18
+        </div>
+    </div>
+
+</div>
+
+<script>
+function setActive(el) {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+}
+</script>
+</body>
+</html>
